@@ -2,30 +2,31 @@ import { query } from '../../config/db.js';
 
 // --- SHIFTS MASTER DATA ---
 
-export async function listShifts() {
+export async function listShifts(storeId) {
   const result = await query(
-    `SELECT * FROM shifts WHERE deleted_at IS NULL ORDER BY start_time`
+    `SELECT * FROM shifts WHERE deleted_at IS NULL AND store_id = $1 ORDER BY start_time`,
+    [storeId]
   );
   return result.rows;
 }
 
-export async function createShift({ name, start_time, end_time, hourly_rate }) {
+export async function createShift({ name, start_time, end_time, hourly_rate }, storeId) {
   const result = await query(
-    `INSERT INTO shifts (name, start_time, end_time, hourly_rate)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO shifts (name, start_time, end_time, hourly_rate, store_id)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [name, start_time, end_time, hourly_rate]
+    [name, start_time, end_time, hourly_rate, storeId]
   );
   return result.rows[0];
 }
 
-export async function updateShift(id, { name, start_time, end_time, hourly_rate }) {
+export async function updateShift(id, { name, start_time, end_time, hourly_rate }, storeId) {
   const result = await query(
     `UPDATE shifts
      SET name = $1, start_time = $2, end_time = $3, hourly_rate = $4, updated_at = NOW()
-     WHERE id = $5 AND deleted_at IS NULL
+     WHERE id = $5 AND store_id = $6 AND deleted_at IS NULL
      RETURNING *`,
-    [name, start_time, end_time, hourly_rate, id]
+    [name, start_time, end_time, hourly_rate, id, storeId]
   );
   if (result.rows.length === 0) {
     throw new Error('Ca làm việc không tồn tại hoặc đã bị xóa.');
@@ -33,13 +34,13 @@ export async function updateShift(id, { name, start_time, end_time, hourly_rate 
   return result.rows[0];
 }
 
-export async function deleteShift(id) {
+export async function deleteShift(id, storeId) {
   const result = await query(
     `UPDATE shifts
      SET deleted_at = NOW()
-     WHERE id = $1 AND deleted_at IS NULL
+     WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL
      RETURNING *`,
-    [id]
+    [id, storeId]
   );
   if (result.rows.length === 0) {
     throw new Error('Ca làm việc không tồn tại hoặc đã bị xóa.');
@@ -49,14 +50,14 @@ export async function deleteShift(id) {
 
 // --- STAFF AVAILABILITY ---
 
-export async function listAvailability({ staff_id, start_date, end_date }) {
+export async function listAvailability({ staff_id, start_date, end_date }, storeId) {
   let sql = `
     SELECT sa.*, u.full_name as staff_name, u.username as staff_username
     FROM staff_availability sa
     JOIN app_users u ON sa.staff_id = u.id
-    WHERE 1=1
+    WHERE sa.store_id = $1
   `;
-  const params = [];
+  const params = [storeId];
 
   if (staff_id) {
     params.push(staff_id);
@@ -77,13 +78,13 @@ export async function listAvailability({ staff_id, start_date, end_date }) {
   return result.rows;
 }
 
-export async function createAvailability(staffId, { available_date, start_time, end_time, note }) {
-  // Check if overlap exists for the same staff on same date
+export async function createAvailability(staffId, { available_date, start_time, end_time, note }, storeId) {
+  // Check if overlap exists for the same staff on same date in this store
   const overlapCheck = await query(
     `SELECT id FROM staff_availability
-     WHERE staff_id = $1 AND available_date = $2
-       AND start_time < $3 AND end_time > $4`,
-    [staffId, available_date, end_time, start_time]
+     WHERE staff_id = $1 AND available_date = $2 AND store_id = $3
+       AND start_time < $4 AND end_time > $5`,
+    [staffId, available_date, storeId, end_time, start_time]
   );
 
   if (overlapCheck.rows.length > 0) {
@@ -91,25 +92,25 @@ export async function createAvailability(staffId, { available_date, start_time, 
   }
 
   const result = await query(
-    `INSERT INTO staff_availability (staff_id, available_date, start_time, end_time, note)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO staff_availability (staff_id, available_date, start_time, end_time, note, store_id)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [staffId, available_date, start_time, end_time, note]
+    [staffId, available_date, start_time, end_time, note, storeId]
   );
   return result.rows[0];
 }
 
-export async function deleteAvailability(id, staffId, isAdmin = false) {
+export async function deleteAvailability(id, staffId, isAdmin = false, storeId) {
   let result;
   if (isAdmin) {
     result = await query(
-      `DELETE FROM staff_availability WHERE id = $1 RETURNING *`,
-      [id]
+      `DELETE FROM staff_availability WHERE id = $1 AND store_id = $2 RETURNING *`,
+      [id, storeId]
     );
   } else {
     result = await query(
-      `DELETE FROM staff_availability WHERE id = $1 AND staff_id = $2 RETURNING *`,
-      [id, staffId]
+      `DELETE FROM staff_availability WHERE id = $1 AND staff_id = $2 AND store_id = $3 RETURNING *`,
+      [id, staffId, storeId]
     );
   }
 
@@ -121,16 +122,16 @@ export async function deleteAvailability(id, staffId, isAdmin = false) {
 
 // --- STAFF SHIFTS ---
 
-export async function listAssignedShifts({ staff_id, start_date, end_date }) {
+export async function listAssignedShifts({ staff_id, start_date, end_date }, storeId) {
   let sql = `
     SELECT ss.*, s.name as shift_name, s.start_time, s.end_time,
            u.full_name as staff_name, u.username as staff_username
     FROM staff_shifts ss
     JOIN shifts s ON ss.shift_id = s.id
     JOIN app_users u ON ss.staff_id = u.id
-    WHERE 1=1
+    WHERE ss.store_id = $1
   `;
-  const params = [];
+  const params = [storeId];
 
   if (staff_id) {
     params.push(staff_id);
@@ -151,9 +152,9 @@ export async function listAssignedShifts({ staff_id, start_date, end_date }) {
   return result.rows;
 }
 
-export async function assignShift(creatorId, { staff_id, shift_id, shift_date, custom_start_time, custom_end_time }) {
+export async function assignShift(creatorId, { staff_id, shift_id, shift_date, custom_start_time, custom_end_time }, storeId) {
   // 1. Fetch shift info
-  const shiftRes = await query(`SELECT * FROM shifts WHERE id = $1 AND deleted_at IS NULL`, [shift_id]);
+  const shiftRes = await query(`SELECT * FROM shifts WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL`, [shift_id, storeId]);
   if (shiftRes.rows.length === 0) {
     throw new Error('Ca làm việc mẫu không tồn tại.');
   }
@@ -186,7 +187,7 @@ export async function assignShift(creatorId, { staff_id, shift_id, shift_date, c
     hasCustom = true;
   }
 
-  // 2. Check conflicts (already assigned a shift overlapping with this time)
+  // 2. Check conflicts (already assigned a shift overlapping with this time across ALL stores to be safe, but let's scope to store for now)
   const overlappingShifts = await query(
     `SELECT ss.id FROM staff_shifts ss
      JOIN shifts s ON ss.shift_id = s.id
@@ -210,21 +211,21 @@ export async function assignShift(creatorId, { staff_id, shift_id, shift_date, c
 
   // 4. Insert
   const result = await query(
-    `INSERT INTO staff_shifts (staff_id, shift_id, shift_date, hourly_rate_snapshot, total_salary, custom_start_time, custom_end_time, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO staff_shifts (staff_id, shift_id, shift_date, hourly_rate_snapshot, total_salary, custom_start_time, custom_end_time, created_by, store_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
-    [staff_id, shift_id, shift_date, rateSnapshot, totalSalary, hasCustom ? custom_start_time : null, hasCustom ? custom_end_time : null, creatorId]
+    [staff_id, shift_id, shift_date, rateSnapshot, totalSalary, hasCustom ? custom_start_time : null, hasCustom ? custom_end_time : null, creatorId, storeId]
   );
   return result.rows[0];
 }
 
-export async function updateShiftStatus(id, status) {
+export async function updateShiftStatus(id, status, storeId) {
   const result = await query(
     `UPDATE staff_shifts
      SET status = $1, updated_at = NOW()
-     WHERE id = $2
+     WHERE id = $2 AND store_id = $3
      RETURNING *`,
-    [status, id]
+    [status, id, storeId]
   );
   if (result.rows.length === 0) {
     throw new Error('Phân lịch làm việc không tồn tại.');
@@ -232,10 +233,10 @@ export async function updateShiftStatus(id, status) {
   return result.rows[0];
 }
 
-export async function deleteShiftAssignment(id) {
+export async function deleteShiftAssignment(id, storeId) {
   const result = await query(
-    `DELETE FROM staff_shifts WHERE id = $1 RETURNING *`,
-    [id]
+    `DELETE FROM staff_shifts WHERE id = $1 AND store_id = $2 RETURNING *`,
+    [id, storeId]
   );
   if (result.rows.length === 0) {
     throw new Error('Lịch phân ca không tồn tại.');
@@ -245,7 +246,7 @@ export async function deleteShiftAssignment(id) {
 
 // --- STAFF REQUESTS ---
 
-export async function listRequests({ staff_id, status }) {
+export async function listRequests({ staff_id, status }, storeId) {
   let sql = `
     SELECT sr.*, u.full_name as staff_name, u.username as staff_username,
            s.name as target_shift_name, s.start_time, s.end_time,
@@ -256,9 +257,9 @@ export async function listRequests({ staff_id, status }) {
     LEFT JOIN shifts s ON sr.target_shift_id = s.id
     LEFT JOIN app_users u2 ON sr.swap_with_staff_id = u2.id
     LEFT JOIN app_users u3 ON sr.processed_by = u3.id
-    WHERE 1=1
+    WHERE sr.store_id = $1
   `;
-  const params = [];
+  const params = [storeId];
 
   if (staff_id) {
     params.push(staff_id);
@@ -275,19 +276,19 @@ export async function listRequests({ staff_id, status }) {
   return result.rows;
 }
 
-export async function createRequest(staffId, { type, reason, target_date, target_shift_id, swap_with_staff_id }) {
+export async function createRequest(staffId, { type, reason, target_date, target_shift_id, swap_with_staff_id }, storeId) {
   const result = await query(
-    `INSERT INTO staff_requests (staff_id, type, reason, target_date, target_shift_id, swap_with_staff_id, status)
-     VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+    `INSERT INTO staff_requests (staff_id, type, reason, target_date, target_shift_id, swap_with_staff_id, status, store_id)
+     VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7)
      RETURNING *`,
-    [staffId, type, reason, target_date, target_shift_id || null, swap_with_staff_id || null]
+    [staffId, type, reason, target_date, target_shift_id || null, swap_with_staff_id || null, storeId]
   );
   return result.rows[0];
 }
 
-export async function processRequest(adminId, id, { status, admin_note }) {
+export async function processRequest(adminId, id, { status, admin_note }, storeId) {
   // 1. Fetch request details
-  const reqRes = await query(`SELECT * FROM staff_requests WHERE id = $1`, [id]);
+  const reqRes = await query(`SELECT * FROM staff_requests WHERE id = $1 AND store_id = $2`, [id, storeId]);
   if (reqRes.rows.length === 0) {
     throw new Error('Yêu cầu không tồn tại.');
   }
@@ -305,15 +306,15 @@ export async function processRequest(adminId, id, { status, admin_note }) {
       await query(
         `UPDATE staff_shifts
          SET status = 'ABSENT', total_salary = 0, updated_at = NOW()
-         WHERE staff_id = $1 AND shift_date = $2 AND (shift_id = $3 OR $3 IS NULL)`,
-        [request.staff_id, request.target_date, request.target_shift_id]
+         WHERE staff_id = $1 AND shift_date = $2 AND (shift_id = $3 OR $3 IS NULL) AND store_id = $4`,
+        [request.staff_id, request.target_date, request.target_shift_id, storeId]
       );
     } else if (request.type === 'SWAP') {
       if (!request.swap_with_staff_id) {
         throw new Error('Không có thông tin nhân viên nhận đổi ca.');
       }
       // Check if swap target staff has overlap conflict
-      const targetShiftRes = await query(`SELECT start_time, end_time FROM shifts WHERE id = $1`, [request.target_shift_id]);
+      const targetShiftRes = await query(`SELECT start_time, end_time FROM shifts WHERE id = $1 AND store_id = $2`, [request.target_shift_id, storeId]);
       if (targetShiftRes.rows.length > 0) {
         const targetShift = targetShiftRes.rows[0];
         const overlappingShifts = await query(
@@ -332,9 +333,9 @@ export async function processRequest(adminId, id, { status, admin_note }) {
       const swapRes = await query(
         `UPDATE staff_shifts
          SET staff_id = $1, updated_at = NOW()
-         WHERE staff_id = $2 AND shift_date = $3 AND shift_id = $4
+         WHERE staff_id = $2 AND shift_date = $3 AND shift_id = $4 AND store_id = $5
          RETURNING id`,
-        [request.swap_with_staff_id, request.staff_id, request.target_date, request.target_shift_id]
+        [request.swap_with_staff_id, request.staff_id, request.target_date, request.target_shift_id, storeId]
       );
       if (swapRes.rows.length === 0) {
         throw new Error('Không tìm thấy lịch phân ca phù hợp để thực hiện đổi ca.');
@@ -346,50 +347,53 @@ export async function processRequest(adminId, id, { status, admin_note }) {
   const result = await query(
     `UPDATE staff_requests
      SET status = $1, admin_note = $2, processed_by = $3, processed_at = NOW(), updated_at = NOW()
-     WHERE id = $4
+     WHERE id = $4 AND store_id = $5
      RETURNING *`,
-    [status, admin_note, adminId, id]
+    [status, admin_note, adminId, id, storeId]
   );
   return result.rows[0];
 }
 
 // --- STATS & COST REPORTS ---
 
-export async function getSalarySummary(staffId, { start_date, end_date }) {
+export async function getSalarySummary(staffId, { start_date, end_date }, storeId) {
   const result = await query(
     `SELECT 
        COUNT(id) filter (where status = 'COMPLETED') as completed_shifts,
        COUNT(id) filter (where status = 'ABSENT') as absent_shifts,
        COALESCE(SUM(total_salary) filter (where status = 'COMPLETED'), 0) as total_earned
      FROM staff_shifts
-     WHERE staff_id = $1 AND shift_date >= $2 AND shift_date <= $3`,
-    [staffId, start_date, end_date]
+     WHERE staff_id = $1 AND shift_date >= $2 AND shift_date <= $3 AND store_id = $4`,
+    [staffId, start_date, end_date, storeId]
   );
   return result.rows[0];
 }
 
-export async function getHRCostReport({ start_date, end_date }) {
+export async function getHRCostReport({ start_date, end_date }, storeId) {
   const result = await query(
     `SELECT 
        u.id as staff_id, u.full_name as staff_name, u.username as staff_username,
        COUNT(ss.id) filter (where ss.status = 'COMPLETED') as completed_shifts,
        COALESCE(SUM(ss.total_salary) filter (where ss.status = 'COMPLETED'), 0) as total_salary
      FROM app_users u
-     LEFT JOIN staff_shifts ss ON u.id = ss.staff_id AND ss.shift_date >= $1 AND ss.shift_date <= $2
-     WHERE u.deleted_at IS NULL
+     JOIN store_staff st ON st.staff_id = u.id
+     LEFT JOIN staff_shifts ss ON u.id = ss.staff_id AND ss.shift_date >= $1 AND ss.shift_date <= $2 AND ss.store_id = $3
+     WHERE u.deleted_at IS NULL AND st.store_id = $3
      GROUP BY u.id, u.full_name, u.username
      ORDER BY total_salary DESC`,
-    [start_date, end_date]
+    [start_date, end_date, storeId]
   );
   return result.rows;
 }
 
-export async function getActiveStaffList() {
+export async function getActiveStaffList(storeId) {
   const result = await query(
-    `SELECT id, username, full_name as "fullName", email 
-     FROM app_users 
-     WHERE role = 'STAFF' AND status = 'ACTIVE' AND deleted_at IS NULL
-     ORDER BY full_name`
+    `SELECT u.id, u.username, u.full_name as "fullName", u.email 
+     FROM app_users u
+     JOIN store_staff ss ON ss.staff_id = u.id
+     WHERE ss.store_id = $1 AND u.status = 'ACTIVE' AND u.deleted_at IS NULL
+     ORDER BY u.full_name`,
+     [storeId]
   );
   return result.rows;
 }

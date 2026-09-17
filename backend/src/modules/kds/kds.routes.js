@@ -1,15 +1,13 @@
 import { Router } from 'express';
-import { ROLES } from '../../constants/roles.js';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireRole } from '../../middlewares/role.middleware.js';
-import { getKdsOrders, markKdsOrderCompleted } from './kds.controller.js';
+import { requireStoreContext } from '../../middlewares/role.middleware.js';
+import { getKdsOrders, markOrderAsCompleted } from './kds.controller.js';
 
 const router = Router();
 
-router.use(requireAuth, requireRole(ROLES.STAFF));
+router.use(requireAuth, requireStoreContext());
 
-router.get('/orders', getKdsOrders);
-router.patch('/orders/:id/complete', markKdsOrderCompleted);
+router.get('/', getKdsOrders);
+router.post('/:id/complete', markOrderAsCompleted);
 
 export default router;
-

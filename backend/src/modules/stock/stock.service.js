@@ -146,7 +146,7 @@ function normalizeDailyCountItems(items) {
   return normalizedItems;
 }
 
-async function getTransactionRowById(client, transactionId) {
+async function getTransactionRowById(client, transactionId, storeId) {
   const result = await client.query(
     `select st.id,
             st.ingredient_id,
@@ -163,14 +163,15 @@ async function getTransactionRowById(client, transactionId) {
      join ingredients i on i.id = st.ingredient_id
      left join app_users u on u.id = st.created_by
      where st.id = $1
+       and st.store_id = $2
      limit 1`,
-    [transactionId],
+    [transactionId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function insertStockTransaction(client, payload) {
+async function insertStockTransaction(client, payload, storeId) {
   const result = await client.query(
     `insert into stock_transactions (
        ingredient_id,
@@ -179,9 +180,10 @@ async function insertStockTransaction(client, payload) {
        before_stock,
        after_stock,
        note,
-       created_by
+       created_by,
+       store_id
      )
-     values ($1, $2, $3, $4, $5, $6, $7)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)
      returning id`,
     [
       payload.ingredientId,
@@ -191,13 +193,14 @@ async function insertStockTransaction(client, payload) {
       payload.afterStock,
       payload.note,
       payload.createdBy,
+      storeId,
     ],
   );
 
-  return getTransactionRowById(client, result.rows[0].id);
+  return getTransactionRowById(client, result.rows[0].id, storeId);
 }
 
-async function getIngredientForUpdate(client, ingredientId) {
+async function getIngredientForUpdate(client, ingredientId, storeId) {
   const result = await client.query(
     `select id,
             name,
@@ -208,16 +211,17 @@ async function getIngredientForUpdate(client, ingredientId) {
             updated_at
      from ingredients
      where id = $1
+       and store_id = $2
        and deleted_at is null
      limit 1
      for update`,
-    [ingredientId],
+    [ingredientId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function getIngredientsForUpdate(client, ingredientIds) {
+async function getIngredientsForUpdate(client, ingredientIds, storeId) {
   const result = await client.query(
     `select id,
             name,
@@ -228,9 +232,10 @@ async function getIngredientsForUpdate(client, ingredientIds) {
             updated_at
      from ingredients
      where id = any($1::uuid[])
+       and store_id = $2
        and deleted_at is null
      for update`,
-    [ingredientIds],
+    [ingredientIds, storeId],
   );
 
   return new Map(result.rows.map((row) => [row.id, row]));
@@ -244,12 +249,13 @@ function ensureAllIngredientsFound(ingredientsById, items) {
   }
 }
 
-async function updateIngredientStock(client, ingredientId, nextStock) {
+async function updateIngredientStock(client, ingredientId, nextStock, storeId) {
   const result = await client.query(
     `update ingredients
      set current_stock = $1,
          updated_at = now()
      where id = $2
+       and store_id = $3
      returning id,
                name,
                unit,
@@ -257,19 +263,19 @@ async function updateIngredientStock(client, ingredientId, nextStock) {
                low_stock_threshold,
                created_at,
                updated_at`,
-    [nextStock, ingredientId],
+    [nextStock, ingredientId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function applyStockChange({ actorUser, ingredientId, note, quantity, type }) {
+async function applyStockChange({ actorUser, ingredientId, note, quantity, type, storeId }) {
   const client = await pool.connect();
 
   try {
     await client.query('begin');
 
-    const ingredient = await getIngredientForUpdate(client, ingredientId);
+    const ingredient = await getIngredientForUpdate(client, ingredientId, storeId);
 
     if (!ingredient) {
       throw new ApiError(404, 'Ingredient not found.');
@@ -283,7 +289,7 @@ async function applyStockChange({ actorUser, ingredientId, note, quantity, type 
       throw new ApiError(400, `Insufficient stock for ${ingredient.name}.`);
     }
 
-    const updatedIngredientRow = await updateIngredientStock(client, ingredientId, afterStock);
+    const updatedIngredientRow = await updateIngredientStock(client, ingredientId, afterStock, storeId);
     const transactionRow = await insertStockTransaction(client, {
       ingredientId,
       type,
@@ -292,7 +298,7 @@ async function applyStockChange({ actorUser, ingredientId, note, quantity, type 
       afterStock,
       note,
       createdBy: actorUser.id,
-    });
+    }, storeId);
 
     await client.query('commit');
 
@@ -308,7 +314,7 @@ async function applyStockChange({ actorUser, ingredientId, note, quantity, type 
   }
 }
 
-export async function importStock(payload, actorUser) {
+export async function importStock(payload, actorUser, storeId) {
   const ingredientId = normalizeIngredientId(payload.ingredientId ?? payload.ingredient_id);
   const quantity = ensurePositiveNumber(payload.quantity, 'Import quantity');
   const note = normalizeString(payload.note ?? payload.notes);
@@ -319,10 +325,11 @@ export async function importStock(payload, actorUser) {
     note,
     quantity,
     type: STOCK_TRANSACTION_TYPES.IMPORT,
+    storeId,
   });
 }
 
-export async function adjustStock(payload, actorUser) {
+export async function adjustStock(payload, actorUser, storeId) {
   const ingredientId = normalizeIngredientId(payload.ingredientId ?? payload.ingredient_id);
   const quantity = ensurePositiveNumber(payload.quantity, 'Adjustment quantity');
   const note = normalizeString(payload.note ?? payload.notes);
@@ -333,10 +340,11 @@ export async function adjustStock(payload, actorUser) {
     note,
     quantity,
     type: STOCK_TRANSACTION_TYPES.ADJUST,
+    storeId,
   });
 }
 
-export async function importStockBatch(payload, actorUser) {
+export async function importStockBatch(payload, actorUser, storeId) {
   const items = normalizeBatchImportItems(payload.items);
   const commonNote = normalizeString(payload.note ?? payload.notes);
   const eventDate = getTodayIsoDate();
@@ -347,7 +355,7 @@ export async function importStockBatch(payload, actorUser) {
     await client.query('begin');
 
     const ingredientIds = items.map((item) => item.ingredientId);
-    const ingredientsById = await getIngredientsForUpdate(client, ingredientIds);
+    const ingredientsById = await getIngredientsForUpdate(client, ingredientIds, storeId);
 
     ensureAllIngredientsFound(ingredientsById, items);
 
@@ -358,7 +366,7 @@ export async function importStockBatch(payload, actorUser) {
       const beforeStock = Number(ingredient.current_stock || 0);
       const afterStock = beforeStock + item.quantity;
       const mergedNote = mergeNotes(commonNote, item.note);
-      const updatedIngredientRow = await updateIngredientStock(client, item.ingredientId, afterStock);
+      const updatedIngredientRow = await updateIngredientStock(client, item.ingredientId, afterStock, storeId);
       const transactionRow = await insertStockTransaction(client, {
         ingredientId: item.ingredientId,
         type: STOCK_TRANSACTION_TYPES.IMPORT,
@@ -372,7 +380,7 @@ export async function importStockBatch(payload, actorUser) {
           note: mergedNote,
         }),
         createdBy: actorUser.id,
-      });
+      }, storeId);
 
       ingredientsById.set(item.ingredientId, updatedIngredientRow);
 
@@ -405,7 +413,7 @@ export async function importStockBatch(payload, actorUser) {
   }
 }
 
-export async function countStockDaily(payload, actorUser) {
+export async function countStockDaily(payload, actorUser, storeId) {
   const items = normalizeDailyCountItems(payload.items);
   const commonNote = normalizeString(payload.note ?? payload.notes);
   const eventDate = payload.countDate
@@ -418,7 +426,7 @@ export async function countStockDaily(payload, actorUser) {
     await client.query('begin');
 
     const ingredientIds = items.map((item) => item.ingredientId);
-    const ingredientsById = await getIngredientsForUpdate(client, ingredientIds);
+    const ingredientsById = await getIngredientsForUpdate(client, ingredientIds, storeId);
 
     ensureAllIngredientsFound(ingredientsById, items);
 
@@ -436,7 +444,7 @@ export async function countStockDaily(payload, actorUser) {
 
       if (differenceQuantity !== 0) {
         changedCount += 1;
-        updatedIngredientRow = await updateIngredientStock(client, item.ingredientId, actualStock);
+        updatedIngredientRow = await updateIngredientStock(client, item.ingredientId, actualStock, storeId);
 
         const transactionRow = await insertStockTransaction(client, {
           ingredientId: item.ingredientId,
@@ -451,7 +459,7 @@ export async function countStockDaily(payload, actorUser) {
             note: mergedNote,
           }),
           createdBy: actorUser.id,
-        });
+        }, storeId);
 
         transaction = toPublicStockTransaction(transactionRow);
         ingredientsById.set(item.ingredientId, updatedIngredientRow);
@@ -495,9 +503,9 @@ export async function listStockTransactions({
   type,
   dateFrom,
   dateTo,
-} = {}) {
-  const params = [];
-  const conditions = [];
+} = {}, storeId) {
+  const params = [storeId];
+  const conditions = ['st.store_id = $1'];
   const normalizedType = normalizeType(type);
 
   if (ingredientId) {
@@ -546,7 +554,7 @@ export async function listStockTransactions({
   return result.rows.map(toPublicStockTransaction);
 }
 
-export async function getStockForecast() {
+export async function getStockForecast(storeId) {
   const result = await query(`
     SELECT 
       i.id AS ingredient_id,
@@ -560,10 +568,10 @@ export async function getStockForecast() {
     LEFT JOIN public.recipes r ON r.id = ri.recipe_id AND r.deleted_at IS NULL
     LEFT JOIN public.order_items oi ON oi.product_id = r.product_id
     LEFT JOIN public.orders o ON o.id = oi.order_id AND o.status = 'SUCCESS' AND o.created_at >= NOW() - INTERVAL '30 days'
-    WHERE i.deleted_at IS NULL
+    WHERE i.store_id = $1 AND i.deleted_at IS NULL
     GROUP BY i.id, i.name, i.unit, i.current_stock, i.low_stock_threshold
     ORDER BY i.name ASC
-  `);
+  `, [storeId]);
 
   const forecasts = result.rows.map(row => {
     const currentStock = Number(row.current_stock);
@@ -597,7 +605,7 @@ export async function getStockForecast() {
   return forecasts;
 }
 
-export async function discardStock(payload, actorUser) {
+export async function discardStock(payload, actorUser, storeId) {
   const note = normalizeString(payload.note ?? payload.notes) || '';
   
   if (payload.productId || payload.product_id) {
@@ -611,14 +619,14 @@ export async function discardStock(payload, actorUser) {
     }
     
     // 1. Get product detail to check if it exists and fetch name
-    const productResult = await query('select name from products where id = $1 and deleted_at is null', [productId]);
+    const productResult = await query('select name from products where id = $1 and store_id = $2 and deleted_at is null', [productId, storeId]);
     if (productResult.rowCount === 0) {
       throw new ApiError(404, 'Product not found.');
     }
     const productName = productResult.rows[0].name;
 
     // 2. Fetch the recipe of this product
-    const recipeResult = await query('select id from recipes where product_id = $1 and deleted_at is null', [productId]);
+    const recipeResult = await query('select id from recipes where product_id = $1 and store_id = $2 and deleted_at is null', [productId, storeId]);
     if (recipeResult.rowCount === 0) {
       throw new ApiError(400, `Sản phẩm "${productName}" chưa được thiết lập công thức định lượng.`);
     }
@@ -637,7 +645,7 @@ export async function discardStock(payload, actorUser) {
         const reqQty = Number(row.quantity_required);
         const totalQtyToDeduct = reqQty * quantity;
 
-        const ingredientResult = await client.query('select name, current_stock from ingredients where id = $1 and deleted_at is null for update', [ingredientId]);
+        const ingredientResult = await client.query('select name, current_stock from ingredients where id = $1 and store_id = $2 and deleted_at is null for update', [ingredientId, storeId]);
         if (ingredientResult.rowCount === 0) {
           throw new ApiError(404, `Ingredient ID ${ingredientId} not found.`);
         }
@@ -649,10 +657,10 @@ export async function discardStock(payload, actorUser) {
           throw new ApiError(400, `Không đủ tồn kho cho nguyên liệu "${ingredient.name}". Cần ${totalQtyToDeduct}, hiện có ${beforeStock}.`);
         }
 
-        await client.query('update ingredients set current_stock = $1, updated_at = now() where id = $2', [afterStock, ingredientId]);
+        await client.query('update ingredients set current_stock = $1, updated_at = now() where id = $2 and store_id = $3', [afterStock, ingredientId, storeId]);
         await client.query(
-          `insert into stock_transactions (ingredient_id, type, quantity, before_stock, after_stock, note, created_by)
-           values ($1, $2, $3, $4, $5, $6, $7)`,
+          `insert into stock_transactions (ingredient_id, type, quantity, before_stock, after_stock, note, created_by, store_id)
+           values ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             ingredientId,
             STOCK_TRANSACTION_TYPES.ADJUST,
@@ -661,6 +669,7 @@ export async function discardStock(payload, actorUser) {
             afterStock,
             `[HỦY HÀNG] Hủy thành phẩm "${productName}" x${quantity}: ${note}`.slice(0, 255),
             actorUser.id,
+            storeId,
           ]
         );
       }
@@ -681,7 +690,7 @@ export async function discardStock(payload, actorUser) {
     }
     
     // Fetch ingredient details to put in the note
-    const ingredientResult = await query('select name from ingredients where id = $1 and deleted_at is null', [ingredientId]);
+    const ingredientResult = await query('select name from ingredients where id = $1 and store_id = $2 and deleted_at is null', [ingredientId, storeId]);
     if (ingredientResult.rowCount === 0) {
       throw new ApiError(404, 'Ingredient not found.');
     }
@@ -693,7 +702,7 @@ export async function discardStock(payload, actorUser) {
       note: `[HỦY HÀNG] Hủy nguyên liệu "${ingredientName}": ${note}`.slice(0, 255),
       quantity,
       type: STOCK_TRANSACTION_TYPES.ADJUST,
+      storeId,
     });
   }
 }
-

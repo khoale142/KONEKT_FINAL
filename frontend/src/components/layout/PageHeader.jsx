@@ -1,4 +1,3 @@
-import React from 'react';
 
 export function PageHeader({ title, description, actions }) {
   return (

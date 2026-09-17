@@ -1,4 +1,5 @@
 import { query } from '../config/db.js';
+import { WORKSPACE_TYPES } from '../constants/roles.js';
 import { ApiError } from '../utils/ApiError.js';
 import { verifyAccessToken } from '../utils/jwt.js';
 
@@ -13,7 +14,7 @@ export async function requireAuth(req, res, next) {
 
     const payload = verifyAccessToken(token);
     const result = await query(
-      `select id, username, email, full_name, role, status, last_login_at, created_at, updated_at
+      `select id, username, email, full_name, status, last_login_at, created_at, updated_at
        from app_users
        where id = $1 and deleted_at is null
        limit 1`,
@@ -31,12 +32,59 @@ export async function requireAuth(req, res, next) {
       username: user.username,
       email: user.email,
       fullName: user.full_name,
-      role: user.role,
       status: user.status,
       lastLoginAt: user.last_login_at,
       createdAt: user.created_at,
       updatedAt: user.updated_at,
     };
+
+    req.workspace = {
+      type: payload.workspaceType || null,
+      id: payload.workspaceId || null,
+      tenantId: null,
+      storeId: null,
+      isOwner: false,
+    };
+
+    if (req.workspace.type === WORKSPACE_TYPES.TENANT) {
+      req.workspace.tenantId = req.workspace.id;
+      
+      const ownerCheck = await query(
+        `select 1 from tenant_owners where user_id = $1 and tenant_id = $2`,
+        [req.user.id, req.workspace.tenantId]
+      );
+      if (!ownerCheck.rows[0]) {
+        throw new ApiError(403, 'Access denied. You are not the owner of this tenant.');
+      }
+      req.workspace.isOwner = true;
+    } else if (req.workspace.type === WORKSPACE_TYPES.STORE) {
+      req.workspace.storeId = req.workspace.id;
+      
+      const storeInfo = await query(
+        `select tenant_id from stores where id = $1`,
+        [req.workspace.storeId]
+      );
+      if (!storeInfo.rows[0]) {
+        throw new ApiError(404, 'Store not found.');
+      }
+      req.workspace.tenantId = storeInfo.rows[0].tenant_id;
+      
+      const ownerCheck = await query(
+        `select 1 from tenant_owners where user_id = $1 and tenant_id = $2`,
+        [req.user.id, req.workspace.tenantId]
+      );
+      req.workspace.isOwner = !!ownerCheck.rows[0];
+      
+      if (!req.workspace.isOwner) {
+        const staffCheck = await query(
+          `select 1 from store_staff where user_id = $1 and store_id = $2`,
+          [req.user.id, req.workspace.storeId]
+        );
+        if (!staffCheck.rows[0]) {
+          throw new ApiError(403, 'Access denied. You are not staff of this store.');
+        }
+      }
+    }
 
     next();
   } catch (error) {

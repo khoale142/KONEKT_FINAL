@@ -1,15 +1,25 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { createNewOrder, getOrder, getOrders, refundOrder, getVietQRConfig } from './order.controller.js';
+import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import {
+  createNewOrder,
+  getAllOrders,
+  getMyOrderById,
+  getMyOrders,
+  getOrderById,
+  refundItems,
+} from './order.controller.js';
 
 const router = Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireStoreContext());
 
 router.post('/', createNewOrder);
-router.get('/', getOrders);
-router.get('/vietqr-config', getVietQRConfig);
-router.get('/:id', getOrder);
-router.post('/:id/refund', refundOrder);
+router.get('/my-orders', getMyOrders);
+router.get('/my-orders/:id', getMyOrderById);
+router.post('/:id/refund', requireOwner(), refundItems);
+
+router.get('/', requireOwner(), getAllOrders);
+router.get('/:id', requireOwner(), getOrderById);
 
 export default router;

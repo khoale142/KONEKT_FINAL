@@ -57,7 +57,7 @@ function ensureValidTag(tag) {
   }
 }
 
-async function findIngredientRowById(ingredientId) {
+async function findIngredientRowById(ingredientId, storeId) {
   const result = await query(
     `select i.id,
             i.name,
@@ -70,17 +70,18 @@ async function findIngredientRowById(ingredientId) {
             (i.current_stock <= i.low_stock_threshold) as is_low_stock
      from ingredients i
      where i.id = $1
+       and i.store_id = $2
        and i.deleted_at is null
      limit 1`,
-    [ingredientId],
+    [ingredientId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function ensureUniqueIngredientName(name, excludeIngredientId = null) {
-  const params = [name];
-  const conditions = ['lower(name) = lower($1)', 'deleted_at is null'];
+async function ensureUniqueIngredientName(name, storeId, excludeIngredientId = null) {
+  const params = [name, storeId];
+  const conditions = ['lower(name) = lower($1)', 'store_id = $2', 'deleted_at is null'];
 
   if (excludeIngredientId) {
     params.push(excludeIngredientId);
@@ -100,23 +101,24 @@ async function ensureUniqueIngredientName(name, excludeIngredientId = null) {
   }
 }
 
-async function ensureDeleteAllowed(ingredientId) {
+async function ensureDeleteAllowed(ingredientId, storeId) {
   const [recipeUsageResult, stockTransactionResult] = await Promise.all([
     query(
       `select exists(
          select 1
          from recipe_items
-         where ingredient_id = $1
+         join recipes on recipes.id = recipe_items.recipe_id
+         where recipe_items.ingredient_id = $1 and recipes.store_id = $2
        ) as is_used`,
-      [ingredientId],
+      [ingredientId, storeId],
     ),
     query(
       `select exists(
          select 1
          from stock_transactions
-         where ingredient_id = $1
+         where ingredient_id = $1 and store_id = $2
        ) as has_transaction`,
-      [ingredientId],
+      [ingredientId, storeId],
     ),
   ]);
 
@@ -129,25 +131,27 @@ async function ensureDeleteAllowed(ingredientId) {
   }
 }
 
-export async function listIngredientTags() {
+export async function listIngredientTags(storeId) {
   const result = await query(
     `select tag
      from (
        select distinct i.tag
        from ingredients i
-       where i.deleted_at is null
+       where i.store_id = $1
+         and i.deleted_at is null
          and i.tag is not null
          and btrim(i.tag) <> ''
      ) ingredient_tags
      order by lower(tag) asc`,
+    [storeId]
   );
 
   return result.rows.map((row) => row.tag).filter(Boolean);
 }
 
-export async function listIngredients({ search = '', lowStock, tag } = {}) {
-  const params = [];
-  const conditions = ['i.deleted_at is null'];
+export async function listIngredients({ search = '', lowStock, tag } = {}, storeId) {
+  const params = [storeId];
+  const conditions = ['i.store_id = $1', 'i.deleted_at is null'];
   const normalizedSearch = normalizeString(search);
   const isLowStockOnly = String(lowStock).toLowerCase() === 'true';
   const normalizedTag = normalizeTag(tag);
@@ -186,8 +190,8 @@ export async function listIngredients({ search = '', lowStock, tag } = {}) {
   return result.rows.map(toPublicIngredient);
 }
 
-export async function getIngredientById(ingredientId) {
-  const ingredient = await findIngredientRowById(ingredientId);
+export async function getIngredientById(ingredientId, storeId) {
+  const ingredient = await findIngredientRowById(ingredientId, storeId);
 
   if (!ingredient) {
     throw new ApiError(404, 'Ingredient not found.');
@@ -196,7 +200,7 @@ export async function getIngredientById(ingredientId) {
   return toPublicIngredient(ingredient);
 }
 
-export async function createIngredient(payload, actorUser) {
+export async function createIngredient(payload, actorUser, storeId) {
   const name = normalizeString(payload.name);
   const tag = normalizeTag(payload.tag);
   const unit = normalizeUnit(payload.unit);
@@ -208,20 +212,20 @@ export async function createIngredient(payload, actorUser) {
   ensureValidName(name);
   ensureValidTag(tag);
   ensureValidUnit(unit);
-  await ensureUniqueIngredientName(name);
+  await ensureUniqueIngredientName(name, storeId);
 
   const result = await query(
-    `insert into ingredients (name, tag, unit, current_stock, low_stock_threshold, created_by)
-     values ($1, $2, $3, $4, $5, $6)
+    `insert into ingredients (name, tag, unit, current_stock, low_stock_threshold, created_by, store_id)
+     values ($1, $2, $3, $4, $5, $6, $7)
      returning id`,
-    [name, tag, unit, 0, lowStockThreshold, actorUser.id],
+    [name, tag, unit, 0, lowStockThreshold, actorUser.id, storeId],
   );
 
-  return getIngredientById(result.rows[0].id);
+  return getIngredientById(result.rows[0].id, storeId);
 }
 
-export async function updateIngredient(ingredientId, payload) {
-  const existingIngredient = await findIngredientRowById(ingredientId);
+export async function updateIngredient(ingredientId, payload, storeId) {
+  const existingIngredient = await findIngredientRowById(ingredientId, storeId);
 
   if (!existingIngredient) {
     throw new ApiError(404, 'Ingredient not found.');
@@ -248,7 +252,7 @@ export async function updateIngredient(ingredientId, payload) {
   ensureValidName(nextName);
   ensureValidTag(nextTag);
   ensureValidUnit(nextUnit);
-  await ensureUniqueIngredientName(nextName, existingIngredient.id);
+  await ensureUniqueIngredientName(nextName, storeId, existingIngredient.id);
 
   await query(
     `update ingredients
@@ -258,25 +262,27 @@ export async function updateIngredient(ingredientId, payload) {
          low_stock_threshold = $4,
          updated_at = now()
      where id = $5
+       and store_id = $6
        and deleted_at is null`,
-    [nextName, nextTag, nextUnit, nextLowStockThreshold, ingredientId],
+    [nextName, nextTag, nextUnit, nextLowStockThreshold, ingredientId, storeId],
   );
 
-  return getIngredientById(ingredientId);
+  return getIngredientById(ingredientId, storeId);
 }
 
-export async function softDeleteIngredient(ingredientId) {
-  const ingredient = await getIngredientById(ingredientId);
+export async function softDeleteIngredient(ingredientId, storeId) {
+  const ingredient = await getIngredientById(ingredientId, storeId);
 
-  await ensureDeleteAllowed(ingredientId);
+  await ensureDeleteAllowed(ingredientId, storeId);
 
   await query(
     `update ingredients
      set deleted_at = now(),
          updated_at = now()
      where id = $1
+       and store_id = $2
        and deleted_at is null`,
-    [ingredientId],
+    [ingredientId, storeId],
   );
 
   return ingredient;

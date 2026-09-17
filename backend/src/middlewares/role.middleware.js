@@ -1,15 +1,29 @@
 import { ApiError } from '../utils/ApiError.js';
+import { WORKSPACE_TYPES } from '../constants/roles.js';
 
-export function requireRole(...allowedRoles) {
+export function requireWorkspace() {
   return (req, res, next) => {
-    if (!req.user) {
-      return next(new ApiError(401, 'Unauthorized. Please login first.'));
+    if (!req.workspace || !req.workspace.type) {
+      return next(new ApiError(403, 'Access denied. Workspace context required.'));
     }
+    return next();
+  };
+}
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(new ApiError(403, 'Access denied. You do not have permission for this action.'));
+export function requireOwner() {
+  return (req, res, next) => {
+    if (!req.workspace || !req.workspace.isOwner) {
+      return next(new ApiError(403, 'Access denied. You must be the owner to perform this action.'));
     }
+    return next();
+  };
+}
 
+export function requireStoreContext() {
+  return (req, res, next) => {
+    if (!req.workspace || req.workspace.type !== WORKSPACE_TYPES.STORE || !req.workspace.storeId) {
+      return next(new ApiError(403, 'Access denied. Store context required.'));
+    }
     return next();
   };
 }

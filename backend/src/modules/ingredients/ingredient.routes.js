@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { ROLES } from '../../constants/roles.js';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireRole } from '../../middlewares/role.middleware.js';
+import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
   createNewIngredient,
   deleteExistingIngredient,
@@ -12,13 +11,13 @@ import {
 
 const router = Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireStoreContext());
 
-router.get('/', requireRole(ROLES.ADMIN, ROLES.STAFF), getIngredients);
-router.get('/:id', requireRole(ROLES.ADMIN, ROLES.STAFF), getIngredient);
+router.get('/', getIngredients);
+router.get('/:id', getIngredient);
 
-router.post('/', requireRole(ROLES.ADMIN), createNewIngredient);
-router.patch('/:id', requireRole(ROLES.ADMIN), updateExistingIngredient);
-router.delete('/:id', requireRole(ROLES.ADMIN), deleteExistingIngredient);
+router.post('/', requireOwner(), createNewIngredient);
+router.patch('/:id', requireOwner(), updateExistingIngredient);
+router.delete('/:id', requireOwner(), deleteExistingIngredient);
 
 export default router;

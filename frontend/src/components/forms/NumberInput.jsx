@@ -1,4 +1,3 @@
-import React from 'react';
 import { handleNumberKeyDownBlock } from '../../utils/validators.js';
 
 export function NumberInput({

@@ -16,6 +16,9 @@ import userRoutes from './modules/users/user.routes.js';
 import hrRoutes from './modules/hr/hr.routes.js';
 import attendanceRoutes from './modules/attendance/attendance.routes.js';
 import posSessionRoutes from './modules/pos_sessions/pos_session.routes.js';
+import workspaceRoutes from './modules/workspaces/workspace.routes.js';
+import tenantRoutes from './modules/tenants/tenant.routes.js';
+import storeRoutes from './modules/stores/store.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { sendSuccess } from './utils/apiResponse.js';
 
@@ -41,6 +44,9 @@ app.get('/api/health', async (req, res, next) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/workspaces', workspaceRoutes);
+app.use('/api/tenants', tenantRoutes);
+app.use('/api/stores', storeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/kds', kdsRoutes);

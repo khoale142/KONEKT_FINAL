@@ -89,6 +89,58 @@ export async function loginWithUsernamePassword({ username, password }) {
   return { user: publicUser, token };
 }
 
+export async function registerUser({ username, email, password, fullName }) {
+  const normalizedUsername = normalizeString(username);
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedFullName = normalizeString(fullName);
+
+  if (!normalizedUsername) {
+    throw new ApiError(400, 'Username is required.');
+  }
+
+  if (normalizedUsername.length > 50) {
+    throw new ApiError(400, 'Username must not exceed 50 characters.');
+  }
+
+  if (!normalizedEmail) {
+    throw new ApiError(400, 'Email is required.');
+  }
+
+  if (!validateEmail(normalizedEmail)) {
+    throw new ApiError(400, 'Email format is invalid.');
+  }
+
+  if (!normalizedFullName) {
+    throw new ApiError(400, 'Full name is required.');
+  }
+
+  validatePasswordValue(password);
+
+  const duplicateCheck = await query(
+    `select 1 from app_users where (lower(username) = lower($1) or lower(email) = lower($2)) and deleted_at is null limit 1`,
+    [normalizedUsername, normalizedEmail]
+  );
+
+  if (duplicateCheck.rows[0]) {
+    throw new ApiError(409, 'Username or Email already exists.');
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const result = await query(
+    `insert into app_users (username, email, password_hash, full_name, status)
+     values ($1, $2, $3, $4, 'ACTIVE')
+     returning id, username, email, full_name, status, last_login_at, created_at, updated_at`,
+    [normalizedUsername, normalizedEmail, passwordHash, normalizedFullName]
+  );
+
+  const user = result.rows[0];
+  const publicUser = toPublicUser(user);
+  const token = signAccessToken(publicUser);
+
+  return { user: publicUser, token };
+}
+
 export async function updateCurrentUserProfile(userId, { fullName, email }) {
   const normalizedFullName = normalizeString(fullName);
   const normalizedEmail = normalizeEmail(email);

@@ -1,4 +1,4 @@
-export const ROLES = {
-  ADMIN: 'ADMIN',
-  STAFF: 'STAFF',
+export const WORKSPACE_TYPES = {
+  TENANT: 'TENANT',
+  STORE: 'STORE',
 };

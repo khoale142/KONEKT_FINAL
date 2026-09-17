@@ -1,4 +1,3 @@
-import React from 'react';
 
 export function Card({ title, value, subtext, icon, loading = false, className = '', children, ...props }) {
   return (

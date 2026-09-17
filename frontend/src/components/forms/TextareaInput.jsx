@@ -1,4 +1,3 @@
-import React from 'react';
 import { handleKeyDownBlock, isVietnameseAccented, hasEmoji, hasDangerousChars, sanitizeTextInput } from '../../utils/validators.js';
 
 export function TextareaInput({

@@ -4,6 +4,10 @@ import { ProtectedRoute } from './ProtectedRoute.jsx';
 import { AppLayout } from '../../components/layout/AppLayout.jsx';
 
 import { LoginPage } from '../../features/auth/pages/LoginPage.jsx';
+import { RegisterPage } from '../../features/auth/pages/RegisterPage.jsx';
+import { WorkspacesPage } from '../../features/workspaces/pages/WorkspacesPage.jsx';
+import { StoreManagementPage } from '../../features/stores/pages/StoreManagementPage.jsx';
+
 import { AdminDashboardPage } from '../../features/dashboard/pages/AdminDashboardPage.jsx';
 import { UserFormPage } from '../../features/users/pages/UserFormPage.jsx';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage.jsx';
@@ -19,35 +23,44 @@ import { POSPage } from '../../features/pos/pages/POSPage.jsx';
 import { StaffSessionPage } from '../../features/pos/pages/StaffSessionPage.jsx';
 import { OrderHistoryPage } from '../../features/orders/pages/OrderHistoryPage.jsx';
 import { OrderDetailPage } from '../../features/orders/pages/OrderDetailPage.jsx';
-import { AdminOrderHistoryPage } from '../../features/orders/pages/AdminOrderHistoryPage.jsx';
 import { StaffHRPage } from '../../features/hr/pages/StaffHRPage.jsx';
 import { AdminHRPage } from '../../features/hr/pages/AdminHRPage.jsx';
 import { AdminCalendarPage } from '../../features/hr/pages/AdminCalendarPage.jsx';
 import { AttendancePage } from '../../features/hr/pages/AttendancePage.jsx';
 
-import { ROLES } from '../../constants/roles.js';
+import { WORKSPACE_TYPES } from '../../constants/roles.js';
 import { ROUTES } from '../../constants/routes.js';
 
 function RoleHomeRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to={ROUTES.LOGIN} replace />;
-  if (user.role === ROLES.ADMIN) return <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />;
-  return <Navigate to={ROUTES.STAFF_POS} replace />;
+  return <Navigate to={ROUTES.WORKSPACES} replace />;
 }
 
 export function AppRouter() {
   return (
     <Routes>
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+      <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+      
+      <Route 
+        path={ROUTES.WORKSPACES} 
+        element={
+          <ProtectedRoute>
+            <WorkspacesPage />
+          </ProtectedRoute>
+        } 
+      />
 
       <Route
-        path="/admin/*"
+        path="/owner/*"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+          <ProtectedRoute requireWorkspaceType={WORKSPACE_TYPES.TENANT}>
             <AppLayout>
               <Routes>
                 <Route path="dashboard" element={<AdminDashboardPage />} />
-                <Route path="users" element={<Navigate to="/admin/hr?tab=users" replace />} />
+                <Route path="stores" element={<StoreManagementPage />} />
+                <Route path="users" element={<Navigate to="/owner/hr?tab=users" replace />} />
                 <Route path="users/new" element={<UserFormPage />} />
                 <Route path="users/:id/edit" element={<UserFormPage />} />
                 <Route path="products" element={<ProductListPage />} />
@@ -56,19 +69,14 @@ export function AppRouter() {
                 <Route path="ingredients" element={<IngredientListPage />} />
                 <Route path="ingredients/new" element={<IngredientFormPage />} />
                 <Route path="ingredients/:id/edit" element={<IngredientFormPage />} />
-                <Route path="stock" element={<StockPage />} />
-                <Route path="stock/transactions" element={<Navigate to="/admin/stock?tab=transactions" replace />} />
-                <Route path="stock/forecast" element={<Navigate to="/admin/stock?tab=forecast" replace />} />
-                <Route path="recipes" element={<Navigate to="/admin/products?tab=recipes" replace />} />
+                <Route path="recipes" element={<Navigate to="/owner/products?tab=recipes" replace />} />
                 <Route path="recipes/new" element={<RecipeFormPage />} />
                 <Route path="recipes/:id/edit" element={<RecipeFormPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="hr/calendar" element={<AdminCalendarPage />} />
                 <Route path="hr/attendance" element={<AttendancePage />} />
                 <Route path="hr" element={<AdminHRPage />} />
-                <Route path="orders" element={<AdminOrderHistoryPage />} />
-                <Route path="orders/:id" element={<OrderDetailPage />} />
-                <Route path="*" element={<Navigate to={ROUTES.ADMIN_DASHBOARD} replace />} />
+                <Route path="*" element={<Navigate to={ROUTES.OWNER_DASHBOARD} replace />} />
               </Routes>
             </AppLayout>
           </ProtectedRoute>
@@ -76,9 +84,9 @@ export function AppRouter() {
       />
 
       <Route
-        path="/staff/*"
+        path="/store/*"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.STAFF]}>
+          <ProtectedRoute requireWorkspaceType={WORKSPACE_TYPES.STORE}>
             <AppLayout>
               <Routes>
                 <Route path="pos" element={<POSPage />} />
@@ -88,7 +96,8 @@ export function AppRouter() {
                 <Route path="orders/:id" element={<OrderDetailPage />} />
                 <Route path="stock" element={<StockPage />} />
                 <Route path="hr" element={<StaffHRPage />} />
-                <Route path="*" element={<Navigate to={ROUTES.STAFF_POS} replace />} />
+                <Route path="hr/attendance" element={<AttendancePage />} />
+                <Route path="*" element={<Navigate to={ROUTES.STORE_POS} replace />} />
               </Routes>
             </AppLayout>
           </ProtectedRoute>

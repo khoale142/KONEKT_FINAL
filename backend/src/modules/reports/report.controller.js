@@ -1,44 +1,51 @@
 import { sendSuccess } from '../../utils/apiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import {
-  listBestSellingProducts,
-  listLowStockIngredients,
-  listRevenueReport,
-  listDiscardReport,
-} from './report.service.js';
+import * as reportService from './report.service.js';
 
 export const getRevenueReport = asyncHandler(async (req, res) => {
-  const revenue = await listRevenueReport(req.query);
+  const storeId = req.workspace.storeId;
+  const data = await reportService.listRevenueReport(storeId, req.query);
 
   return sendSuccess(res, {
-    message: 'Revenue report loaded successfully.',
-    data: revenue,
+    message: 'Revenue report loaded.',
+    data: {
+      items: data,
+    },
   });
 });
 
-export const getBestSellingProductsReport = asyncHandler(async (req, res) => {
-  const products = await listBestSellingProducts(req.query);
+export const getBestSellingProducts = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await reportService.listBestSellingProducts(storeId, req.query);
 
   return sendSuccess(res, {
-    message: 'Best-selling products report loaded successfully.',
-    data: products,
+    message: 'Best selling products loaded.',
+    data: {
+      items: data,
+    },
   });
 });
 
-export const getLowStockIngredientsReport = asyncHandler(async (req, res) => {
-  const ingredients = await listLowStockIngredients();
+export const getLowStockIngredients = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await reportService.listLowStockIngredients(storeId);
 
   return sendSuccess(res, {
-    message: 'Low-stock ingredients report loaded successfully.',
-    data: ingredients,
+    message: 'Low stock ingredients loaded.',
+    data: {
+      items: data,
+    },
   });
 });
 
-export const getDiscardsReport = asyncHandler(async (req, res) => {
-  const discards = await listDiscardReport(req.query);
+export const getDiscardReport = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await reportService.listDiscardReport(storeId, req.query);
 
   return sendSuccess(res, {
-    message: 'Discard report loaded successfully.',
-    data: discards,
+    message: 'Discard report loaded.',
+    data: {
+      items: data,
+    },
   });
 });

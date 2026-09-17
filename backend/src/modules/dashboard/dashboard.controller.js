@@ -2,11 +2,12 @@ import { sendSuccess } from '../../utils/apiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getSummary } from './dashboard.service.js';
 
-export const summary = asyncHandler(async (req, res) => {
-  const data = await getSummary();
+export const getDashboardSummary = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await getSummary(storeId);
 
   return sendSuccess(res, {
-    message: 'Dashboard summary loaded.',
+    message: 'Dashboard data loaded successfully.',
     data,
   });
 });

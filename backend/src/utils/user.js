@@ -6,7 +6,6 @@ export function toPublicUser(row) {
     username: row.username,
     email: row.email,
     fullName: row.full_name,
-    role: row.role,
     status: row.status,
     lastLoginAt: row.last_login_at || null,
     createdAt: row.created_at || null,

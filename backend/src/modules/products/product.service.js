@@ -57,7 +57,7 @@ function ensureValidTag(tag) {
   }
 }
 
-async function findProductRowById(productId) {
+async function findProductRowById(productId, storeId) {
   const result = await query(
     `select p.id,
             p.name,
@@ -74,17 +74,18 @@ async function findProductRowById(productId) {
             ) as has_recipe
      from products p
      where p.id = $1
+       and p.store_id = $2
        and p.deleted_at is null
      limit 1`,
-    [productId],
+    [productId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function ensureUniqueProductName(name, excludeProductId = null) {
-  const params = [name];
-  const conditions = ['lower(name) = lower($1)', 'deleted_at is null'];
+async function ensureUniqueProductName(name, storeId, excludeProductId = null) {
+  const params = [name, storeId];
+  const conditions = ['lower(name) = lower($1)', 'store_id = $2', 'deleted_at is null'];
 
   if (excludeProductId) {
     params.push(excludeProductId);
@@ -104,25 +105,27 @@ async function ensureUniqueProductName(name, excludeProductId = null) {
   }
 }
 
-export async function listProductTags() {
+export async function listProductTags(storeId) {
   const result = await query(
     `select tag
      from (
        select distinct p.tag
        from products p
-       where p.deleted_at is null
+       where p.store_id = $1
+         and p.deleted_at is null
          and p.tag is not null
          and btrim(p.tag) <> ''
      ) product_tags
      order by lower(tag) asc`,
+    [storeId]
   );
 
   return result.rows.map((row) => row.tag).filter(Boolean);
 }
 
-export async function listProducts({ search = '', status, tag } = {}) {
-  const params = [];
-  const conditions = ['p.deleted_at is null'];
+export async function listProducts({ search = '', status, tag } = {}, storeId) {
+  const params = [storeId];
+  const conditions = ['p.store_id = $1', 'p.deleted_at is null'];
   const normalizedSearch = normalizeString(search);
   const normalizedStatus = normalizeStatus(status);
   const normalizedTag = normalizeTag(tag);
@@ -167,8 +170,8 @@ export async function listProducts({ search = '', status, tag } = {}) {
   return result.rows.map(toPublicProduct);
 }
 
-export async function getProductById(productId) {
-  const product = await findProductRowById(productId);
+export async function getProductById(productId, storeId) {
+  const product = await findProductRowById(productId, storeId);
 
   if (!product) {
     throw new ApiError(404, 'Product not found.');
@@ -177,7 +180,7 @@ export async function getProductById(productId) {
   return toPublicProduct(product);
 }
 
-export async function createProduct(payload, actorUser) {
+export async function createProduct(payload, actorUser, storeId) {
   const name = normalizeString(payload.name);
   const tag = normalizeTag(payload.tag);
   const price = ensureValidPrice(payload.price);
@@ -187,20 +190,20 @@ export async function createProduct(payload, actorUser) {
   ensureValidTag(tag);
   ensureValidStatus(status);
 
-  await ensureUniqueProductName(name);
+  await ensureUniqueProductName(name, storeId);
 
   const result = await query(
-    `insert into products (name, tag, price, status, created_by)
-     values ($1, $2, $3, $4, $5)
+    `insert into products (name, tag, price, status, created_by, store_id)
+     values ($1, $2, $3, $4, $5, $6)
      returning id`,
-    [name, tag, price, status, actorUser.id],
+    [name, tag, price, status, actorUser.id, storeId],
   );
 
-  return getProductById(result.rows[0].id);
+  return getProductById(result.rows[0].id, storeId);
 }
 
-export async function updateProduct(productId, payload) {
-  const existingProduct = await findProductRowById(productId);
+export async function updateProduct(productId, payload, storeId) {
+  const existingProduct = await findProductRowById(productId, storeId);
 
   if (!existingProduct) {
     throw new ApiError(404, 'Product not found.');
@@ -219,7 +222,7 @@ export async function updateProduct(productId, payload) {
   ensureValidTag(nextTag);
   ensureValidStatus(nextStatus);
 
-  await ensureUniqueProductName(nextName, existingProduct.id);
+  await ensureUniqueProductName(nextName, storeId, existingProduct.id);
 
   await query(
     `update products
@@ -229,29 +232,31 @@ export async function updateProduct(productId, payload) {
          status = $4,
          updated_at = now()
      where id = $5
+       and store_id = $6
        and deleted_at is null`,
-    [nextName, nextTag, nextPrice, nextStatus, productId],
+    [nextName, nextTag, nextPrice, nextStatus, productId, storeId],
   );
 
-  return getProductById(productId);
+  return getProductById(productId, storeId);
 }
 
-export async function softDeleteProduct(productId) {
-  const existingProduct = await getProductById(productId);
+export async function softDeleteProduct(productId, storeId) {
+  const existingProduct = await getProductById(productId, storeId);
 
   await query(
     `update products
      set deleted_at = now(),
          updated_at = now()
      where id = $1
+       and store_id = $2
        and deleted_at is null`,
-    [productId],
+    [productId, storeId],
   );
 
   return existingProduct;
 }
 
-export async function listPosAvailableProducts() {
+export async function listPosAvailableProducts(storeId) {
   const result = await query(
     `select p.id,
             p.name,
@@ -262,8 +267,9 @@ export async function listPosAvailableProducts() {
             p.updated_at,
             true as has_recipe
      from products p
-     where p.deleted_at is null
-       and p.status = $1
+     where p.store_id = $1
+       and p.deleted_at is null
+       and p.status = $2
        and exists(
          select 1
          from recipes r
@@ -272,7 +278,7 @@ export async function listPosAvailableProducts() {
            and r.deleted_at is null
        )
      order by p.name asc`,
-    [PRODUCT_STATUS.ACTIVE],
+    [storeId, PRODUCT_STATUS.ACTIVE],
   );
 
   return result.rows.map(toPublicProduct);

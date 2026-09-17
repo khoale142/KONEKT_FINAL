@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { summary } from './dashboard.controller.js';
+import { requireStoreContext } from '../../middlewares/role.middleware.js';
+import { getDashboardSummary } from './dashboard.controller.js';
 
 const router = Router();
 
-router.get('/summary', requireAuth, summary);
+router.use(requireAuth, requireStoreContext());
+
+router.get('/summary', getDashboardSummary);
 
 export default router;

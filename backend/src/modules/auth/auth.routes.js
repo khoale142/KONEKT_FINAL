@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { changePassword, login, me, updateMe, forgotPassword, resetPassword } from './auth.controller.js';
+import { changePassword, login, register, me, updateMe, forgotPassword, resetPassword } from './auth.controller.js';
 
 const router = Router();
 
 router.post('/login', login);
+router.post('/register', register);
 router.get('/me', requireAuth, me);
 router.patch('/me', requireAuth, updateMe);
 router.patch('/change-password', requireAuth, changePassword);

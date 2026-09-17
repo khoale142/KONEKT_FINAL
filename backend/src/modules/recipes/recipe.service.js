@@ -58,7 +58,7 @@ function normalizeRecipeItems(items) {
   });
 }
 
-async function findProductRowById(productId) {
+async function findProductRowById(productId, storeId) {
   const result = await query(
     `select id,
             name,
@@ -66,16 +66,17 @@ async function findProductRowById(productId) {
             price
      from products
      where id = $1
+       and store_id = $2
        and deleted_at is null
      limit 1`,
-    [productId],
+    [productId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function ensureProductExists(productId) {
-  const product = await findProductRowById(productId);
+async function ensureProductExists(productId, storeId) {
+  const product = await findProductRowById(productId, storeId);
 
   if (!product) {
     throw new ApiError(404, 'Product not found.');
@@ -84,16 +85,19 @@ async function ensureProductExists(productId) {
   return product;
 }
 
-async function ensureIngredientsExist(ingredientIds) {
+async function ensureIngredientsExist(ingredientIds, storeId) {
   const placeholders = ingredientIds.map((_, index) => `$${index + 1}`).join(', ');
+  const params = [...ingredientIds, storeId];
+  
   const result = await query(
     `select id,
             name,
             unit
      from ingredients
      where id in (${placeholders})
+       and store_id = $${params.length}
        and deleted_at is null`,
-    ingredientIds,
+    params,
   );
 
   if (result.rows.length !== ingredientIds.length) {
@@ -103,7 +107,7 @@ async function ensureIngredientsExist(ingredientIds) {
   return result.rows;
 }
 
-async function findRecipeHeaderById(recipeId) {
+async function findRecipeHeaderById(recipeId, storeId) {
   const result = await query(
     `select r.id,
             r.product_id,
@@ -115,16 +119,17 @@ async function findRecipeHeaderById(recipeId) {
      from recipes r
      join products p on p.id = r.product_id
      where r.id = $1
+       and r.store_id = $2
        and r.deleted_at is null
        and p.deleted_at is null
      limit 1`,
-    [recipeId],
+    [recipeId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function findRecipeHeaderByProductId(productId) {
+async function findRecipeHeaderByProductId(productId, storeId) {
   const result = await query(
     `select r.id,
             r.product_id,
@@ -136,18 +141,19 @@ async function findRecipeHeaderByProductId(productId) {
      from recipes r
      join products p on p.id = r.product_id
      where r.product_id = $1
+       and r.store_id = $2
        and r.deleted_at is null
        and p.deleted_at is null
      limit 1`,
-    [productId],
+    [productId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-async function ensureRecipeDoesNotExistForProduct(productId, excludeRecipeId = null) {
-  const params = [productId];
-  const conditions = ['product_id = $1', 'deleted_at is null'];
+async function ensureRecipeDoesNotExistForProduct(productId, storeId, excludeRecipeId = null) {
+  const params = [productId, storeId];
+  const conditions = ['product_id = $1', 'store_id = $2', 'deleted_at is null'];
 
   if (excludeRecipeId) {
     params.push(excludeRecipeId);
@@ -167,7 +173,7 @@ async function ensureRecipeDoesNotExistForProduct(productId, excludeRecipeId = n
   }
 }
 
-async function getRecipeForUpdate(client, recipeId) {
+async function getRecipeForUpdate(client, recipeId, storeId) {
   const result = await client.query(
     `select r.id,
             r.product_id,
@@ -179,11 +185,12 @@ async function getRecipeForUpdate(client, recipeId) {
      from recipes r
      join products p on p.id = r.product_id
      where r.id = $1
+       and r.store_id = $2
        and r.deleted_at is null
        and p.deleted_at is null
      limit 1
      for update of r`,
-    [recipeId],
+    [recipeId, storeId],
   );
 
   return result.rows[0] || null;
@@ -247,10 +254,10 @@ async function insertRecipeItems(client, recipeId, items) {
   }
 }
 
-export async function listRecipes({ search = '' } = {}) {
+export async function listRecipes({ search = '' } = {}, storeId) {
   const normalizedSearch = normalizeString(search);
-  const params = [];
-  const conditions = ['r.deleted_at is null', 'p.deleted_at is null'];
+  const params = [storeId];
+  const conditions = ['r.store_id = $1', 'r.deleted_at is null', 'p.deleted_at is null'];
 
   if (normalizedSearch) {
     params.push(`%${normalizedSearch}%`);
@@ -275,9 +282,9 @@ export async function listRecipes({ search = '' } = {}) {
   return buildRecipesFromHeaders(result.rows);
 }
 
-export async function getRecipeById(recipeId) {
+export async function getRecipeById(recipeId, storeId) {
   const normalizedRecipeId = normalizeId(recipeId, 'Recipe id');
-  const header = await findRecipeHeaderById(normalizedRecipeId);
+  const header = await findRecipeHeaderById(normalizedRecipeId, storeId);
 
   if (!header) {
     throw new ApiError(404, 'Recipe not found.');
@@ -287,11 +294,11 @@ export async function getRecipeById(recipeId) {
   return recipe;
 }
 
-export async function getRecipeByProductId(productId) {
+export async function getRecipeByProductId(productId, storeId) {
   const normalizedProductId = normalizeId(productId, 'Product id');
-  await ensureProductExists(normalizedProductId);
+  await ensureProductExists(normalizedProductId, storeId);
 
-  const header = await findRecipeHeaderByProductId(normalizedProductId);
+  const header = await findRecipeHeaderByProductId(normalizedProductId, storeId);
 
   if (!header) {
     throw new ApiError(404, 'Recipe not found.');
@@ -301,13 +308,13 @@ export async function getRecipeByProductId(productId) {
   return recipe;
 }
 
-export async function createRecipe(payload, actorUser) {
+export async function createRecipe(payload, actorUser, storeId) {
   const productId = normalizeId(payload.productId ?? payload.product_id, 'Product id');
   const items = normalizeRecipeItems(payload.items);
 
-  await ensureProductExists(productId);
-  await ensureRecipeDoesNotExistForProduct(productId);
-  await ensureIngredientsExist(items.map((item) => item.ingredientId));
+  await ensureProductExists(productId, storeId);
+  await ensureRecipeDoesNotExistForProduct(productId, storeId);
+  await ensureIngredientsExist(items.map((item) => item.ingredientId), storeId);
 
   const client = await pool.connect();
 
@@ -315,17 +322,17 @@ export async function createRecipe(payload, actorUser) {
     await client.query('begin');
 
     const insertRecipeResult = await client.query(
-      `insert into recipes (product_id, created_by)
-       values ($1, $2)
+      `insert into recipes (product_id, created_by, store_id)
+       values ($1, $2, $3)
        returning id`,
-      [productId, actorUser.id],
+      [productId, actorUser.id, storeId],
     );
 
     await insertRecipeItems(client, insertRecipeResult.rows[0].id, items);
 
     await client.query('commit');
 
-    return getRecipeById(insertRecipeResult.rows[0].id);
+    return getRecipeById(insertRecipeResult.rows[0].id, storeId);
   } catch (error) {
     await client.query('rollback');
 
@@ -339,7 +346,7 @@ export async function createRecipe(payload, actorUser) {
   }
 }
 
-export async function updateRecipe(recipeId, payload) {
+export async function updateRecipe(recipeId, payload, storeId) {
   const normalizedRecipeId = normalizeId(recipeId, 'Recipe id');
   const items = normalizeRecipeItems(payload.items);
 
@@ -348,7 +355,7 @@ export async function updateRecipe(recipeId, payload) {
   try {
     await client.query('begin');
 
-    const existingRecipe = await getRecipeForUpdate(client, normalizedRecipeId);
+    const existingRecipe = await getRecipeForUpdate(client, normalizedRecipeId, storeId);
 
     if (!existingRecipe) {
       throw new ApiError(404, 'Recipe not found.');
@@ -368,7 +375,7 @@ export async function updateRecipe(recipeId, payload) {
       }
     }
 
-    await ensureIngredientsExist(items.map((item) => item.ingredientId));
+    await ensureIngredientsExist(items.map((item) => item.ingredientId), storeId);
 
     await client.query('delete from recipe_items where recipe_id = $1', [normalizedRecipeId]);
     await insertRecipeItems(client, normalizedRecipeId, items);
@@ -377,13 +384,14 @@ export async function updateRecipe(recipeId, payload) {
       `update recipes
        set updated_at = now()
        where id = $1
+         and store_id = $2
          and deleted_at is null`,
-      [normalizedRecipeId],
+      [normalizedRecipeId, storeId],
     );
 
     await client.query('commit');
 
-    return getRecipeById(normalizedRecipeId);
+    return getRecipeById(normalizedRecipeId, storeId);
   } catch (error) {
     await client.query('rollback');
     throw error;
@@ -392,17 +400,18 @@ export async function updateRecipe(recipeId, payload) {
   }
 }
 
-export async function softDeleteRecipe(recipeId) {
+export async function softDeleteRecipe(recipeId, storeId) {
   const normalizedRecipeId = normalizeId(recipeId, 'Recipe id');
-  const recipe = await getRecipeById(normalizedRecipeId);
+  const recipe = await getRecipeById(normalizedRecipeId, storeId);
 
   await query(
     `update recipes
      set deleted_at = now(),
          updated_at = now()
      where id = $1
+       and store_id = $2
        and deleted_at is null`,
-    [normalizedRecipeId],
+    [normalizedRecipeId, storeId],
   );
 
   return recipe;

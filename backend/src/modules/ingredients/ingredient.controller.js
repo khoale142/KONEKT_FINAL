@@ -10,7 +10,8 @@ import {
 } from './ingredient.service.js';
 
 export const getIngredients = asyncHandler(async (req, res) => {
-  const [ingredients, tags] = await Promise.all([listIngredients(req.query), listIngredientTags()]);
+  const storeId = req.workspace.storeId;
+  const [ingredients, tags] = await Promise.all([listIngredients(req.query, storeId), listIngredientTags(storeId)]);
 
   return sendSuccess(res, {
     message: 'Ingredients loaded successfully.',
@@ -22,7 +23,8 @@ export const getIngredients = asyncHandler(async (req, res) => {
 });
 
 export const getIngredient = asyncHandler(async (req, res) => {
-  const ingredient = await getIngredientById(req.params.id);
+  const storeId = req.workspace.storeId;
+  const ingredient = await getIngredientById(req.params.id, storeId);
 
   return sendSuccess(res, {
     message: 'Ingredient loaded successfully.',
@@ -33,7 +35,8 @@ export const getIngredient = asyncHandler(async (req, res) => {
 });
 
 export const createNewIngredient = asyncHandler(async (req, res) => {
-  const ingredient = await createIngredient(req.body, req.user);
+  const storeId = req.workspace.storeId;
+  const ingredient = await createIngredient(req.body, req.user, storeId);
 
   return sendSuccess(res, {
     message: 'Ingredient created successfully.',
@@ -45,7 +48,8 @@ export const createNewIngredient = asyncHandler(async (req, res) => {
 });
 
 export const updateExistingIngredient = asyncHandler(async (req, res) => {
-  const ingredient = await updateIngredient(req.params.id, req.body);
+  const storeId = req.workspace.storeId;
+  const ingredient = await updateIngredient(req.params.id, req.body, storeId);
 
   return sendSuccess(res, {
     message: 'Ingredient updated successfully.',
@@ -56,7 +60,8 @@ export const updateExistingIngredient = asyncHandler(async (req, res) => {
 });
 
 export const deleteExistingIngredient = asyncHandler(async (req, res) => {
-  const ingredient = await softDeleteIngredient(req.params.id);
+  const storeId = req.workspace.storeId;
+  const ingredient = await softDeleteIngredient(req.params.id, storeId);
 
   return sendSuccess(res, {
     message: 'Ingredient deleted successfully.',

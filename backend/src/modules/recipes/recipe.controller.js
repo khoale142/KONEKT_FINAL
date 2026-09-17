@@ -10,7 +10,8 @@ import {
 } from './recipe.service.js';
 
 export const getRecipes = asyncHandler(async (req, res) => {
-  const recipes = await listRecipes(req.query);
+  const storeId = req.workspace.storeId;
+  const recipes = await listRecipes(req.query, storeId);
 
   return sendSuccess(res, {
     message: 'Recipes loaded successfully.',
@@ -21,7 +22,8 @@ export const getRecipes = asyncHandler(async (req, res) => {
 });
 
 export const getRecipe = asyncHandler(async (req, res) => {
-  const recipe = await getRecipeById(req.params.id);
+  const storeId = req.workspace.storeId;
+  const recipe = await getRecipeById(req.params.id, storeId);
 
   return sendSuccess(res, {
     message: 'Recipe loaded successfully.',
@@ -31,11 +33,12 @@ export const getRecipe = asyncHandler(async (req, res) => {
   });
 });
 
-export const getRecipeForProduct = asyncHandler(async (req, res) => {
-  const recipe = await getRecipeByProductId(req.params.productId);
+export const getRecipeByProduct = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const recipe = await getRecipeByProductId(req.params.productId, storeId);
 
   return sendSuccess(res, {
-    message: 'Recipe loaded successfully.',
+    message: 'Product recipe loaded successfully.',
     data: {
       recipe,
     },
@@ -43,7 +46,8 @@ export const getRecipeForProduct = asyncHandler(async (req, res) => {
 });
 
 export const createNewRecipe = asyncHandler(async (req, res) => {
-  const recipe = await createRecipe(req.body, req.user);
+  const storeId = req.workspace.storeId;
+  const recipe = await createRecipe(req.body, req.user, storeId);
 
   return sendSuccess(res, {
     message: 'Recipe created successfully.',
@@ -55,7 +59,8 @@ export const createNewRecipe = asyncHandler(async (req, res) => {
 });
 
 export const updateExistingRecipe = asyncHandler(async (req, res) => {
-  const recipe = await updateRecipe(req.params.id, req.body);
+  const storeId = req.workspace.storeId;
+  const recipe = await updateRecipe(req.params.id, req.body, storeId);
 
   return sendSuccess(res, {
     message: 'Recipe updated successfully.',
@@ -66,7 +71,8 @@ export const updateExistingRecipe = asyncHandler(async (req, res) => {
 });
 
 export const deleteExistingRecipe = asyncHandler(async (req, res) => {
-  const recipe = await softDeleteRecipe(req.params.id);
+  const storeId = req.workspace.storeId;
+  const recipe = await softDeleteRecipe(req.params.id, storeId);
 
   return sendSuccess(res, {
     message: 'Recipe deleted successfully.',

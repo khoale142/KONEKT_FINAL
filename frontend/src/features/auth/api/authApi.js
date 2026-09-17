@@ -4,6 +4,9 @@ export const authApi = {
   login({ username, password }) {
     return apiClient.post('/auth/login', { username, password });
   },
+  register({ username, password, fullName, email, phone }) {
+    return apiClient.post('/auth/register', { username, password, fullName, email, phone });
+  },
   getMe() {
     return apiClient.get('/auth/me');
   },

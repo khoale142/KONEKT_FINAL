@@ -1,14 +1,14 @@
 import { query } from '../../config/db.js';
 import { ApiError } from '../../utils/ApiError.js';
 
-export async function getActiveSession(staffId) {
+export async function getActiveSession(staffId, storeId) {
   const result = await query(
     `SELECT id, staff_id, opened_at, starting_cash, status, notes,
             mid_shift_cash, mid_shift_counted_at, mid_shift_expected, mid_shift_discrepancy, mid_shift_notes
      FROM pos_sessions
-     WHERE staff_id = $1 AND status = 'OPEN'
+     WHERE staff_id = $1 AND store_id = $2 AND status = 'OPEN'
      LIMIT 1`,
-    [staffId]
+    [staffId, storeId]
   );
   
   if (result.rows.length === 0) {
@@ -67,9 +67,9 @@ export async function getActiveSession(staffId) {
   return session;
 }
 
-export async function openSession(staffId, startingCash, notes) {
+export async function openSession(staffId, startingCash, notes, storeId) {
   // Check if there is already an active session
-  const activeSession = await getActiveSession(staffId);
+  const activeSession = await getActiveSession(staffId, storeId);
   if (activeSession) {
     throw new ApiError(400, 'Bạn đang có một ca làm việc chưa đóng. Vui lòng kết ca hiện tại trước.');
   }
@@ -80,22 +80,22 @@ export async function openSession(staffId, startingCash, notes) {
   }
 
   const result = await query(
-    `INSERT INTO pos_sessions (staff_id, starting_cash, status, notes)
-     VALUES ($1, $2, 'OPEN', $3)
+    `INSERT INTO pos_sessions (staff_id, starting_cash, status, notes, store_id)
+     VALUES ($1, $2, 'OPEN', $3, $4)
      RETURNING id, staff_id, opened_at, starting_cash, status, notes`,
-    [staffId, cashVal, notes || null]
+    [staffId, cashVal, notes || null, storeId]
   );
 
   return result.rows[0];
 }
 
-export async function closeSession(sessionId, endingCashActual, notes) {
+export async function closeSession(sessionId, endingCashActual, notes, storeId) {
   // Find session
   const result = await query(
     `SELECT id, staff_id, opened_at, starting_cash, status, mid_shift_cash, mid_shift_counted_at
      FROM pos_sessions
-     WHERE id = $1 AND status = 'OPEN'`,
-    [sessionId]
+     WHERE id = $1 AND store_id = $2 AND status = 'OPEN'`,
+    [sessionId, storeId]
   );
 
   if (result.rows.length === 0) {
@@ -155,17 +155,17 @@ export async function closeSession(sessionId, endingCashActual, notes) {
          status = 'CLOSED',
          is_overdue = $4,
          notes = COALESCE($5, notes)
-     WHERE id = $6
+     WHERE id = $6 AND store_id = $7
      RETURNING *`,
-    [endingCashExpected, actualCash, discrepancy, isOverdue, notes || null, sessionId]
+    [endingCashExpected, actualCash, discrepancy, isOverdue, notes || null, sessionId, storeId]
   );
 
   return updateResult.rows[0];
 }
 
-export async function listSessions({ staffId, dateFrom, dateTo } = {}) {
-  const params = [];
-  const conditions = [];
+export async function listSessions({ staffId, dateFrom, dateTo } = {}, storeId) {
+  const params = [storeId];
+  const conditions = ['s.store_id = $1'];
 
   if (staffId) {
     params.push(staffId);
@@ -200,13 +200,13 @@ export async function listSessions({ staffId, dateFrom, dateTo } = {}) {
   return result.rows;
 }
 
-export async function midShiftCountSession(sessionId, midShiftCash, notes) {
+export async function midShiftCountSession(sessionId, midShiftCash, notes, storeId) {
   // Find session
   const result = await query(
     `SELECT id, staff_id, opened_at, starting_cash, status
      FROM pos_sessions
-     WHERE id = $1 AND status = 'OPEN'`,
-    [sessionId]
+     WHERE id = $1 AND store_id = $2 AND status = 'OPEN'`,
+    [sessionId, storeId]
   );
 
   if (result.rows.length === 0) {
@@ -246,15 +246,15 @@ export async function midShiftCountSession(sessionId, midShiftCash, notes) {
          mid_shift_expected = $3,
          mid_shift_discrepancy = $4,
          mid_shift_notes = $5
-     WHERE id = $6
+     WHERE id = $6 AND store_id = $7
      RETURNING *`,
-    [countedCash, now, expectedCash, discrepancy, notes || null, sessionId]
+    [countedCash, now, expectedCash, discrepancy, notes || null, sessionId, storeId]
   );
 
   return updateResult.rows[0];
 }
 
-export async function getSessionReport(sessionId) {
+export async function getSessionReport(sessionId, storeId) {
   // Find session
   const sessionResult = await query(
     `SELECT s.id, s.staff_id, u.full_name as staff_name, u.username as staff_username,
@@ -264,8 +264,8 @@ export async function getSessionReport(sessionId) {
             s.mid_shift_discrepancy, s.mid_shift_notes
      FROM pos_sessions s
      JOIN app_users u ON u.id = s.staff_id
-     WHERE s.id = $1`,
-    [sessionId]
+     WHERE s.id = $1 AND s.store_id = $2`,
+    [sessionId, storeId]
   );
 
   if (sessionResult.rows.length === 0) {

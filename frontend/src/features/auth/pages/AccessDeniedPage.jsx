@@ -1,20 +1,21 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/AuthProvider.jsx';
 import { Button } from '../../../components/common/Button.jsx';
+import { WORKSPACE_TYPES } from '../../../constants/roles.js';
 import { ROUTES } from '../../../constants/routes.js';
-import { ROLES } from '../../../constants/roles.js';
 
 export function AccessDeniedPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { workspace } = useAuth();
 
-  const handleGoHome = () => {
-    if (user?.role === ROLES.ADMIN) {
-      navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
+  const handleGoBack = () => {
+    if (workspace?.type === WORKSPACE_TYPES.TENANT) {
+      navigate(ROUTES.OWNER_DASHBOARD, { replace: true });
+    } else if (workspace?.type === WORKSPACE_TYPES.STORE) {
+      navigate(ROUTES.STORE_POS, { replace: true });
     } else {
-      navigate(ROUTES.STAFF_POS, { replace: true });
+      navigate(ROUTES.WORKSPACES, { replace: true });
     }
   };
 
@@ -40,7 +41,7 @@ export function AccessDeniedPage() {
         Bạn không có quyền truy cập vào trang này. Vui lòng quay lại hoặc liên hệ quản trị viên.
       </p>
       <div style={{ marginTop: '24px' }}>
-        <Button variant="primary" onClick={handleGoHome}>
+        <Button variant="primary" onClick={handleGoBack}>
           Quay lại trang chủ
         </Button>
       </div>

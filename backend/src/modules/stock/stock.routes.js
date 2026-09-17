@@ -1,27 +1,27 @@
 import { Router } from 'express';
-import { ROLES } from '../../constants/roles.js';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireRole } from '../../middlewares/role.middleware.js';
+import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
-  createBatchImportTransaction,
-  createAdjustTransaction,
-  createDailyStockCount,
-  createImportTransaction,
+  discardStockItem,
+  getStockForecastList,
   getStockTransactions,
-  getForecast,
-  createDiscardTransaction,
+  performBatchStockImport,
+  performDailyStockCount,
+  performStockAdjustment,
+  performStockImport,
 } from './stock.controller.js';
 
 const router = Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireStoreContext());
 
-router.post('/import', requireRole(ROLES.ADMIN, ROLES.STAFF), createImportTransaction);
-router.post('/import/batch', requireRole(ROLES.ADMIN, ROLES.STAFF), createBatchImportTransaction);
-router.post('/adjust', requireRole(ROLES.ADMIN, ROLES.STAFF), createAdjustTransaction);
-router.post('/count/daily', requireRole(ROLES.ADMIN, ROLES.STAFF), createDailyStockCount);
-router.post('/discard', requireRole(ROLES.ADMIN, ROLES.STAFF), createDiscardTransaction);
-router.get('/transactions', requireRole(ROLES.ADMIN), getStockTransactions);
-router.get('/forecast', requireRole(ROLES.ADMIN), getForecast);
+router.get('/transactions', getStockTransactions);
+router.get('/forecast', getStockForecastList);
+
+router.post('/import', requireOwner(), performStockImport);
+router.post('/import-batch', requireOwner(), performBatchStockImport);
+router.post('/adjust', requireOwner(), performStockAdjustment);
+router.post('/count', requireOwner(), performDailyStockCount);
+router.post('/discard', requireOwner(), discardStockItem);
 
 export default router;

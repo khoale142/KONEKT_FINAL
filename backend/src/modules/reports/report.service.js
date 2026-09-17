@@ -14,9 +14,9 @@ function normalizePositiveInteger(value) {
   return normalizedValue;
 }
 
-export async function listRevenueReport({ dateFrom, dateTo } = {}) {
-  const params = [];
-  const conditions = [];
+export async function listRevenueReport(storeId, { dateFrom, dateTo } = {}) {
+  const params = [storeId];
+  const conditions = ['store_id = $1'];
 
   if (dateFrom) {
     params.push(dateFrom);
@@ -28,7 +28,7 @@ export async function listRevenueReport({ dateFrom, dateTo } = {}) {
     conditions.push(`order_date <= $${params.length}`);
   }
 
-  const whereClause = conditions.length ? `where ${conditions.join(' and ')}` : '';
+  const whereClause = `where ${conditions.join(' and ')}`;
 
   const result = await query(
     `select order_date, total_orders, total_revenue, total_refunded
@@ -46,36 +46,39 @@ export async function listRevenueReport({ dateFrom, dateTo } = {}) {
   }));
 }
 
-export async function listBestSellingProducts({ limit } = {}) {
+export async function listBestSellingProducts(storeId, { limit } = {}) {
   const normalizedLimit = normalizePositiveInteger(limit);
-  const params = [];
-  const limitClause = normalizedLimit ? `limit $1` : '';
+  const params = [storeId];
+  const limitClause = normalizedLimit ? `limit $2` : '';
 
   if (normalizedLimit) {
     params.push(normalizedLimit);
   }
 
   const result = await query(
-    `select product_id, product_name_snapshot, total_quantity, total_revenue
+    `select product_id, product_name, total_quantity_sold as total_quantity, total_revenue
      from v_best_selling_products
-     order by total_quantity desc, total_revenue desc, product_name_snapshot asc
+     where store_id = $1
+     order by total_quantity_sold desc, total_revenue desc, product_name asc
      ${limitClause}`,
     params,
   );
 
   return result.rows.map((row) => ({
     productId: row.product_id,
-    productName: row.product_name_snapshot,
+    productName: row.product_name,
     quantitySold: toNumber(row.total_quantity),
     totalRevenue: toNumber(row.total_revenue),
   }));
 }
 
-export async function listLowStockIngredients() {
+export async function listLowStockIngredients(storeId) {
   const result = await query(
-    `select id, name, unit, current_stock, low_stock_threshold, updated_at
+    `select ingredient_id as id, ingredient_name as name, unit, current_stock, low_stock_threshold
      from v_low_stock_ingredients
-     order by (low_stock_threshold - current_stock) desc, updated_at asc nulls last, name asc`,
+     where store_id = $1
+     order by (low_stock_threshold - current_stock) desc, name asc`,
+    [storeId]
   );
 
   return result.rows.map((row) => ({
@@ -84,13 +87,12 @@ export async function listLowStockIngredients() {
     unit: row.unit,
     currentStock: toNumber(row.current_stock),
     lowStockThreshold: toNumber(row.low_stock_threshold),
-    updatedAt: row.updated_at || null,
   }));
 }
 
-export async function listDiscardReport({ dateFrom, dateTo } = {}) {
-  const params = [];
-  const conditions = ["st.note like '[HỦY HÀNG]%'"];
+export async function listDiscardReport(storeId, { dateFrom, dateTo } = {}) {
+  const params = [storeId];
+  const conditions = ["st.store_id = $1", "st.note like '[HỦY HÀNG]%'"];
 
   if (dateFrom) {
     params.push(dateFrom);

@@ -11,7 +11,8 @@ function isUUID(str) {
 // --- SHIFTS ---
 
 export const getShifts = asyncHandler(async (req, res) => {
-  const shifts = await hrService.listShifts();
+  const storeId = req.workspace.storeId;
+  const shifts = await hrService.listShifts(storeId);
   return sendSuccess(res, {
     message: 'Danh sách ca làm việc loaded thành công.',
     data: { shifts },
@@ -19,6 +20,7 @@ export const getShifts = asyncHandler(async (req, res) => {
 });
 
 export const createNewShift = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { name, start_time, end_time, hourly_rate } = req.body;
 
   if (!name || name.trim() === '') {
@@ -31,7 +33,7 @@ export const createNewShift = asyncHandler(async (req, res) => {
     throw new Error('Đơn giá lương mỗi giờ phải là số không âm.');
   }
 
-  const shift = await hrService.createShift({ name, start_time, end_time, hourly_rate });
+  const shift = await hrService.createShift({ name, start_time, end_time, hourly_rate }, storeId);
   return sendSuccess(res, {
     message: 'Tạo ca làm việc thành công.',
     statusCode: 201,
@@ -40,6 +42,7 @@ export const createNewShift = asyncHandler(async (req, res) => {
 });
 
 export const updateExistingShift = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { name, start_time, end_time, hourly_rate } = req.body;
   const { id } = req.params;
 
@@ -56,7 +59,7 @@ export const updateExistingShift = asyncHandler(async (req, res) => {
     throw new Error('Đơn giá lương mỗi giờ phải là số không âm.');
   }
 
-  const shift = await hrService.updateShift(id, { name, start_time, end_time, hourly_rate });
+  const shift = await hrService.updateShift(id, { name, start_time, end_time, hourly_rate }, storeId);
   return sendSuccess(res, {
     message: 'Cập nhật ca làm việc thành công.',
     data: { shift },
@@ -64,11 +67,12 @@ export const updateExistingShift = asyncHandler(async (req, res) => {
 });
 
 export const deleteExistingShift = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { id } = req.params;
   if (!isUUID(id)) {
     throw new Error('ID ca làm việc không hợp lệ.');
   }
-  await hrService.deleteShift(id);
+  await hrService.deleteShift(id, storeId);
   return sendSuccess(res, {
     message: 'Xóa ca làm việc thành công.',
   });
@@ -77,16 +81,48 @@ export const deleteExistingShift = asyncHandler(async (req, res) => {
 // --- AVAILABILITY ---
 
 export const getAvailabilities = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { staff_id, start_date, end_date } = req.query;
 
-  // Non-admin can only view their own availability
-  const queryStaffId = req.user.role === 'ADMIN' ? staff_id : req.user.id;
+  // By default, if the route requires owner, then req.user is an owner.
+  // Actually, we will split this logic in routes or just check the role here.
+  // If we just rely on query staff_id... Wait, if staff calls this, staff_id is overridden.
+  // We'll let routes pass the correct query. Actually let's just use what's passed in query for now.
+  // If owner, they can query specific staff. If staff, they must query themselves.
+  
+  // Let's assume the route will handle role checks. But wait, `staff` vs `owner`.
+  // Owner can view all (if staff_id is omitted).
+  // Let's check `req.workspace.isOwner` maybe? No, we don't have that. Let's just use `req.user.role` 
+  // Wait, roles are Account level. In workspace, we should check `req.workspace.role`.
+  // The middleware doesn't set `req.workspace.role`. 
+  // It's better to create 2 separate controller functions for staff vs owner, 
+  // or just always filter by `staff_id = req.user.id` for staff route.
+  // Let's create `getAvailabilitiesForStaff` and `getAvailabilitiesForOwner`.
+
+  const queryStaffId = staff_id; // For owner, it's optional.
 
   const availabilities = await hrService.listAvailability({
     staff_id: queryStaffId,
     start_date,
     end_date,
+  }, storeId);
+
+  return sendSuccess(res, {
+    message: 'Danh sách lịch rảnh loaded thành công.',
+    data: { availabilities },
   });
+});
+
+export const getMyAvailabilities = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const { start_date, end_date } = req.query;
+  const staffId = req.user.id;
+
+  const availabilities = await hrService.listAvailability({
+    staff_id: staffId,
+    start_date,
+    end_date,
+  }, storeId);
 
   return sendSuccess(res, {
     message: 'Danh sách lịch rảnh loaded thành công.',
@@ -95,6 +131,7 @@ export const getAvailabilities = asyncHandler(async (req, res) => {
 });
 
 export const createNewAvailability = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { available_date, start_time, end_time, note } = req.body;
   const staffId = req.user.id;
 
@@ -110,7 +147,7 @@ export const createNewAvailability = asyncHandler(async (req, res) => {
     start_time,
     end_time,
     note,
-  });
+  }, storeId);
 
   return sendSuccess(res, {
     message: 'Đăng ký lịch báo rảnh thành công.',
@@ -119,14 +156,28 @@ export const createNewAvailability = asyncHandler(async (req, res) => {
   });
 });
 
-export const deleteExistingAvailability = asyncHandler(async (req, res) => {
+export const deleteMyAvailability = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { id } = req.params;
   if (!isUUID(id)) {
     throw new Error('ID lịch rảnh không hợp lệ.');
   }
 
-  const isAdmin = req.user.role === 'ADMIN';
-  await hrService.deleteAvailability(id, req.user.id, isAdmin);
+  await hrService.deleteAvailability(id, req.user.id, false, storeId);
+
+  return sendSuccess(res, {
+    message: 'Xóa đăng ký lịch rảnh thành công.',
+  });
+});
+
+export const deleteExistingAvailability = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const { id } = req.params;
+  if (!isUUID(id)) {
+    throw new Error('ID lịch rảnh không hợp lệ.');
+  }
+
+  await hrService.deleteAvailability(id, req.user.id, true, storeId);
 
   return sendSuccess(res, {
     message: 'Xóa đăng ký lịch rảnh thành công.',
@@ -136,16 +187,14 @@ export const deleteExistingAvailability = asyncHandler(async (req, res) => {
 // --- SHIFT ASSIGNMENT ---
 
 export const getAssignedShifts = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { staff_id, start_date, end_date } = req.query;
 
-  // Non-admin can only view their own assigned shifts
-  const queryStaffId = req.user.role === 'ADMIN' ? staff_id : req.user.id;
-
   const shifts = await hrService.listAssignedShifts({
-    staff_id: queryStaffId,
+    staff_id,
     start_date,
     end_date,
-  });
+  }, storeId);
 
   return sendSuccess(res, {
     message: 'Lịch phân ca loaded thành công.',
@@ -153,7 +202,26 @@ export const getAssignedShifts = asyncHandler(async (req, res) => {
   });
 });
 
+export const getMyAssignedShifts = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const { start_date, end_date } = req.query;
+  const staffId = req.user.id;
+
+  const shifts = await hrService.listAssignedShifts({
+    staff_id: staffId,
+    start_date,
+    end_date,
+  }, storeId);
+
+  return sendSuccess(res, {
+    message: 'Lịch phân ca loaded thành công.',
+    data: { shifts },
+  });
+});
+
+
 export const assignNewShift = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { staff_id, shift_id, shift_date, custom_start_time, custom_end_time } = req.body;
 
   if (!staff_id || !isUUID(staff_id)) {
@@ -172,7 +240,7 @@ export const assignNewShift = asyncHandler(async (req, res) => {
     shift_date,
     custom_start_time,
     custom_end_time,
-  });
+  }, storeId);
 
   return sendSuccess(res, {
     message: 'Phân công ca làm thành công.',
@@ -182,6 +250,7 @@ export const assignNewShift = asyncHandler(async (req, res) => {
 });
 
 export const changeShiftStatus = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { id } = req.params;
   const { status } = req.body;
 
@@ -192,7 +261,7 @@ export const changeShiftStatus = asyncHandler(async (req, res) => {
     throw new Error('Trạng thái ca làm không hợp lệ.');
   }
 
-  const assignedShift = await hrService.updateShiftStatus(id, status);
+  const assignedShift = await hrService.updateShiftStatus(id, status, storeId);
   return sendSuccess(res, {
     message: 'Cập nhật trạng thái ca làm thành công.',
     data: { assignedShift },
@@ -200,12 +269,13 @@ export const changeShiftStatus = asyncHandler(async (req, res) => {
 });
 
 export const deleteAssignedShift = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { id } = req.params;
   if (!isUUID(id)) {
     throw new Error('ID phân ca không hợp lệ.');
   }
 
-  await hrService.deleteShiftAssignment(id);
+  await hrService.deleteShiftAssignment(id, storeId);
   return sendSuccess(res, {
     message: 'Xóa lịch phân ca thành công.',
   });
@@ -214,15 +284,29 @@ export const deleteAssignedShift = asyncHandler(async (req, res) => {
 // --- REQUESTS ---
 
 export const getRequests = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { staff_id, status } = req.query;
 
-  // Non-admin can only view their own requests
-  const queryStaffId = req.user.role === 'ADMIN' ? staff_id : req.user.id;
+  const requests = await hrService.listRequests({
+    staff_id,
+    status,
+  }, storeId);
+
+  return sendSuccess(res, {
+    message: 'Danh sách yêu cầu loaded thành công.',
+    data: { requests },
+  });
+});
+
+export const getMyRequests = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const { status } = req.query;
+  const staffId = req.user.id;
 
   const requests = await hrService.listRequests({
-    staff_id: queryStaffId,
+    staff_id: staffId,
     status,
-  });
+  }, storeId);
 
   return sendSuccess(res, {
     message: 'Danh sách yêu cầu loaded thành công.',
@@ -231,6 +315,7 @@ export const getRequests = asyncHandler(async (req, res) => {
 });
 
 export const createNewRequest = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { type, reason, target_date, target_shift_id, swap_with_staff_id } = req.body;
   const staffId = req.user.id;
 
@@ -261,7 +346,7 @@ export const createNewRequest = asyncHandler(async (req, res) => {
     target_date,
     target_shift_id,
     swap_with_staff_id,
-  });
+  }, storeId);
 
   return sendSuccess(res, {
     message: 'Gửi yêu cầu thành công và đang chờ duyệt.',
@@ -271,6 +356,7 @@ export const createNewRequest = asyncHandler(async (req, res) => {
 });
 
 export const processExistingRequest = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { id } = req.params;
   const { status, admin_note } = req.body;
 
@@ -284,7 +370,7 @@ export const processExistingRequest = asyncHandler(async (req, res) => {
   const request = await hrService.processRequest(req.user.id, id, {
     status,
     admin_note,
-  });
+  }, storeId);
 
   return sendSuccess(res, {
     message: status === 'APPROVED' ? 'Phê duyệt yêu cầu thành công.' : 'Từ chối yêu cầu thành công.',
@@ -295,6 +381,7 @@ export const processExistingRequest = asyncHandler(async (req, res) => {
 // --- REPORTS ---
 
 export const getMySalary = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { start_date, end_date } = req.query;
   const staffId = req.user.id;
 
@@ -302,7 +389,7 @@ export const getMySalary = asyncHandler(async (req, res) => {
     throw new Error('Vui lòng chọn khoảng thời gian bắt đầu và kết thúc.');
   }
 
-  const summary = await hrService.getSalarySummary(staffId, { start_date, end_date });
+  const summary = await hrService.getSalarySummary(staffId, { start_date, end_date }, storeId);
   return sendSuccess(res, {
     message: 'Tải thông tin phiếu lương thành công.',
     data: { summary },
@@ -310,13 +397,14 @@ export const getMySalary = asyncHandler(async (req, res) => {
 });
 
 export const getAdminHRCosts = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
   const { start_date, end_date } = req.query;
 
   if (!start_date || !end_date) {
     throw new Error('Vui lòng chọn khoảng thời gian bắt đầu và kết thúc.');
   }
 
-  const costs = await hrService.getHRCostReport({ start_date, end_date });
+  const costs = await hrService.getHRCostReport({ start_date, end_date }, storeId);
   return sendSuccess(res, {
     message: 'Tải báo cáo chi phí nhân sự thành công.',
     data: { costs },
@@ -324,7 +412,8 @@ export const getAdminHRCosts = asyncHandler(async (req, res) => {
 });
 
 export const getStaffList = asyncHandler(async (req, res) => {
-  const staff = await hrService.getActiveStaffList();
+  const storeId = req.workspace.storeId;
+  const staff = await hrService.getActiveStaffList(storeId);
   return sendSuccess(res, {
     message: 'Staff list loaded successfully.',
     data: { staff },

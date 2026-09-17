@@ -3,11 +3,15 @@ import { env } from '../config/env.js';
 
 export function signAccessToken(user) {
   return jwt.sign(
-    {
-      userId: user.id,
-      username: user.username,
-      role: user.role,
-    },
+    { userId: user.id },
+    env.jwtSecret,
+    { expiresIn: env.jwtExpiresIn },
+  );
+}
+
+export function signWorkspaceToken({ userId, workspaceType, workspaceId }) {
+  return jwt.sign(
+    { userId, workspaceType, workspaceId },
     env.jwtSecret,
     { expiresIn: env.jwtExpiresIn },
   );

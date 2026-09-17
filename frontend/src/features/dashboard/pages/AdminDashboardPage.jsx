@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, ShoppingBag, AlertTriangle, Coffee, RotateCcw, PlusCircle, PackagePlus, FileText, Users, Calendar, ArrowRight } from 'lucide-react';
 import { getDashboardSummary } from '../api/dashboardApi.js';
@@ -43,7 +43,7 @@ export function AdminDashboardPage() {
     ? Math.max(...summary.weeklyRevenue.map(d => Number(d.total_revenue))) 
     : 0;
 
-  const last7DaysData = React.useMemo(() => {
+  const last7DaysData = useMemo(() => {
     const data = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {

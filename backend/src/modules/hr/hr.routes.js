@@ -1,53 +1,41 @@
-import { Router } from 'express';
-import { ROLES } from '../../constants/roles.js';
+import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireRole } from '../../middlewares/role.middleware.js';
-import {
-  assignNewShift,
-  changeShiftStatus,
-  createNewAvailability,
-  createNewRequest,
-  createNewShift,
-  deleteAssignedShift,
-  deleteExistingAvailability,
-  deleteExistingShift,
-  getAdminHRCosts,
-  getAssignedShifts,
-  getAvailabilities,
-  getMySalary,
-  getRequests,
-  getShifts,
-  getStaffList,
-  processExistingRequest,
-  updateExistingShift,
-} from './hr.controller.js';
+import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import * as hrController from './hr.controller.js';
 
 const router = Router();
 
-// Require authentication for all HR routes
-router.use(requireAuth);
+router.use(requireAuth, requireStoreContext());
+router.get('/shifts', hrController.getShifts);
+router.post('/shifts', requireOwner(), hrController.createNewShift);
+router.put('/shifts/:id', requireOwner(), hrController.updateExistingShift);
+router.delete('/shifts/:id', requireOwner(), hrController.deleteExistingShift);
 
-// --- GENERAL & STAFF ROUTES ---
-router.get('/shifts', getShifts);
-router.get('/availability', getAvailabilities);
-router.post('/availability', createNewAvailability);
-router.delete('/availability/:id', deleteExistingAvailability);
-router.get('/my-shifts', getAssignedShifts);
-router.get('/my-salary', getMySalary);
-router.get('/staff-list', getStaffList);
-router.get('/requests', getRequests);
-router.post('/requests', createNewRequest);
+// --- STAFF LIST ---
+router.get('/staff', requireOwner(), hrController.getStaffList);
 
-// --- ADMIN ONLY ROUTES ---
-router.post('/shifts', requireRole(ROLES.ADMIN), createNewShift);
-router.patch('/shifts/:id', requireRole(ROLES.ADMIN), updateExistingShift);
-router.delete('/shifts/:id', requireRole(ROLES.ADMIN), deleteExistingShift);
+// --- AVAILABILITY ---
+router.get('/availabilities', requireOwner(), hrController.getAvailabilities);
+router.get('/my-availabilities', hrController.getMyAvailabilities);
+router.post('/availabilities', hrController.createNewAvailability);
+router.delete('/availabilities/:id', requireOwner(), hrController.deleteExistingAvailability);
+router.delete('/my-availabilities/:id', hrController.deleteMyAvailability);
 
-router.post('/shifts/assign', requireRole(ROLES.ADMIN), assignNewShift);
-router.patch('/shifts/assign/:id/status', requireRole(ROLES.ADMIN), changeShiftStatus);
-router.delete('/shifts/assign/:id', requireRole(ROLES.ADMIN), deleteAssignedShift);
+// --- SHIFT ASSIGNMENT ---
+router.get('/assigned-shifts', requireOwner(), hrController.getAssignedShifts);
+router.get('/my-assigned-shifts', hrController.getMyAssignedShifts);
+router.post('/assigned-shifts', requireOwner(), hrController.assignNewShift);
+router.patch('/assigned-shifts/:id/status', requireOwner(), hrController.changeShiftStatus);
+router.delete('/assigned-shifts/:id', requireOwner(), hrController.deleteAssignedShift);
 
-router.patch('/requests/:id', requireRole(ROLES.ADMIN), processExistingRequest);
-router.get('/admin/reports/costs', requireRole(ROLES.ADMIN), getAdminHRCosts);
+// --- REQUESTS ---
+router.get('/requests', requireOwner(), hrController.getRequests);
+router.get('/my-requests', hrController.getMyRequests);
+router.post('/requests', hrController.createNewRequest);
+router.patch('/requests/:id/process', requireOwner(), hrController.processExistingRequest);
+
+// --- REPORTS ---
+router.get('/reports/my-salary', hrController.getMySalary);
+router.get('/reports/hr-costs', requireOwner(), hrController.getAdminHRCosts);
 
 export default router;

@@ -17,7 +17,6 @@ const DEFAULT_FORM = {
   username: '',
   fullName: '',
   email: '',
-  role: 'STAFF',
   status: 'ACTIVE',
   password: '',
 };
@@ -57,7 +56,6 @@ export function UserFormPage() {
           username: user.username || '',
           fullName: user.fullName || '',
           email: user.email || '',
-          role: user.role || 'STAFF',
           status: user.status || 'ACTIVE',
           password: '',
         });
@@ -139,7 +137,6 @@ export function UserFormPage() {
         await userApi.updateUser(id, {
           fullName: form.fullName.trim(),
           email: form.email.trim(),
-          role: form.role,
           status: form.status,
         });
         setToastType('success');
@@ -149,7 +146,6 @@ export function UserFormPage() {
           username: form.username.trim(),
           fullName: form.fullName.trim(),
           email: form.email.trim(),
-          role: form.role,
           status: form.status,
           password: form.password,
         });
@@ -264,19 +260,7 @@ export function UserFormPage() {
                 />
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
-                <SelectInput
-                  label="Vai trò"
-                  name="role"
-                  value={form.role}
-                  onChange={handleChange}
-                  options={[
-                    { value: 'ADMIN', label: 'Quản trị viên' },
-                    { value: 'STAFF', label: 'Nhân viên' },
-                  ]}
-                  disabled={isSubmitting}
-                />
-
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: '12px' }}>
                 <SelectInput
                   label="Trạng thái"
                   name="status"
@@ -308,9 +292,6 @@ export function UserFormPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px' }}>
               <div>
                 <strong>Username:</strong> {form.username || '-'}
-              </div>
-              <div>
-                <strong>Vai trò:</strong> {form.role === 'ADMIN' ? ' Quản trị viên' : ' Nhân viên'}
               </div>
               <div>
                 <strong>Trạng thái:</strong> {form.status === 'ACTIVE' ? ' Hoạt động' : ' Ngưng hoạt động'}

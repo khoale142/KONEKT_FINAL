@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/AuthProvider.jsx';
 import { AuthLayout } from '../../../components/layout/AuthLayout.jsx';
@@ -8,7 +8,7 @@ import { Button } from '../../../components/common/Button.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
 import { validateUsername, validatePassword } from '../../../utils/validators.js';
 import { ROUTES } from '../../../constants/routes.js';
-import { ROLES } from '../../../constants/roles.js';
+
 import { authApi } from '../api/authApi.js';
 
 export function LoginPage() {
@@ -30,10 +30,7 @@ export function LoginPage() {
 
   // If already logged in, redirect to home
   if (user) {
-    if (user.role === ROLES.ADMIN) {
-      return <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />;
-    }
-    return <Navigate to={ROUTES.STAFF_POS} replace />;
+    return <Navigate to={ROUTES.WORKSPACES} replace />;
   }
 
   const handleChange = (e) => {
@@ -64,17 +61,13 @@ export function LoginPage() {
 
     try {
       setIsSubmitting(true);
-      const loggedInUser = await login({
+      await login({
         username: form.username.trim(),
         password: form.password,
       });
       
-      // Redirect based on role
-      if (loggedInUser.role === ROLES.ADMIN) {
-        navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
-      } else {
-        navigate(ROUTES.STAFF_POS, { replace: true });
-      }
+      // Redirect to workspaces selection page
+      navigate(ROUTES.WORKSPACES, { replace: true });
     } catch (err) {
       setSubmitError(err.message || 'Đăng nhập thất bại.');
     } finally {
@@ -263,6 +256,25 @@ export function LoginPage() {
               }}>
                 Đăng nhập
               </Button>
+            </div>
+            
+            <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.875rem' }}>
+              Chưa có tài khoản?{' '}
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.REGISTER)}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--color-primary)', 
+                  fontWeight: '600', 
+                  cursor: 'pointer',
+                  padding: 0,
+                  textDecoration: 'underline' 
+                }}
+              >
+                Đăng ký ngay
+              </button>
             </div>
           </form>
         )}

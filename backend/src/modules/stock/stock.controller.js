@@ -10,8 +10,9 @@ import {
   discardStock,
 } from './stock.service.js';
 
-export const createImportTransaction = asyncHandler(async (req, res) => {
-  const data = await importStock(req.body, req.user);
+export const performStockImport = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await importStock(req.body, req.user, storeId);
 
   return sendSuccess(res, {
     message: 'Stock imported successfully.',
@@ -20,8 +21,9 @@ export const createImportTransaction = asyncHandler(async (req, res) => {
   });
 });
 
-export const createAdjustTransaction = asyncHandler(async (req, res) => {
-  const data = await adjustStock(req.body, req.user);
+export const performStockAdjustment = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await adjustStock(req.body, req.user, storeId);
 
   return sendSuccess(res, {
     message: 'Stock adjusted successfully.',
@@ -30,28 +32,31 @@ export const createAdjustTransaction = asyncHandler(async (req, res) => {
   });
 });
 
-export const createBatchImportTransaction = asyncHandler(async (req, res) => {
-  const data = await importStockBatch(req.body, req.user);
+export const performBatchStockImport = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await importStockBatch(req.body, req.user, storeId);
 
   return sendSuccess(res, {
-    message: 'Batch stock import completed successfully.',
+    message: 'Batch stock import processed successfully.',
     statusCode: 201,
     data,
   });
 });
 
-export const createDailyStockCount = asyncHandler(async (req, res) => {
-  const data = await countStockDaily(req.body, req.user);
+export const performDailyStockCount = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await countStockDaily(req.body, req.user, storeId);
 
   return sendSuccess(res, {
-    message: 'Daily stock count completed successfully.',
+    message: 'Daily stock count processed successfully.',
     statusCode: 201,
     data,
   });
 });
 
 export const getStockTransactions = asyncHandler(async (req, res) => {
-  const transactions = await listStockTransactions(req.query);
+  const storeId = req.workspace.storeId;
+  const transactions = await listStockTransactions(req.query, storeId);
 
   return sendSuccess(res, {
     message: 'Stock transactions loaded successfully.',
@@ -61,21 +66,20 @@ export const getStockTransactions = asyncHandler(async (req, res) => {
   });
 });
 
-export const getForecast = asyncHandler(async (req, res) => {
-  const data = await getStockForecast();
-
+export const getStockForecastList = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const forecasts = await getStockForecast(storeId);
   return sendSuccess(res, {
-    message: 'Stock forecasts loaded successfully.',
-    data,
+    message: 'Stock forecast loaded successfully.',
+    data: forecasts
   });
 });
 
-export const createDiscardTransaction = asyncHandler(async (req, res) => {
-  const data = await discardStock(req.body, req.user);
-
+export const discardStockItem = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  await discardStock(req.body, req.user, storeId);
   return sendSuccess(res, {
-    message: 'Stock items discarded successfully.',
-    statusCode: 201,
-    data,
+    message: 'Stock discarded successfully.',
+    statusCode: 200,
   });
 });

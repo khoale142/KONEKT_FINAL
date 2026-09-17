@@ -1,6 +1,5 @@
 import { query } from '../../config/db.js';
 import { KDS_STATUSES } from '../../constants/kdsStatuses.js';
-import { ROLES } from '../../constants/roles.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { toPublicOrder } from '../../utils/order.js';
 
@@ -17,12 +16,6 @@ function normalizeId(value, fieldName) {
 
 function buildPlaceholders(values, startIndex = 1) {
   return values.map((_, index) => `$${startIndex + index}`).join(', ');
-}
-
-function ensureStaffUser(actorUser) {
-  if (!actorUser || actorUser.role !== ROLES.STAFF) {
-    throw new ApiError(403, 'Access denied. Staff role is required.');
-  }
 }
 
 async function loadOrderItemRows(orderIds) {
@@ -73,7 +66,7 @@ async function buildOrdersWithItems(headers) {
   return headers.map((header) => toPublicOrder(header, itemMap.get(header.id) || []));
 }
 
-async function loadOrderHeadersByKdsStatus(kdsStatus, { newestFirst = false } = {}) {
+async function loadOrderHeadersByKdsStatus(kdsStatus, storeId, { newestFirst = false } = {}) {
   const sortField =
     kdsStatus === KDS_STATUSES.COMPLETED ? 'coalesce(o.kds_completed_at, o.updated_at, o.created_at)' : 'o.created_at';
   const sortDirection = newestFirst ? 'desc' : 'asc';
@@ -98,15 +91,16 @@ async function loadOrderHeadersByKdsStatus(kdsStatus, { newestFirst = false } = 
      from orders o
      join app_users u on u.id = o.staff_id
      where o.status = 'SUCCESS'
+       and o.store_id = $2
        and o.kds_status = $1
      order by ${sortField} ${sortDirection}, o.created_at asc`,
-    [kdsStatus],
+    [kdsStatus, storeId],
   );
 
   return result.rows;
 }
 
-async function findOrderHeaderById(orderId) {
+async function findOrderHeaderById(orderId, storeId) {
   const result = await query(
     `select o.id,
             o.order_code,
@@ -127,20 +121,19 @@ async function findOrderHeaderById(orderId) {
      from orders o
      join app_users u on u.id = o.staff_id
      where o.id = $1
+       and o.store_id = $2
        and o.status = 'SUCCESS'
      limit 1`,
-    [orderId],
+    [orderId, storeId],
   );
 
   return result.rows[0] || null;
 }
 
-export async function listKdsOrdersForStaff(actorUser) {
-  ensureStaffUser(actorUser);
-
+export async function listKdsOrdersForStaff(actorUser, storeId) {
   const [newHeaders, completedHeaders] = await Promise.all([
-    loadOrderHeadersByKdsStatus(KDS_STATUSES.NEW),
-    loadOrderHeadersByKdsStatus(KDS_STATUSES.COMPLETED, { newestFirst: true }),
+    loadOrderHeadersByKdsStatus(KDS_STATUSES.NEW, storeId),
+    loadOrderHeadersByKdsStatus(KDS_STATUSES.COMPLETED, storeId, { newestFirst: true }),
   ]);
 
   const [newOrders, completedOrders] = await Promise.all([
@@ -154,9 +147,7 @@ export async function listKdsOrdersForStaff(actorUser) {
   };
 }
 
-export async function completeKdsOrder(orderId, actorUser) {
-  ensureStaffUser(actorUser);
-
+export async function completeKdsOrder(orderId, actorUser, storeId) {
   const normalizedOrderId = normalizeId(orderId, 'Order id');
   const updateResult = await query(
     `update orders
@@ -165,19 +156,21 @@ export async function completeKdsOrder(orderId, actorUser) {
          kds_completed_by = $2,
          updated_at = now()
      where id = $3
+       and store_id = $4
        and status = 'SUCCESS'
-       and kds_status = $4
+       and kds_status = $5
      returning id`,
     [
       KDS_STATUSES.COMPLETED,
       actorUser.id,
       normalizedOrderId,
+      storeId,
       KDS_STATUSES.NEW,
     ],
   );
 
   if (!updateResult.rows[0]) {
-    const existingOrder = await findOrderHeaderById(normalizedOrderId);
+    const existingOrder = await findOrderHeaderById(normalizedOrderId, storeId);
 
     if (!existingOrder) {
       throw new ApiError(404, 'Order not found.');
@@ -191,9 +184,8 @@ export async function completeKdsOrder(orderId, actorUser) {
   }
 
   const [order] = await buildOrdersWithItems([
-    await findOrderHeaderById(normalizedOrderId),
+    await findOrderHeaderById(normalizedOrderId, storeId),
   ]);
 
   return order;
 }
-

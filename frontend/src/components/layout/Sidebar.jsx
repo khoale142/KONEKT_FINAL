@@ -13,35 +13,40 @@ import {
   UserCheck,
   ChevronLeft,
   ChevronRight,
+  Store
 } from 'lucide-react';
 import { ROUTES } from '../../constants/routes.js';
-import { ROLES } from '../../constants/roles.js';
+import { WORKSPACE_TYPES } from '../../constants/roles.js';
+import { useAuth } from '../../app/providers/AuthProvider.jsx';
 
-export function Sidebar({ role, isCollapsed, onToggle }) {
+export function Sidebar({ isCollapsed, onToggle }) {
   const location = useLocation();
+  const { workspace } = useAuth();
 
-  const adminMenu = [
-    { label: 'Bang dieu khien', path: ROUTES.ADMIN_DASHBOARD, icon: <LayoutDashboard size={21} /> },
-    { label: 'Sản phẩm & Công thức', path: ROUTES.ADMIN_PRODUCTS, icon: <Coffee size={21} /> },
-    { label: 'Quan ly nguyen lieu', path: ROUTES.ADMIN_INGREDIENTS, icon: <Milk size={21} /> },
-    { label: 'Kho hàng & Dự báo', path: ROUTES.ADMIN_STOCK, icon: <Package size={21} /> },
-    { label: 'Bao cao thong ke', path: ROUTES.ADMIN_REPORTS, icon: <BarChart3 size={21} /> },
-    { label: 'Quản lý đơn hàng', path: ROUTES.ADMIN_ORDERS, icon: <History size={21} /> },
-    { label: 'Lich lam nhan su', path: '/admin/hr/calendar', icon: <Calendar size={21} /> },
-    { label: 'Quan ly nhan su', path: '/admin/hr', icon: <Users size={21} /> },
-    { label: 'Cham cong nhan su', path: ROUTES.ADMIN_HR_ATTENDANCE, icon: <UserCheck size={21} /> },
+  const ownerMenu = [
+    { label: 'Bảng điều khiển', path: ROUTES.OWNER_DASHBOARD, icon: <LayoutDashboard size={21} /> },
+    { label: 'Quản lý Chi nhánh', path: ROUTES.OWNER_STORES, icon: <Store size={21} /> },
+    { label: 'Sản phẩm & Công thức', path: ROUTES.OWNER_PRODUCTS, icon: <Coffee size={21} /> },
+    { label: 'Quản lý nguyên liệu', path: ROUTES.OWNER_INGREDIENTS, icon: <Milk size={21} /> },
+    { label: 'Báo cáo thống kê', path: ROUTES.OWNER_REPORTS, icon: <BarChart3 size={21} /> },
+    { label: 'Lịch làm nhân sự', path: '/owner/hr/calendar', icon: <Calendar size={21} /> },
+    { label: 'Quản lý nhân sự', path: '/owner/hr', icon: <Users size={21} /> },
+    { label: 'Chấm công nhân sự', path: ROUTES.OWNER_HR_ATTENDANCE, icon: <UserCheck size={21} /> },
   ];
 
-  const staffMenu = [
-    { label: 'Ban hang (POS)', path: ROUTES.STAFF_POS, icon: <ShoppingCart size={21} /> },
-    { label: 'Quản lý ca làm', path: ROUTES.STAFF_SESSION, icon: <UserCheck size={21} /> },
-    { label: 'KDS / Bep', path: ROUTES.STAFF_KDS, icon: <ChefHat size={21} /> }, 
-    { label: 'Lich su don hang', path: ROUTES.STAFF_ORDERS, icon: <History size={21} /> },
-    { label: 'Nhập kho & Kiểm kê', path: '/staff/stock', icon: <Package size={21} /> },
-    { label: 'Nhan su & Lich lam', path: '/staff/hr', icon: <Calendar size={21} /> },
+  const storeMenu = [
+    { label: 'Bán hàng (POS)', path: ROUTES.STORE_POS, icon: <ShoppingCart size={21} /> },
+    { label: 'Quản lý ca làm', path: ROUTES.STORE_SESSION, icon: <UserCheck size={21} /> },
+    { label: 'KDS / Bếp', path: ROUTES.STORE_KDS, icon: <ChefHat size={21} /> }, 
+    { label: 'Lịch sử đơn hàng', path: ROUTES.STORE_ORDERS, icon: <History size={21} /> },
+    { label: 'Nhập kho & Kiểm kê', path: ROUTES.STORE_STOCK, icon: <Package size={21} /> },
+    { label: 'Nhân sự & Lịch làm', path: '/store/hr', icon: <Calendar size={21} /> },
+    { label: 'Chấm công', path: ROUTES.STORE_HR_ATTENDANCE, icon: <UserCheck size={21} /> },
   ];
 
-  const menu = role === ROLES.ADMIN ? adminMenu : staffMenu;
+  // If user is owner of the current store, they might want to see more links, but let's keep it simple: 
+  // Owner uses /owner/* for global store configs, and /store/* for operational stuff.
+  const menu = workspace?.type === WORKSPACE_TYPES.TENANT ? ownerMenu : storeMenu;
 
   const isLinkActive = (itemPath) => {
     const currentPath = location.pathname;
@@ -50,38 +55,32 @@ export function Sidebar({ role, isCollapsed, onToggle }) {
     if (itemPathname === currentPath) return true;
     
     // Check main parent highlights for subroutes
-    if (itemPathname === ROUTES.ADMIN_PRODUCTS.split('?')[0]) {
-      if (currentPath.startsWith('/admin/products') || currentPath.startsWith('/admin/recipes')) {
+    if (itemPathname === ROUTES.OWNER_PRODUCTS.split('?')[0]) {
+      if (currentPath.startsWith('/owner/products') || currentPath.startsWith('/owner/recipes')) {
         return true;
       }
     }
 
-    if (itemPathname === ROUTES.ADMIN_INGREDIENTS.split('?')[0]) {
-      if (currentPath.startsWith('/admin/ingredients')) {
+    if (itemPathname === ROUTES.OWNER_INGREDIENTS.split('?')[0]) {
+      if (currentPath.startsWith('/owner/ingredients')) {
         return true;
       }
     }
 
-    if (itemPathname === ROUTES.ADMIN_STOCK.split('?')[0] || itemPathname === '/staff/stock') {
-      if (currentPath.startsWith('/admin/stock') || currentPath.startsWith('/staff/stock')) {
+    if (itemPathname === ROUTES.STORE_STOCK.split('?')[0]) {
+      if (currentPath.startsWith('/store/stock')) {
         return true;
       }
     }
 
-    if (itemPathname === '/admin/hr') {
-      if (currentPath.startsWith('/admin/users') || currentPath.startsWith('/admin/hr')) {
+    if (itemPathname === '/owner/hr') {
+      if (currentPath.startsWith('/owner/users') || currentPath.startsWith('/owner/hr')) {
         return true;
       }
     }
 
-    if (itemPathname === ROUTES.ADMIN_ORDERS) {
-      if (currentPath.startsWith('/admin/orders')) {
-        return true;
-      }
-    }
-
-    if (itemPathname === ROUTES.STAFF_ORDERS) {
-      if (currentPath.startsWith('/staff/orders')) {
+    if (itemPathname === ROUTES.STORE_ORDERS) {
+      if (currentPath.startsWith('/store/orders')) {
         return true;
       }
     }
@@ -89,12 +88,19 @@ export function Sidebar({ role, isCollapsed, onToggle }) {
     return false;
   };
 
+  const getBrandText = () => {
+    if (!workspace) return 'Mini Coffee';
+    if (workspace.type === WORKSPACE_TYPES.TENANT) return workspace.tenantName || 'Thương hiệu';
+    if (workspace.type === WORKSPACE_TYPES.STORE) return workspace.storeName || 'Cửa hàng';
+    return 'Mini Coffee';
+  };
+
   return (
     <aside className={`app-sidebar ${isCollapsed ? 'is-collapsed' : ''}`}>
       <div className="sidebar-brand">
         <div className="sidebar-brand-mark">MC</div>
         <div className="sidebar-brand-text">
-          <h1 className="sidebar-brand-title">Mini Coffee</h1>
+          <h1 className="sidebar-brand-title">{getBrandText()}</h1>
           <p className="sidebar-brand-subtitle">POS & Inventory</p>
         </div>
       </div>

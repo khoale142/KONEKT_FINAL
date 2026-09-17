@@ -11,7 +11,8 @@ import {
 } from './product.service.js';
 
 export const getProducts = asyncHandler(async (req, res) => {
-  const [products, tags] = await Promise.all([listProducts(req.query), listProductTags()]);
+  const storeId = req.workspace.storeId;
+  const [products, tags] = await Promise.all([listProducts(req.query, storeId), listProductTags(storeId)]);
 
   return sendSuccess(res, {
     message: 'Products loaded successfully.',
@@ -23,7 +24,8 @@ export const getProducts = asyncHandler(async (req, res) => {
 });
 
 export const getProduct = asyncHandler(async (req, res) => {
-  const product = await getProductById(req.params.id);
+  const storeId = req.workspace.storeId;
+  const product = await getProductById(req.params.id, storeId);
 
   return sendSuccess(res, {
     message: 'Product loaded successfully.',
@@ -34,7 +36,8 @@ export const getProduct = asyncHandler(async (req, res) => {
 });
 
 export const createNewProduct = asyncHandler(async (req, res) => {
-  const product = await createProduct(req.body, req.user);
+  const storeId = req.workspace.storeId;
+  const product = await createProduct(req.body, req.user, storeId);
 
   return sendSuccess(res, {
     message: 'Product created successfully.',
@@ -46,7 +49,8 @@ export const createNewProduct = asyncHandler(async (req, res) => {
 });
 
 export const updateExistingProduct = asyncHandler(async (req, res) => {
-  const product = await updateProduct(req.params.id, req.body);
+  const storeId = req.workspace.storeId;
+  const product = await updateProduct(req.params.id, req.body, storeId);
 
   return sendSuccess(res, {
     message: 'Product updated successfully.',
@@ -57,7 +61,8 @@ export const updateExistingProduct = asyncHandler(async (req, res) => {
 });
 
 export const deleteExistingProduct = asyncHandler(async (req, res) => {
-  const product = await softDeleteProduct(req.params.id);
+  const storeId = req.workspace.storeId;
+  const product = await softDeleteProduct(req.params.id, storeId);
 
   return sendSuccess(res, {
     message: 'Product deleted successfully.',
@@ -68,7 +73,8 @@ export const deleteExistingProduct = asyncHandler(async (req, res) => {
 });
 
 export const getPosAvailableProducts = asyncHandler(async (req, res) => {
-  const products = await listPosAvailableProducts();
+  const storeId = req.workspace.storeId;
+  const products = await listPosAvailableProducts(storeId);
 
   return sendSuccess(res, {
     message: 'POS available products loaded successfully.',

@@ -5,7 +5,7 @@ async function countRows(sql, params = []) {
   return Number(result.rows[0]?.count || 0);
 }
 
-export async function getSummary() {
+export async function getSummary(storeId) {
   const today = new Date().toISOString().slice(0, 10);
 
   const [
@@ -19,36 +19,41 @@ export async function getSummary() {
     lowStockListResult,
     weeklyRevenueResult
   ] = await Promise.all([
-    countRows('select count(*)::int as count from products where deleted_at is null'),
-    countRows('select count(*)::int as count from ingredients where deleted_at is null'),
-    countRows("select count(*)::int as count from orders where status = 'SUCCESS'"),
-    countRows('select count(*)::int as count from v_low_stock_ingredients'),
-    countRows("select count(*)::int as count from staff_requests where status = 'PENDING'"),
+    countRows('select count(*)::int as count from products where deleted_at is null and store_id = $1', [storeId]),
+    countRows('select count(*)::int as count from ingredients where deleted_at is null and store_id = $1', [storeId]),
+    countRows("select count(*)::int as count from orders where status = 'SUCCESS' and store_id = $1", [storeId]),
+    countRows('select count(*)::int as count from v_low_stock_ingredients where store_id = $1', [storeId]),
+    countRows("select count(*)::int as count from staff_requests where status = 'PENDING' and store_id = $1", [storeId]),
     query(
       `select coalesce(total_revenue, 0)::numeric as total_revenue, coalesce(total_orders, 0)::int as total_orders
        from v_daily_revenue
-       where order_date = $1
+       where order_date = $1 and store_id = $2
        limit 1`,
-      [today],
+      [today, storeId],
     ),
     query(
       `select id, order_code, total_amount, created_at, status
        from orders
-       where status = 'SUCCESS'
+       where status = 'SUCCESS' and store_id = $1
        order by created_at desc
-       limit 5`
+       limit 5`,
+       [storeId]
     ),
     query(
-      `select name, current_stock, low_stock_threshold, unit
+      `select ingredient_name as name, current_stock, low_stock_threshold, unit
        from v_low_stock_ingredients
+       where store_id = $1
        order by current_stock asc
-       limit 5`
+       limit 5`,
+       [storeId]
     ),
     query(
       `select order_date::text as order_date, coalesce(total_revenue, 0)::numeric as total_revenue
        from v_daily_revenue
+       where store_id = $1
        order by order_date desc
-       limit 7`
+       limit 7`,
+       [storeId]
     )
   ]);
 

@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 let authToken = localStorage.getItem('accessToken') || '';
+let workspaceToken = localStorage.getItem('workspaceToken') || '';
 
 export function setAuthToken(token) {
   authToken = token;
@@ -12,14 +13,26 @@ export function clearAuthToken() {
   localStorage.removeItem('accessToken');
 }
 
+export function setWorkspaceToken(token) {
+  workspaceToken = token;
+  localStorage.setItem('workspaceToken', token);
+}
+
+export function clearWorkspaceToken() {
+  workspaceToken = '';
+  localStorage.removeItem('workspaceToken');
+}
+
 async function request(path, options = {}) {
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
 
-  if (authToken) {
-    headers.Authorization = `Bearer ${authToken}`;
+  const activeToken = workspaceToken || authToken;
+
+  if (activeToken) {
+    headers.Authorization = `Bearer ${activeToken}`;
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -31,6 +44,7 @@ async function request(path, options = {}) {
 
   if (response.status === 401) {
     clearAuthToken();
+    clearWorkspaceToken();
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
       window.location.href = '/login';
     }

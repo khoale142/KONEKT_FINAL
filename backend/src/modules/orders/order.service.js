@@ -1,6 +1,5 @@
 import { pool, query } from '../../config/db.js';
 import { KDS_STATUSES } from '../../constants/kdsStatuses.js';
-import { ROLES } from '../../constants/roles.js';
 import { STOCK_TRANSACTION_TYPES } from '../../constants/stockTransactionTypes.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { toPublicOrder } from '../../utils/order.js';
@@ -100,22 +99,19 @@ function normalizeCartItems(items) {
   }));
 }
 
-function ensureStaffUser(actorUser) {
-  if (!actorUser || actorUser.role !== ROLES.STAFF) {
-    throw new ApiError(403, 'Access denied. Staff role is required.');
-  }
-}
-
-async function loadProductsByIds(productIds) {
+async function loadProductsByIds(productIds, storeId) {
+  const placeholders = buildPlaceholders(productIds);
+  const params = [...productIds, storeId];
   const result = await query(
     `select id,
             name,
             price,
             status
      from products
-     where id in (${buildPlaceholders(productIds)})
+     where id in (${placeholders})
+       and store_id = $${params.length}
        and deleted_at is null`,
-    productIds,
+    params,
   );
 
   return result.rows;
@@ -139,14 +135,17 @@ function ensureProductsAreActive(cartItems, productMap) {
   }
 }
 
-async function loadRecipeHeadersByProductIds(productIds) {
+async function loadRecipeHeadersByProductIds(productIds, storeId) {
+  const placeholders = buildPlaceholders(productIds);
+  const params = [...productIds, storeId];
   const result = await query(
     `select id,
             product_id
      from recipes
-     where product_id in (${buildPlaceholders(productIds)})
+     where product_id in (${placeholders})
+       and store_id = $${params.length}
        and deleted_at is null`,
-    productIds,
+    params,
   );
 
   return result.rows;
@@ -258,18 +257,21 @@ function buildOrderPlan(cartItems, productMap, recipeItemsByProductId) {
   };
 }
 
-async function loadIngredientsForUpdate(client, ingredientIds) {
+async function loadIngredientsForUpdate(client, ingredientIds, storeId) {
+  const placeholders = buildPlaceholders(ingredientIds);
+  const params = [...ingredientIds, storeId];
   const result = await client.query(
     `select id,
             name,
             unit,
             current_stock
      from ingredients
-     where id in (${buildPlaceholders(ingredientIds)})
+     where id in (${placeholders})
+       and store_id = $${params.length}
        and deleted_at is null
      order by id
      for update`,
-    ingredientIds,
+    params,
   );
 
   return result.rows;
@@ -319,7 +321,7 @@ async function generateUniqueOrderCode(client) {
   throw new ApiError(500, 'Could not generate unique order code.');
 }
 
-async function insertOrderItems(client, orderId, orderItems) {
+async function insertOrderItems(client, orderId, orderItems, storeId) {
   for (const orderItem of orderItems) {
     await client.query(
       `insert into order_items (
@@ -328,9 +330,10 @@ async function insertOrderItems(client, orderId, orderItems) {
          product_name_snapshot,
          quantity,
          unit_price,
-         subtotal
+         subtotal,
+         store_id
        )
-       values ($1, $2, $3, $4, $5, $6)`,
+       values ($1, $2, $3, $4, $5, $6, $7)`,
       [
         orderId,
         orderItem.productId,
@@ -338,18 +341,20 @@ async function insertOrderItems(client, orderId, orderItems) {
         orderItem.quantity,
         orderItem.unitPrice,
         orderItem.subtotal,
+        storeId,
       ],
     );
   }
 }
 
-async function applyStockDeductions(client, ingredientRequirements, actorUser, orderId, orderCode) {
+async function applyStockDeductions(client, ingredientRequirements, actorUser, orderId, orderCode, storeId) {
   const ingredientRequirementMap = new Map(
     ingredientRequirements.map((requirement) => [requirement.ingredientId, requirement]),
   );
   const lockedIngredients = await loadIngredientsForUpdate(
     client,
     ingredientRequirements.map((requirement) => requirement.ingredientId),
+    storeId
   );
 
   if (lockedIngredients.length !== ingredientRequirements.length) {
@@ -380,9 +385,10 @@ async function applyStockDeductions(client, ingredientRequirements, actorUser, o
          after_stock,
          order_id,
          note,
-         created_by
+         created_by,
+         store_id
        )
-       values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         ingredient.id,
         STOCK_TRANSACTION_TYPES.ORDER_DEDUCT,
@@ -392,12 +398,13 @@ async function applyStockDeductions(client, ingredientRequirements, actorUser, o
         orderId,
         `POS order ${orderCode}`,
         actorUser.id,
+        storeId,
       ],
     );
   }
 }
 
-async function findOrderHeaderByIdForStaff(orderId, staffId) {
+async function findOrderHeaderByIdForStaff(orderId, staffId, storeId) {
   const result = await query(
     `select o.id,
             o.order_code,
@@ -420,9 +427,10 @@ async function findOrderHeaderByIdForStaff(orderId, staffId) {
      join app_users u on u.id = o.staff_id
      where o.id = $1
        and o.staff_id = $2
+       and o.store_id = $3
        and o.status in ('SUCCESS', 'PARTIALLY_REFUNDED', 'REFUNDED')
      limit 1`,
-    [orderId, staffId],
+    [orderId, staffId, storeId],
   );
 
   return result.rows[0] || null;
@@ -477,19 +485,17 @@ async function buildOrdersWithItems(headers) {
   return headers.map((header) => toPublicOrder(header, itemMap.get(header.id) || []));
 }
 
-export async function createOrder(payload, actorUser) {
-  ensureStaffUser(actorUser);
-
+export async function createOrder(payload, actorUser, storeId) {
   const cartItems = normalizeCartItems(payload.items);
   const note = normalizeString(payload.note);
   const productIds = cartItems.map((item) => item.productId);
-  const products = await loadProductsByIds(productIds);
+  const products = await loadProductsByIds(productIds, storeId);
   const productMap = new Map(products.map((product) => [product.id, product]));
 
   ensureProductsExist(productIds, productMap);
   ensureProductsAreActive(cartItems, productMap);
 
-  const recipeHeaders = await loadRecipeHeadersByProductIds(productIds);
+  const recipeHeaders = await loadRecipeHeadersByProductIds(productIds, storeId);
   ensureProductsHaveRecipes(cartItems, productMap, recipeHeaders);
 
   const recipeItemRows = await loadRecipeItemRows(recipeHeaders.map((row) => row.id));
@@ -508,8 +514,8 @@ export async function createOrder(payload, actorUser) {
 
     // Check if there is an active POS session for this staff
     const activeSessionRes = await client.query(
-      `select id from pos_sessions where staff_id = $1 and status = 'OPEN' limit 1`,
-      [actorUser.id]
+      `select id from pos_sessions where staff_id = $1 and store_id = $2 and status = 'OPEN' limit 1`,
+      [actorUser.id, storeId]
     );
 
     if (activeSessionRes.rows.length === 0) {
@@ -531,9 +537,10 @@ export async function createOrder(payload, actorUser) {
          status,
          kds_status,
          note,
-         pos_session_id
+         pos_session_id,
+         store_id
        )
-       values ($1, $2, $3, $4, $5, $6, now(), 'SUCCESS', $7, $8, $9)
+       values ($1, $2, $3, $4, $5, $6, now(), 'SUCCESS', $7, $8, $9, $10)
        returning id`,
       [
         orderCode,
@@ -544,18 +551,19 @@ export async function createOrder(payload, actorUser) {
         paymentSummary.changeAmount,
         KDS_STATUSES.NEW,
         note || null,
-        posSessionId
+        posSessionId,
+        storeId,
       ],
     );
 
     const orderId = insertOrderResult.rows[0].id;
 
-    await insertOrderItems(client, orderId, orderItems);
-    await applyStockDeductions(client, ingredientRequirements, actorUser, orderId, orderCode);
+    await insertOrderItems(client, orderId, orderItems, storeId);
+    await applyStockDeductions(client, ingredientRequirements, actorUser, orderId, orderCode, storeId);
 
     await client.query('commit');
 
-    return getOrderByIdForStaff(orderId, actorUser);
+    return getOrderByIdForStaff(orderId, actorUser, storeId);
   } catch (error) {
     await client.query('rollback');
     throw error;
@@ -564,11 +572,9 @@ export async function createOrder(payload, actorUser) {
   }
 }
 
-export async function listOrdersForStaff(actorUser, { dateFrom, dateTo } = {}) {
-  ensureStaffUser(actorUser);
-
-  const params = [actorUser.id];
-  const conditions = ['o.staff_id = $1', "o.status in ('SUCCESS', 'PARTIALLY_REFUNDED', 'REFUNDED')"];
+export async function listOrdersForStaff(actorUser, { dateFrom, dateTo } = {}, storeId) {
+  const params = [actorUser.id, storeId];
+  const conditions = ['o.staff_id = $1', 'o.store_id = $2', "o.status in ('SUCCESS', 'PARTIALLY_REFUNDED', 'REFUNDED')"];
 
   if (dateFrom) {
     params.push(dateFrom);
@@ -608,11 +614,9 @@ export async function listOrdersForStaff(actorUser, { dateFrom, dateTo } = {}) {
   return result.rows.map((row) => toPublicOrder(row));
 }
 
-export async function getOrderByIdForStaff(orderId, actorUser) {
-  ensureStaffUser(actorUser);
-
+export async function getOrderByIdForStaff(orderId, actorUser, storeId) {
   const normalizedOrderId = normalizeId(orderId, 'Order id');
-  const header = await findOrderHeaderByIdForStaff(normalizedOrderId, actorUser.id);
+  const header = await findOrderHeaderByIdForStaff(normalizedOrderId, actorUser.id, storeId);
 
   if (!header) {
     throw new ApiError(404, 'Order not found.');
@@ -622,7 +626,7 @@ export async function getOrderByIdForStaff(orderId, actorUser) {
   return order;
 }
 
-export async function refundOrderItems(orderId, { refundAll, items, returnToStock, reason } = {}, actorUser) {
+export async function refundOrderItems(orderId, { refundAll, items, returnToStock, reason } = {}, actorUser, storeId) {
   const normalizedOrderId = normalizeId(orderId, 'Order id');
   const cleanReason = reason ? String(reason).trim() : '';
   if (!cleanReason) {
@@ -636,8 +640,8 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
     const orderRes = await client.query(
       `select id, order_code, total_amount, refunded_amount, status, staff_id
        from orders
-       where id = $1 for update`,
-      [normalizedOrderId]
+       where id = $1 and store_id = $2 for update`,
+      [normalizedOrderId, storeId]
     );
 
     if (orderRes.rows.length === 0) {
@@ -716,7 +720,6 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
 
     const newRefundedAmount = Number(order.refunded_amount || 0) + refundAmountTotal;
     
-    // Check if fully refunded
     const allItemsRes = await client.query(
       `select quantity, refunded_quantity from order_items where order_id = $1`,
       [normalizedOrderId]
@@ -738,8 +741,8 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
         const { itemRow, quantityToRefund } = refundInfo;
         
         const recipeRes = await client.query(
-          `select id from recipes where product_id = $1 and deleted_at is null limit 1`,
-          [itemRow.product_id]
+          `select id from recipes where product_id = $1 and store_id = $2 and deleted_at is null limit 1`,
+          [itemRow.product_id, storeId]
         );
         
         if (recipeRes.rows.length > 0) {
@@ -772,9 +775,9 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
               
               await client.query(
                 `insert into stock_transactions (
-                   ingredient_id, type, quantity, before_stock, after_stock, order_id, note, created_by
+                   ingredient_id, type, quantity, before_stock, after_stock, order_id, note, created_by, store_id
                  )
-                 values ($1, 'ORDER_REFUND', $2, $3, $4, $5, $6, $7)`,
+                 values ($1, 'ORDER_REFUND', $2, $3, $4, $5, $6, $7, $8)`,
                 [
                   ingId,
                   totalQtyToRestore,
@@ -782,7 +785,8 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
                   afterStock,
                   normalizedOrderId,
                   `Hoàn kho từ hoàn tiền đơn hàng ${order.order_code} - Lý do: ${cleanReason}`,
-                  actorUser.id
+                  actorUser.id,
+                  storeId
                 ]
               );
             }
@@ -793,7 +797,6 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
 
     await client.query('commit');
     
-    // Retrieve and return updated order
     const updatedHeaderRes = await client.query(
       `select o.id, o.order_code, o.staff_id, u.username as staff_username,
               o.total_amount, o.refunded_amount, o.payment_method, o.amount_received,
@@ -822,14 +825,9 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
   }
 }
 
-export async function listOrdersForAdmin(actorUser, { dateFrom, dateTo, staffId, status, orderCode } = {}) {
-  // Ensure user is admin (actorUser.role === ROLES.ADMIN)
-  if (actorUser.role !== 'ADMIN') {
-    throw new ApiError(403, 'Yêu cầu quyền Admin.');
-  }
-
-  const params = [];
-  const conditions = [];
+export async function listOrdersForOwner(actorUser, { dateFrom, dateTo, staffId, status, orderCode } = {}, storeId) {
+  const params = [storeId];
+  const conditions = ['o.store_id = $1'];
 
   if (staffId) {
     params.push(staffId);
@@ -888,11 +886,7 @@ export async function listOrdersForAdmin(actorUser, { dateFrom, dateTo, staffId,
   return result.rows.map((row) => toPublicOrder(row));
 }
 
-export async function getOrderByIdForAdmin(orderId, actorUser) {
-  if (actorUser.role !== 'ADMIN') {
-    throw new ApiError(403, 'Yêu cầu quyền Admin.');
-  }
-
+export async function getOrderByIdForOwner(orderId, actorUser, storeId) {
   const normalizedOrderId = normalizeId(orderId, 'Order id');
   const result = await query(
     `select o.id,
@@ -915,9 +909,10 @@ export async function getOrderByIdForAdmin(orderId, actorUser) {
      from orders o
      join app_users u on u.id = o.staff_id
      where o.id = $1
+       and o.store_id = $2
        and o.status in ('SUCCESS', 'PARTIALLY_REFUNDED', 'REFUNDED')
      limit 1`,
-    [normalizedOrderId],
+    [normalizedOrderId, storeId],
   );
 
   const header = result.rows[0] || null;
@@ -929,4 +924,3 @@ export async function getOrderByIdForAdmin(orderId, actorUser) {
   const [order] = await buildOrdersWithItems([header]);
   return order;
 }
-

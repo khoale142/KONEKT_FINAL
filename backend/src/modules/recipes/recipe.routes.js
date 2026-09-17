@@ -1,25 +1,25 @@
 import { Router } from 'express';
-import { ROLES } from '../../constants/roles.js';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireRole } from '../../middlewares/role.middleware.js';
+import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
   createNewRecipe,
   deleteExistingRecipe,
   getRecipe,
-  getRecipeForProduct,
+  getRecipeByProduct,
   getRecipes,
   updateExistingRecipe,
 } from './recipe.controller.js';
 
 const router = Router();
 
-router.use(requireAuth, requireRole(ROLES.ADMIN));
+router.use(requireAuth, requireStoreContext());
 
 router.get('/', getRecipes);
-router.post('/', createNewRecipe);
-router.get('/product/:productId', getRecipeForProduct);
 router.get('/:id', getRecipe);
-router.patch('/:id', updateExistingRecipe);
-router.delete('/:id', deleteExistingRecipe);
+router.get('/products/:productId', getRecipeByProduct);
+
+router.post('/', requireOwner(), createNewRecipe);
+router.put('/:id', requireOwner(), updateExistingRecipe);
+router.delete('/:id', requireOwner(), deleteExistingRecipe);
 
 export default router;

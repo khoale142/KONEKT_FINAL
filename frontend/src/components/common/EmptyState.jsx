@@ -1,4 +1,3 @@
-import React from 'react';
 import { Inbox } from 'lucide-react';
 
 export function EmptyState({ message = 'Không có dữ liệu hiển thị.', icon, action }) {

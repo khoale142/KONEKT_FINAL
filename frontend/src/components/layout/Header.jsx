@@ -1,14 +1,20 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, Settings, User, Building2 } from 'lucide-react';
 import { useAuth } from '../../app/providers/AuthProvider.jsx';
 import { ROUTES } from '../../constants/routes.js';
+import { WORKSPACE_TYPES } from '../../constants/roles.js';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user, workspace, switchWorkspace, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleOpenProfile = () => {
     navigate(ROUTES.PROFILE);
+  };
+
+  const handleSwitchWorkspace = () => {
+    switchWorkspace();
+    navigate(ROUTES.WORKSPACES, { replace: true });
   };
 
   const handleLogout = () => {
@@ -25,6 +31,18 @@ export function Header() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {workspace && (
+          <button
+            type="button"
+            onClick={handleSwitchWorkspace}
+            className="btn btn-secondary btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px' }}
+          >
+            <Building2 size={14} />
+            <span>Đổi nơi làm việc</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={handleOpenProfile}
@@ -56,7 +74,7 @@ export function Header() {
               {user?.fullName || user?.username || 'Nhân viên'}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--color-secondary)' }}>
-              {user?.role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'}
+              {!workspace ? 'Chưa chọn nơi làm việc' : workspace.type === WORKSPACE_TYPES.TENANT ? 'Owner (Quản trị)' : 'Nhân viên'}
             </span>
           </div>
         </div>

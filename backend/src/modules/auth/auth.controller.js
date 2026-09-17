@@ -1,6 +1,15 @@
 import { sendSuccess } from '../../utils/apiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { changeCurrentUserPassword, loginWithUsernamePassword, updateCurrentUserProfile, requestPasswordReset, resetPasswordWithToken } from './auth.service.js';
+import { changeCurrentUserPassword, loginWithUsernamePassword, registerUser, updateCurrentUserProfile, requestPasswordReset, resetPasswordWithToken } from './auth.service.js';
+
+export const register = asyncHandler(async (req, res) => {
+  const data = await registerUser(req.body);
+
+  return sendSuccess(res, {
+    message: 'Registered successfully.',
+    data,
+  });
+});
 
 export const login = asyncHandler(async (req, res) => {
   const data = await loginWithUsernamePassword(req.body);

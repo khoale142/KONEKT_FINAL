@@ -19,7 +19,7 @@ import { stockApi } from '../api/stockApi.js';
 import { ingredientApi } from '../../ingredients/api/ingredientApi.js';
 import { productApi } from '../../products/api/productApi.js';
 import { useAuth } from '../../../app/providers/AuthProvider.jsx';
-import { ROLES } from '../../../constants/roles.js';
+import { WORKSPACE_TYPES } from '../../../constants/roles.js';
 import { PageHeader } from '../../../components/layout/PageHeader.jsx';
 import { Button } from '../../../components/common/Button.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
@@ -144,7 +144,7 @@ function formatStockDelta(value) {
 }
 
 export function StockPage() {
-  const { user } = useAuth();
+  const { user, workspace } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'adjust';
 
@@ -572,7 +572,7 @@ export function StockPage() {
       }
     };
 
-    if (user?.role === ROLES.STAFF) {
+    if (workspace?.type === WORKSPACE_TYPES.STORE) {
       setConfirmDialog({
         isOpen: true,
         title: 'Xác nhận kiểm kê',
@@ -893,7 +893,7 @@ export function StockPage() {
 
   // ------------------ MAIN SWITCH LOAD LOGIC ------------------
   useEffect(() => {
-    if (user && user.role === ROLES.STAFF) {
+    if (workspace?.type === WORKSPACE_TYPES.STORE) {
       if (activeTab === 'forecast' || activeTab === 'transactions') {
         setActiveTab('adjust');
         return;
@@ -925,7 +925,7 @@ export function StockPage() {
               <Button variant="secondary" onClick={loadIngredients} disabled={isLoading} icon={<RefreshCw size={16} />}>
                 Làm mới danh sách
               </Button>
-              {user?.role !== ROLES.STAFF && (
+              {workspace?.type !== WORKSPACE_TYPES.STORE && (
                 <>
                   <Button
                     variant="secondary"
@@ -985,7 +985,7 @@ export function StockPage() {
           <PackageOpen size={18} />
           Kiểm kê & Điều chỉnh kho
         </button>
-        {user?.role === ROLES.ADMIN && (
+        {workspace?.type === WORKSPACE_TYPES.TENANT && (
           <>
             <button
               onClick={() => setActiveTab('forecast')}
@@ -1214,7 +1214,7 @@ export function StockPage() {
                 />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {user?.role === ROLES.STAFF ? (
+                  {workspace?.type === WORKSPACE_TYPES.STORE ? (
                     <div style={{ fontSize: '14px', color: 'var(--color-secondary)' }}>
                       Vui lòng đếm thực tế và nhập chính xác số lượng tồn thực tế của từng nguyên liệu có tại cửa hàng.
                     </div>
@@ -1223,7 +1223,7 @@ export function StockPage() {
                       Mỗi dòng sẽ so sánh tồn lý thuyết hiện có với tồn thực tế bạn nhập. Những dòng có chênh lệch sẽ được ghi thành điều chỉnh kho để đưa vào báo cáo sau này.
                     </div>
                   )}
-                  {user?.role !== ROLES.STAFF && (
+                  {workspace?.type !== WORKSPACE_TYPES.STORE && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button variant="secondary" onClick={resetCountInputs} disabled={isLoading || isSubmitting} icon={<Eraser size={16} />}>
                         Đặt lại theo tồn lý thuyết
@@ -1240,23 +1240,23 @@ export function StockPage() {
                       <th style={{ width: '124px' }}>Mã NL</th>
                       <th style={{ minWidth: '240px' }}>Tên nguyên liệu</th>
                       <th style={{ width: '90px', textAlign: 'center' }}>Đơn vị</th>
-                      {user?.role !== ROLES.STAFF && <th style={{ width: '140px', textAlign: 'right' }}>Tồn lý thuyết</th>}
+                      {workspace?.type !== WORKSPACE_TYPES.STORE && <th style={{ width: '140px', textAlign: 'right' }}>Tồn lý thuyết</th>}
                       <th style={{ width: '180px' }}>Tồn thực tế</th>
-                      {user?.role !== ROLES.STAFF && <th style={{ width: '140px', textAlign: 'right' }}>Chênh lệch</th>}
+                      {workspace?.type !== WORKSPACE_TYPES.STORE && <th style={{ width: '140px', textAlign: 'right' }}>Chênh lệch</th>}
                       <th style={{ minWidth: '240px' }}>Ghi chú theo dòng</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td colSpan={user?.role === ROLES.STAFF ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
+                        <td colSpan={workspace?.type === WORKSPACE_TYPES.STORE ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
                           <div className="spinner" style={{ margin: '0 auto 12px' }}></div>
                           <span style={{ color: 'var(--color-secondary)' }}>Đang tải danh sách nguyên liệu...</span>
                         </td>
                       </tr>
                     ) : visibleIngredients.length === 0 ? (
                       <tr>
-                        <td colSpan={user?.role === ROLES.STAFF ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)', color: 'var(--color-secondary)' }}>
+                        <td colSpan={workspace?.type === WORKSPACE_TYPES.STORE ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)', color: 'var(--color-secondary)' }}>
                           Không có nguyên liệu nào phù hợp với bộ lọc hiện tại.
                         </td>
                       </tr>
@@ -1284,7 +1284,7 @@ export function StockPage() {
                               </div>
                             </td>
                             <td style={{ textAlign: 'center', fontWeight: '600' }}>{ingredient.unit}</td>
-                            {user?.role !== ROLES.STAFF && (
+                            {workspace?.type !== WORKSPACE_TYPES.STORE && (
                               <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                                 {formatDisplayNumber(ingredient.currentStock)} {ingredient.unit}
                               </td>
@@ -1306,7 +1306,7 @@ export function StockPage() {
                                 </div>
                               )}
                             </td>
-                            {user?.role !== ROLES.STAFF && (
+                            {workspace?.type !== WORKSPACE_TYPES.STORE && (
                               <td
                                 style={{
                                   textAlign: 'right',
