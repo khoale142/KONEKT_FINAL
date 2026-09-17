@@ -30,7 +30,7 @@ jobs:
         run: |
           cd backend
           # Use mock or dummy DATABASE_URL to verify scripts load without crashing
-          DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres JWT_SECRET=dummysecret node -e "import('../src/config/env.js').then(() => console.log('Env loaded successfully'))"
+          DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres JWT_SECRET=dummysecret node -e "import('./src/config/env.js').then(() => console.log('Env loaded successfully'))"
 
       - name: Run Vitest Unit Tests
         run: |
