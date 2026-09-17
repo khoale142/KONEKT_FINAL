@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   backend-ci:
@@ -17,25 +17,23 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: backend/package-lock.json
 
       - name: Install Dependencies
-        run: |
-          cd backend
-          npm ci
+        working-directory: backend
+        run: npm ci
 
       - name: Run Database Connection Check
+        working-directory: backend
         run: |
-          cd backend
           # Use mock or dummy DATABASE_URL to verify scripts load without crashing
           DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres JWT_SECRET=dummysecret node -e "import('./src/config/env.js').then(() => console.log('Env loaded successfully'))"
 
       - name: Run Vitest Unit Tests
-        run: |
-          cd backend
-          npm test
+        working-directory: backend
+        run: npm test
 
   frontend-ci:
     name: Frontend CI
@@ -47,21 +45,18 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
-        run: |
-          cd frontend
-          npm ci
+        working-directory: frontend
+        run: npm ci
 
       - name: Run Linter
-        run: |
-          cd frontend
-          npm run lint
+        working-directory: frontend
+        run: npm run lint
 
       - name: Run Build
-        run: |
-          cd frontend
-          npm run build
+        working-directory: frontend
+        run: npm run build
