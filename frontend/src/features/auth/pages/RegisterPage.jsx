@@ -7,7 +7,6 @@ import { AuthLayout } from '../../../components/layout/AuthLayout.jsx';
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     fullName: '',
     password: '',
@@ -31,7 +30,7 @@ export function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.email || !formData.fullName || !formData.password || !formData.confirmPassword) {
+    if (!formData.email || !formData.fullName || !formData.password || !formData.confirmPassword) {
       setError('Vui lòng điền đầy đủ thông tin.');
       return;
     }
@@ -46,7 +45,7 @@ export function RegisterPage() {
 
     try {
       await register({
-        username: formData.username,
+        username: formData.email,
         email: formData.email,
         fullName: formData.fullName,
         password: formData.password,
@@ -75,117 +74,78 @@ export function RegisterPage() {
         )}
 
         <div className="form-group">
-          <label htmlFor="username" className="form-label">
-            Tên đăng nhập
+          <label htmlFor="email" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Mail size={18} />
+            <span>Email</span>
           </label>
-          <div className="input-with-icon">
-            <div className="input-icon">
-              <User size={18} />
-            </div>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              className="form-control"
-              placeholder="Ví dụ: minicoffee_admin"
-              value={formData.username}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              autoComplete="username"
-              required
-            />
-          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            className="form-control"
+            placeholder="Ví dụ: admin@minicoffee.local"
+            value={formData.email}
+            onChange={handleInputChange}
+            disabled={isSubmitting}
+            autoComplete="email"
+            required
+          />
         </div>
 
         <div className="form-group">
-          <label htmlFor="email" className="form-label">
-            Email
+          <label htmlFor="fullName" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <User size={18} />
+            <span>Họ và tên</span>
           </label>
-          <div className="input-with-icon">
-            <div className="input-icon">
-              <Mail size={18} />
-            </div>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className="form-control"
-              placeholder="Ví dụ: admin@minicoffee.local"
-              value={formData.email}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              autoComplete="email"
-              required
-            />
-          </div>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            className="form-control"
+            placeholder="Ví dụ: Nguyễn Văn A"
+            value={formData.fullName}
+            onChange={handleInputChange}
+            disabled={isSubmitting}
+            required
+          />
         </div>
 
         <div className="form-group">
-          <label htmlFor="fullName" className="form-label">
-            Họ và tên
+          <label htmlFor="password" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <KeyRound size={18} />
+            <span>Mật khẩu</span>
           </label>
-          <div className="input-with-icon">
-            <div className="input-icon">
-              <User size={18} />
-            </div>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              className="form-control"
-              placeholder="Ví dụ: Nguyễn Văn A"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              required
-            />
-          </div>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            className="form-control"
+            placeholder="Nhập mật khẩu"
+            value={formData.password}
+            onChange={handleInputChange}
+            disabled={isSubmitting}
+            autoComplete="new-password"
+            required
+          />
         </div>
 
         <div className="form-group">
-          <label htmlFor="password" className="form-label">
-            Mật khẩu
+          <label htmlFor="confirmPassword" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <KeyRound size={18} />
+            <span>Xác nhận mật khẩu</span>
           </label>
-          <div className="input-with-icon">
-            <div className="input-icon">
-              <KeyRound size={18} />
-            </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className="form-control"
-              placeholder="Nhập mật khẩu"
-              value={formData.password}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              autoComplete="new-password"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="confirmPassword" className="form-label">
-            Xác nhận mật khẩu
-          </label>
-          <div className="input-with-icon">
-            <div className="input-icon">
-              <KeyRound size={18} />
-            </div>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              className="form-control"
-              placeholder="Nhập lại mật khẩu"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              disabled={isSubmitting}
-              autoComplete="new-password"
-              required
-            />
-          </div>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            className="form-control"
+            placeholder="Nhập lại mật khẩu"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            disabled={isSubmitting}
+            autoComplete="new-password"
+            required
+          />
         </div>
 
         <button

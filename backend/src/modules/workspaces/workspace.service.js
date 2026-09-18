@@ -67,6 +67,9 @@ export async function selectWorkspace(userId, { workspaceType, workspaceId }) {
     throw new ApiError(400, 'Invalid workspace type.');
   }
 
+  let role = 'STAFF';
+  let tenantId = null;
+
   if (type === WORKSPACE_TYPES.TENANT) {
     const check = await query(
       `select 1 from tenant_owners 
@@ -78,10 +81,15 @@ export async function selectWorkspace(userId, { workspaceType, workspaceId }) {
     if (!check.rows[0]) {
       throw new ApiError(403, 'Access denied to this tenant.');
     }
+    tenantId = workspaceId;
+    role = 'OWNER';
   } else if (type === WORKSPACE_TYPES.STORE) {
     // Check if user is staff of this store OR owner of the tenant that owns this store
     const storeInfo = await query(
-      `select tenant_id from stores where id = $1 and status = 'ACTIVE'`,
+      `select s.tenant_id
+       from stores s
+       join tenants t on t.id = s.tenant_id
+       where s.id = $1 and s.status = 'ACTIVE' and t.status = 'ACTIVE'`,
       [workspaceId]
     );
     
@@ -89,25 +97,29 @@ export async function selectWorkspace(userId, { workspaceType, workspaceId }) {
       throw new ApiError(404, 'Store not found or inactive.');
     }
     
-    const tenantId = storeInfo.rows[0].tenant_id;
+    tenantId = storeInfo.rows[0].tenant_id;
     
     const isOwnerCheck = await query(
       `select 1 from tenant_owners where user_id = $1 and tenant_id = $2`,
       [userId, tenantId]
     );
     
-    if (!isOwnerCheck.rows[0]) {
+    if (isOwnerCheck.rows[0]) {
+      // Owners have manager privileges in all their stores
+      role = 'MANAGER';
+    } else {
       const isStaffCheck = await query(
-        `select 1 from store_staff where user_id = $1 and store_id = $2`,
+        `select role from store_staff where user_id = $1 and store_id = $2`,
         [userId, workspaceId]
       );
       
       if (!isStaffCheck.rows[0]) {
         throw new ApiError(403, 'Access denied to this store.');
       }
+      role = isStaffCheck.rows[0].role || 'STAFF';
     }
   }
 
-  const token = signWorkspaceToken({ userId, workspaceType: type, workspaceId });
+  const token = signWorkspaceToken({ userId, workspaceType: type, workspaceId, tenantId, role });
   return { token };
 }

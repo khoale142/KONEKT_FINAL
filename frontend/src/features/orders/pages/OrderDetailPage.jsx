@@ -10,7 +10,6 @@ import { Alert } from '../../../components/feedback/Alert.jsx';
 import { formatVND } from '../../../utils/currency.js';
 import { formatDateTime } from '../../../utils/date.js';
 import { ROUTES } from '../../../constants/routes.js';
-import { useAuth } from '../../../app/providers/AuthProvider.jsx';
 import { TextareaInput } from '../../../components/forms/TextareaInput.jsx';
 
 function getPaymentMethodLabel(paymentMethod) {
@@ -35,7 +34,6 @@ function getKdsStatusVariant(kdsStatus) {
 export function OrderDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { user } = useAuth();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -114,11 +112,7 @@ export function OrderDetailPage() {
   ];
 
   const goBack = () => {
-    if (user?.role === 'ADMIN') {
-      navigate('/admin/orders');
-    } else {
-      navigate(ROUTES.STAFF_ORDERS);
-    }
+    navigate(ROUTES.STORE_ORDERS);
   };
 
   const handleRefundSubmit = async (e) => {

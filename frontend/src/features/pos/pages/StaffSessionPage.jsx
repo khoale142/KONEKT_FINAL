@@ -404,8 +404,8 @@ export function StaffSessionPage() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                      <Button variant="secondary" onClick={() => navigate('/staff/pos')} style={{ fontWeight: '600' }}>
-                        Vào bán hàng (POS)
+                      <Button variant="secondary" onClick={() => navigate('/store/pos')} style={{ fontWeight: '600' }}>
+                        Trở về Bán hàng
                       </Button>
                     </div>
                   </div>

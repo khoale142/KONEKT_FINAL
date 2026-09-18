@@ -74,7 +74,13 @@ export function Header() {
               {user?.fullName || user?.username || 'Nhân viên'}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--color-secondary)' }}>
-              {!workspace ? 'Chưa chọn nơi làm việc' : workspace.type === WORKSPACE_TYPES.TENANT ? 'Owner (Quản trị)' : 'Nhân viên'}
+              {!workspace
+                ? 'Chưa chọn nơi làm việc'
+                : workspace.type === WORKSPACE_TYPES.TENANT
+                  ? 'Chủ doanh nghiệp'
+                  : workspace.role === 'MANAGER'
+                    ? 'Quản lý cửa hàng'
+                    : 'Nhân viên'}
             </span>
           </div>
         </div>

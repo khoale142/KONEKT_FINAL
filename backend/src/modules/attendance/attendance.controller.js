@@ -2,7 +2,7 @@ import * as attendanceService from './attendance.service.js';
 
 export async function getTodayToken(req, res, next) {
   try {
-    const token = attendanceService.generateTodayToken();
+    const token = attendanceService.generateTodayToken(req.workspace.storeId);
     return res.status(200).json({
       success: true,
       data: { token },
@@ -24,7 +24,7 @@ export async function checkIn(req, res, next) {
       });
     }
 
-    const attendance = await attendanceService.checkIn(staffId, token);
+    const attendance = await attendanceService.checkIn(staffId, token, req.workspace.storeId);
     return res.status(200).json({
       success: true,
       message: 'Chấm công vào ca (Check-in) thành công.',
@@ -42,7 +42,7 @@ export async function checkOut(req, res, next) {
   try {
     const staffId = req.user.id;
 
-    const attendance = await attendanceService.checkOut(staffId);
+    const attendance = await attendanceService.checkOut(staffId, req.workspace.storeId);
     return res.status(200).json({
       success: true,
       message: 'Chấm công ra ca (Check-out) thành công và ghi nhận lương.',
@@ -64,7 +64,7 @@ export async function getLogs(req, res, next) {
     const start = startDate || today;
     const end = endDate || today;
 
-    const logs = await attendanceService.getAttendanceLogs(start, end);
+    const logs = await attendanceService.getAttendanceLogs(start, end, req.workspace.storeId);
     return res.status(200).json({
       success: true,
       data: logs,
@@ -77,7 +77,7 @@ export async function getLogs(req, res, next) {
 export async function getTodayStatus(req, res, next) {
   try {
     const staffId = req.user.id;
-    const status = await attendanceService.getTodayStaffStatus(staffId);
+    const status = await attendanceService.getTodayStaffStatus(staffId, req.workspace.storeId);
     return res.status(200).json({
       success: true,
       data: status,

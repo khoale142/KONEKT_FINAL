@@ -20,7 +20,7 @@ export const hrApi = {
     return apiClient.post('/hr/shifts', data);
   },
   updateShift(id, data) {
-    return apiClient.patch(`/hr/shifts/${id}`, data);
+    return apiClient.put(`/hr/shifts/${id}`, data);
   },
   deleteShift(id) {
     return apiClient.delete(`/hr/shifts/${id}`);
@@ -28,49 +28,61 @@ export const hrApi = {
 
   // Availability
   getAvailability(params = {}) {
-    return apiClient.get(`/hr/availability${buildQueryString(params)}`);
+    return apiClient.get(`/hr/availabilities${buildQueryString(params)}`);
+  },
+  getMyAvailability(params = {}) {
+    return apiClient.get(`/hr/my-availabilities${buildQueryString(params)}`);
   },
   createAvailability(data) {
-    return apiClient.post('/hr/availability', data);
+    return apiClient.post('/hr/availabilities', data);
   },
   deleteAvailability(id) {
-    return apiClient.delete(`/hr/availability/${id}`);
+    return apiClient.delete(`/hr/availabilities/${id}`);
+  },
+  deleteMyAvailability(id) {
+    return apiClient.delete(`/hr/my-availabilities/${id}`);
   },
 
   // Shift assignment
   getAssignedShifts(params = {}) {
-    return apiClient.get(`/hr/my-shifts${buildQueryString(params)}`);
+    return apiClient.get(`/hr/assigned-shifts${buildQueryString(params)}`);
+  },
+  getMyAssignedShifts(params = {}) {
+    return apiClient.get(`/hr/my-assigned-shifts${buildQueryString(params)}`);
   },
   assignShift(data) {
-    return apiClient.post('/hr/shifts/assign', data);
+    return apiClient.post('/hr/assigned-shifts', data);
   },
   changeShiftStatus(id, status) {
-    return apiClient.patch(`/hr/shifts/assign/${id}/status`, { status });
+    return apiClient.patch(`/hr/assigned-shifts/${id}/status`, { status });
   },
   deleteAssignedShift(id) {
-    return apiClient.delete(`/hr/shifts/assign/${id}`);
+    return apiClient.delete(`/hr/assigned-shifts/${id}`);
   },
 
   // Requests
   getRequests(params = {}) {
     return apiClient.get(`/hr/requests${buildQueryString(params)}`);
   },
+  getMyRequests(params = {}) {
+    return apiClient.get(`/hr/my-requests${buildQueryString(params)}`);
+  },
   createRequest(data) {
     return apiClient.post('/hr/requests', data);
   },
   processRequest(id, data) {
-    return apiClient.patch(`/hr/requests/${id}`, data);
+    return apiClient.patch(`/hr/requests/${id}/process`, data);
   },
   getStaffList() {
-    return apiClient.get('/hr/staff-list');
+    return apiClient.get('/hr/staff');
   },
 
   // Salary & reports
   getMySalary(params = {}) {
-    return apiClient.get(`/hr/my-salary${buildQueryString(params)}`);
+    return apiClient.get(`/hr/reports/my-salary${buildQueryString(params)}`);
   },
   getAdminHRCosts(params = {}) {
-    return apiClient.get(`/hr/admin/reports/costs${buildQueryString(params)}`);
+    return apiClient.get(`/hr/reports/hr-costs${buildQueryString(params)}`);
   },
 };
 

@@ -535,7 +535,7 @@ export function POSPage() {
           const session = response.data.session;
           setActiveSession(session || null);
           if (!session) {
-            navigate('/staff/session', { state: { message: 'Vui lòng mở ca làm việc trước khi thực hiện bán hàng.' } });
+            navigate('/store/session', { state: { message: 'Vui lòng mở ca làm việc trước khi thực hiện bán hàng.' } });
           }
         }
       } catch (err) {
@@ -916,7 +916,7 @@ export function POSPage() {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => navigate('/staff/session')}
+                onClick={() => navigate('/store/session')}
                 disabled={isLoading || isSubmitting}
               >
                 Quản lý ca làm

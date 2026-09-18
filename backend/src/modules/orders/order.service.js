@@ -372,8 +372,9 @@ async function applyStockDeductions(client, ingredientRequirements, actorUser, o
       `update ingredients
        set current_stock = $1,
            updated_at = now()
-       where id = $2`,
-      [afterStock, ingredient.id],
+        where id = $2
+          and store_id = $3`,
+       [afterStock, ingredient.id, storeId],
     );
 
     await client.query(
@@ -655,10 +656,10 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
     }
 
     const itemsRes = await client.query(
-      `select id, product_id, product_name_snapshot, quantity, unit_price, subtotal, refunded_quantity
-       from order_items
-       where order_id = $1 for update`,
-      [normalizedOrderId]
+       `select id, product_id, product_name_snapshot, quantity, unit_price, subtotal, refunded_quantity
+        from order_items
+        where order_id = $1 and store_id = $2 for update`,
+       [normalizedOrderId, storeId]
     );
     const orderItems = itemsRes.rows;
 
@@ -713,27 +714,27 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
       await client.query(
         `update order_items
          set refunded_quantity = $1
-         where id = $2`,
-        [newRefundedQty, itemRow.id]
+          where id = $2 and store_id = $3`,
+         [newRefundedQty, itemRow.id, storeId]
       );
     }
 
     const newRefundedAmount = Number(order.refunded_amount || 0) + refundAmountTotal;
     
     const allItemsRes = await client.query(
-      `select quantity, refunded_quantity from order_items where order_id = $1`,
-      [normalizedOrderId]
+      `select quantity, refunded_quantity from order_items where order_id = $1 and store_id = $2`,
+      [normalizedOrderId, storeId]
     );
     const isFullyRefunded = allItemsRes.rows.every(row => Number(row.quantity) === Number(row.refunded_quantity));
     const newStatus = isFullyRefunded ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
 
     await client.query(
       `update orders
-       set refunded_amount = $1,
+        set refunded_amount = $1,
            status = $2,
            updated_at = now()
-       where id = $3`,
-      [newRefundedAmount, newStatus, normalizedOrderId]
+        where id = $3 and store_id = $4`,
+       [newRefundedAmount, newStatus, normalizedOrderId, storeId]
     );
 
     if (returnToStock) {
@@ -759,8 +760,8 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
             const totalQtyToRestore = qtyNeededPerUnit * quantityToRefund;
             
             const ingRes = await client.query(
-              `select name, current_stock from ingredients where id = $1 and deleted_at is null for update`,
-              [ingId]
+              `select name, current_stock from ingredients where id = $1 and store_id = $2 and deleted_at is null for update`,
+              [ingId, storeId]
             );
             
             if (ingRes.rows.length > 0) {
@@ -769,8 +770,8 @@ export async function refundOrderItems(orderId, { refundAll, items, returnToStoc
               const afterStock = beforeStock + totalQtyToRestore;
               
               await client.query(
-                `update ingredients set current_stock = $1, updated_at = now() where id = $2`,
-                [afterStock, ingId]
+                `update ingredients set current_stock = $1, updated_at = now() where id = $2 and store_id = $3`,
+                [afterStock, ingId, storeId]
               );
               
               await client.query(

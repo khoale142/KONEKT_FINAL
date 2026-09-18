@@ -109,7 +109,7 @@ export function AdminDashboardPage() {
           subtext={`${summary?.today?.orders || 0} đơn hàng thành công`}
           icon={<DollarSign size={24} />}
           loading={isLoading}
-          onClick={() => handleQuickAction(ROUTES.ADMIN_REPORTS)}
+          onClick={() => handleQuickAction(ROUTES.STORE_REPORTS)}
         />
         <Card
           className="card-hoverable"
@@ -118,7 +118,7 @@ export function AdminDashboardPage() {
           subtext="Đơn hàng thành công trong ngày"
           icon={<ShoppingBag size={24} />}
           loading={isLoading}
-          onClick={() => handleQuickAction(ROUTES.ADMIN_REPORTS)}
+          onClick={() => handleQuickAction(ROUTES.STORE_REPORTS)}
         />
         <Card
           className={`card-hoverable ${summary?.counts?.lowStockIngredients > 0 ? 'pulse-alert card-border-danger' : ''}`}
@@ -127,7 +127,7 @@ export function AdminDashboardPage() {
           subtext="Nguyên liệu dưới hạn định mức"
           icon={<AlertTriangle size={24} />}
           loading={isLoading}
-          onClick={() => handleQuickAction(ROUTES.ADMIN_STOCK)}
+          onClick={() => handleQuickAction(ROUTES.STORE_STOCK)}
         />
         <Card
           className={`card-hoverable ${summary?.counts?.pendingRequests > 0 ? 'pulse-alert card-border-warning' : ''}`}
@@ -136,7 +136,7 @@ export function AdminDashboardPage() {
           subtext="Đơn xin nghỉ & đổi ca"
           icon={<Users size={24} />}
           loading={isLoading}
-          onClick={() => handleQuickAction('/admin/hr')}
+          onClick={() => handleQuickAction(ROUTES.STORE_MANAGER_HR)}
         />
         <Card
           className="card-hoverable"
@@ -145,7 +145,7 @@ export function AdminDashboardPage() {
           subtext="Sản phẩm đang kinh doanh"
           icon={<Coffee size={24} />}
           loading={isLoading}
-          onClick={() => handleQuickAction(ROUTES.ADMIN_PRODUCTS)}
+          onClick={() => handleQuickAction(ROUTES.STORE_PRODUCTS)}
         />
       </div>
 
@@ -154,7 +154,7 @@ export function AdminDashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {summary?.counts?.pendingRequests > 0 && (
             <div 
-              onClick={() => handleQuickAction('/admin/hr')}
+              onClick={() => handleQuickAction(ROUTES.STORE_MANAGER_HR)}
               className="pulse-alert"
               style={{
                 display: 'flex',
@@ -185,7 +185,7 @@ export function AdminDashboardPage() {
 
           {summary?.counts?.lowStockIngredients > 0 && summary?.lowStockList && (
             <div 
-              onClick={() => handleQuickAction(ROUTES.ADMIN_STOCK)}
+              onClick={() => handleQuickAction(ROUTES.STORE_STOCK)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -360,7 +360,7 @@ export function AdminDashboardPage() {
               {summary.recentOrders.map((order) => (
                 <div 
                   key={order.id} 
-                  onClick={() => handleQuickAction(ROUTES.ADMIN_REPORTS)}
+                  onClick={() => handleQuickAction(ROUTES.STORE_REPORTS)}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -403,7 +403,7 @@ export function AdminDashboardPage() {
         <div className="dashboard-quick-actions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
           <button
             type="button"
-            onClick={() => handleQuickAction(ROUTES.ADMIN_PRODUCTS_NEW)}
+            onClick={() => handleQuickAction(ROUTES.STORE_PRODUCTS_NEW)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -425,7 +425,7 @@ export function AdminDashboardPage() {
 
           <button
             type="button"
-            onClick={() => handleQuickAction(ROUTES.ADMIN_STOCK)}
+            onClick={() => handleQuickAction(ROUTES.STORE_STOCK)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -447,7 +447,7 @@ export function AdminDashboardPage() {
 
           <button
             type="button"
-            onClick={() => handleQuickAction(ROUTES.ADMIN_RECIPES)}
+            onClick={() => handleQuickAction(ROUTES.STORE_RECIPES)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -469,7 +469,7 @@ export function AdminDashboardPage() {
 
           <button
             type="button"
-            onClick={() => handleQuickAction('/admin/hr/calendar')}
+            onClick={() => handleQuickAction(ROUTES.STORE_HR_CALENDAR)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -491,7 +491,7 @@ export function AdminDashboardPage() {
 
           <button
             type="button"
-            onClick={() => handleQuickAction(ROUTES.ADMIN_REPORTS)}
+            onClick={() => handleQuickAction(ROUTES.STORE_REPORTS)}
             style={{
               display: 'flex',
               alignItems: 'center',

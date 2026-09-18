@@ -59,7 +59,7 @@ export async function listStoreStaff(storeId, { search = '', status }) {
   const result = await query(
     `select u.id, u.username, u.email, u.full_name, u.status, u.last_login_at, u.created_at, u.updated_at
      from app_users u
-     join store_staff ss on u.id = ss.staff_id
+     join store_staff ss on u.id = ss.user_id
      where ${conditions.join(' and ')}
      order by u.full_name asc`,
     params,
@@ -81,8 +81,8 @@ export async function getUserById(userId) {
 export async function removeStaffFromStore(staffId, storeId) {
   const result = await query(
     `delete from store_staff
-     where staff_id = $1 and store_id = $2
-     returning staff_id`,
+     where user_id = $1 and store_id = $2
+     returning user_id`,
     [staffId, storeId]
   );
   

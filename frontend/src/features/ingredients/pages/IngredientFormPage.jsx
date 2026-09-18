@@ -121,7 +121,7 @@ export function IngredientFormPage() {
       }
 
       setTimeout(() => {
-        navigate(ROUTES.ADMIN_INGREDIENTS);
+        navigate(ROUTES.STORE_INGREDIENTS);
       }, 900);
     } catch (saveError) {
       setSubmitError(saveError.message || 'Lưu thông tin nguyên liệu thất bại.');
@@ -140,7 +140,7 @@ export function IngredientFormPage() {
             : 'Tạo mới nguyên liệu để chuẩn bị cho công thức, kho và bộ lọc theo tag.'
         }
         actions={
-          <Button variant="secondary" onClick={() => navigate(ROUTES.ADMIN_INGREDIENTS)} icon={<ArrowLeft size={16} />}>
+          <Button variant="secondary" onClick={() => navigate(ROUTES.STORE_INGREDIENTS)} icon={<ArrowLeft size={16} />}>
             Quay lại danh sách
           </Button>
         }
@@ -212,7 +212,7 @@ export function IngredientFormPage() {
               />
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
-                <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.ADMIN_INGREDIENTS)} disabled={isSubmitting}>
+                <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.STORE_INGREDIENTS)} disabled={isSubmitting}>
                   Hủy bỏ
                 </Button>
                 <Button type="submit" variant="primary" loading={isSubmitting} icon={<Save size={16} />}>
@@ -241,7 +241,7 @@ export function IngredientFormPage() {
                   <strong>Khuyến nghị:</strong> Dùng màn giao dịch kho để nhập thêm hoặc điều chỉnh hao hụt.
                 </div>
                 <div style={{ marginTop: '8px' }}>
-                  <Button variant="secondary" onClick={() => navigate(ROUTES.ADMIN_STOCK)} icon={<Boxes size={16} />}>
+                  <Button variant="secondary" onClick={() => navigate(ROUTES.STORE_STOCK)} icon={<Boxes size={16} />}>
                     Mở màn giao dịch kho
                   </Button>
                 </div>

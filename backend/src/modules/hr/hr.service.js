@@ -79,6 +79,14 @@ export async function listAvailability({ staff_id, start_date, end_date }, store
 }
 
 export async function createAvailability(staffId, { available_date, start_time, end_time, note }, storeId) {
+  const membershipRes = await query(
+    `SELECT 1 FROM store_staff WHERE user_id = $1 AND store_id = $2`,
+    [staffId, storeId],
+  );
+  if (!membershipRes.rows[0]) {
+    throw new Error('Báº¡n khÃ´ng pháº£i nhÃ¢n viÃªn cá»§a chi nhÃ¡nh hiá»‡n táº¡i.');
+  }
+
   // Check if overlap exists for the same staff on same date in this store
   const overlapCheck = await query(
     `SELECT id FROM staff_availability
@@ -153,6 +161,14 @@ export async function listAssignedShifts({ staff_id, start_date, end_date }, sto
 }
 
 export async function assignShift(creatorId, { staff_id, shift_id, shift_date, custom_start_time, custom_end_time }, storeId) {
+  const membershipRes = await query(
+    `SELECT 1 FROM store_staff WHERE user_id = $1 AND store_id = $2`,
+    [staff_id, storeId],
+  );
+  if (!membershipRes.rows[0]) {
+    throw new Error('Nhân viên không thuộc chi nhánh hiện tại.');
+  }
+
   // 1. Fetch shift info
   const shiftRes = await query(`SELECT * FROM shifts WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL`, [shift_id, storeId]);
   if (shiftRes.rows.length === 0) {
@@ -277,6 +293,24 @@ export async function listRequests({ staff_id, status }, storeId) {
 }
 
 export async function createRequest(staffId, { type, reason, target_date, target_shift_id, swap_with_staff_id }, storeId) {
+  const membershipRes = await query(
+    `SELECT 1 FROM store_staff WHERE user_id = $1 AND store_id = $2`,
+    [staffId, storeId],
+  );
+  if (!membershipRes.rows[0]) {
+    throw new Error('Bạn không phải nhân viên của chi nhánh hiện tại.');
+  }
+
+  if (swap_with_staff_id) {
+    const swapMembershipRes = await query(
+      `SELECT 1 FROM store_staff WHERE user_id = $1 AND store_id = $2`,
+      [swap_with_staff_id, storeId],
+    );
+    if (!swapMembershipRes.rows[0]) {
+      throw new Error('Nhân viên nhận đổi ca không thuộc chi nhánh hiện tại.');
+    }
+  }
+
   const result = await query(
     `INSERT INTO staff_requests (staff_id, type, reason, target_date, target_shift_id, swap_with_staff_id, status, store_id)
      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7)
@@ -313,6 +347,14 @@ export async function processRequest(adminId, id, { status, admin_note }, storeI
       if (!request.swap_with_staff_id) {
         throw new Error('Không có thông tin nhân viên nhận đổi ca.');
       }
+      const swapMembershipRes = await query(
+        `SELECT 1 FROM store_staff WHERE user_id = $1 AND store_id = $2`,
+        [request.swap_with_staff_id, storeId],
+      );
+      if (!swapMembershipRes.rows[0]) {
+        throw new Error('Nhân viên nhận đổi ca không thuộc chi nhánh hiện tại.');
+      }
+
       // Check if swap target staff has overlap conflict
       const targetShiftRes = await query(`SELECT start_time, end_time FROM shifts WHERE id = $1 AND store_id = $2`, [request.target_shift_id, storeId]);
       if (targetShiftRes.rows.length > 0) {
@@ -376,7 +418,7 @@ export async function getHRCostReport({ start_date, end_date }, storeId) {
        COUNT(ss.id) filter (where ss.status = 'COMPLETED') as completed_shifts,
        COALESCE(SUM(ss.total_salary) filter (where ss.status = 'COMPLETED'), 0) as total_salary
      FROM app_users u
-     JOIN store_staff st ON st.staff_id = u.id
+     JOIN store_staff st ON st.user_id = u.id
      LEFT JOIN staff_shifts ss ON u.id = ss.staff_id AND ss.shift_date >= $1 AND ss.shift_date <= $2 AND ss.store_id = $3
      WHERE u.deleted_at IS NULL AND st.store_id = $3
      GROUP BY u.id, u.full_name, u.username
@@ -388,9 +430,9 @@ export async function getHRCostReport({ start_date, end_date }, storeId) {
 
 export async function getActiveStaffList(storeId) {
   const result = await query(
-    `SELECT u.id, u.username, u.full_name as "fullName", u.email 
+    `SELECT u.id, u.username, u.full_name as "fullName"
      FROM app_users u
-     JOIN store_staff ss ON ss.staff_id = u.id
+     JOIN store_staff ss ON ss.user_id = u.id
      WHERE ss.store_id = $1 AND u.status = 'ACTIVE' AND u.deleted_at IS NULL
      ORDER BY u.full_name`,
      [storeId]

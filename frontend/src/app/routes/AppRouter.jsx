@@ -6,10 +6,10 @@ import { AppLayout } from '../../components/layout/AppLayout.jsx';
 import { LoginPage } from '../../features/auth/pages/LoginPage.jsx';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage.jsx';
 import { WorkspacesPage } from '../../features/workspaces/pages/WorkspacesPage.jsx';
+import { TenantStoreSelectPage } from '../../features/workspaces/pages/TenantStoreSelectPage.jsx';
 import { StoreManagementPage } from '../../features/stores/pages/StoreManagementPage.jsx';
 
 import { AdminDashboardPage } from '../../features/dashboard/pages/AdminDashboardPage.jsx';
-import { UserFormPage } from '../../features/users/pages/UserFormPage.jsx';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage.jsx';
 import { ProductListPage } from '../../features/products/pages/ProductListPage.jsx';
 import { ProductFormPage } from '../../features/products/pages/ProductFormPage.jsx';
@@ -53,30 +53,22 @@ export function AppRouter() {
       />
 
       <Route
+        path="/owner/select-store"
+        element={
+          <ProtectedRoute requireWorkspaceType={WORKSPACE_TYPES.TENANT}>
+            <TenantStoreSelectPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/owner/*"
         element={
           <ProtectedRoute requireWorkspaceType={WORKSPACE_TYPES.TENANT}>
             <AppLayout>
               <Routes>
-                <Route path="dashboard" element={<AdminDashboardPage />} />
                 <Route path="stores" element={<StoreManagementPage />} />
-                <Route path="users" element={<Navigate to="/owner/hr?tab=users" replace />} />
-                <Route path="users/new" element={<UserFormPage />} />
-                <Route path="users/:id/edit" element={<UserFormPage />} />
-                <Route path="products" element={<ProductListPage />} />
-                <Route path="products/new" element={<ProductFormPage />} />
-                <Route path="products/:id/edit" element={<ProductFormPage />} />
-                <Route path="ingredients" element={<IngredientListPage />} />
-                <Route path="ingredients/new" element={<IngredientFormPage />} />
-                <Route path="ingredients/:id/edit" element={<IngredientFormPage />} />
-                <Route path="recipes" element={<Navigate to="/owner/products?tab=recipes" replace />} />
-                <Route path="recipes/new" element={<RecipeFormPage />} />
-                <Route path="recipes/:id/edit" element={<RecipeFormPage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="hr/calendar" element={<AdminCalendarPage />} />
-                <Route path="hr/attendance" element={<AttendancePage />} />
-                <Route path="hr" element={<AdminHRPage />} />
-                <Route path="*" element={<Navigate to={ROUTES.OWNER_DASHBOARD} replace />} />
+                <Route path="*" element={<Navigate to={ROUTES.OWNER_STORES} replace />} />
               </Routes>
             </AppLayout>
           </ProtectedRoute>
@@ -89,11 +81,24 @@ export function AppRouter() {
           <ProtectedRoute requireWorkspaceType={WORKSPACE_TYPES.STORE}>
             <AppLayout>
               <Routes>
+                <Route path="dashboard" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><AdminDashboardPage /></ProtectedRoute>} />
+                <Route path="products" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ProductListPage /></ProtectedRoute>} />
+                <Route path="products/new" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ProductFormPage /></ProtectedRoute>} />
+                <Route path="products/:id/edit" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ProductFormPage /></ProtectedRoute>} />
+                <Route path="ingredients" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><IngredientListPage /></ProtectedRoute>} />
+                <Route path="ingredients/new" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><IngredientFormPage /></ProtectedRoute>} />
+                <Route path="ingredients/:id/edit" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><IngredientFormPage /></ProtectedRoute>} />
+                <Route path="recipes" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><Navigate to="/store/products?tab=recipes" replace /></ProtectedRoute>} />
+                <Route path="recipes/new" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><RecipeFormPage /></ProtectedRoute>} />
+                <Route path="recipes/:id/edit" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><RecipeFormPage /></ProtectedRoute>} />
+                <Route path="reports" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ReportsPage /></ProtectedRoute>} />
+                <Route path="manager-hr/calendar" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><AdminCalendarPage /></ProtectedRoute>} />
+                <Route path="manager-hr" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><AdminHRPage /></ProtectedRoute>} />
                 <Route path="pos" element={<POSPage />} />
                 <Route path="session" element={<StaffSessionPage />} />
                 <Route path="kds" element={<KDSPage />} />
-                <Route path="orders" element={<OrderHistoryPage />} />
-                <Route path="orders/:id" element={<OrderDetailPage />} />
+                <Route path="orders" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><OrderHistoryPage /></ProtectedRoute>} />
+                <Route path="orders/:id" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><OrderDetailPage /></ProtectedRoute>} />
                 <Route path="stock" element={<StockPage />} />
                 <Route path="hr" element={<StaffHRPage />} />
                 <Route path="hr/attendance" element={<AttendancePage />} />

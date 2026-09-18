@@ -6,7 +6,7 @@ import { TextInput } from '../../../components/forms/TextInput.jsx';
 import { PasswordInput } from '../../../components/forms/PasswordInput.jsx';
 import { Button } from '../../../components/common/Button.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
-import { validateUsername, validatePassword } from '../../../utils/validators.js';
+import { validateEmail, validatePassword } from '../../../utils/validators.js';
 import { ROUTES } from '../../../constants/routes.js';
 
 import { authApi } from '../api/authApi.js';
@@ -15,7 +15,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { user, login } = useAuth();
   
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +23,6 @@ export function LoginPage() {
   // Forgot/Reset password views and states
   const [view, setView] = useState('login'); // 'login' | 'forgot' | 'reset'
   const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotUsername, setForgotUsername] = useState('');
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -47,13 +46,13 @@ export function LoginPage() {
     e.preventDefault();
     setSubmitError('');
     
-    // Validate username and password
-    const usernameError = validateUsername(form.username);
+    // Validate email and password
+    const emailError = validateEmail(form.email);
     const passwordError = validatePassword(form.password);
 
-    if (usernameError || passwordError) {
+    if (emailError || passwordError) {
       setErrors({
-        username: usernameError,
+        email: emailError,
         password: passwordError,
       });
       return;
@@ -62,7 +61,7 @@ export function LoginPage() {
     try {
       setIsSubmitting(true);
       await login({
-        username: form.username.trim(),
+        email: form.email.trim(),
         password: form.password,
       });
       
@@ -81,9 +80,6 @@ export function LoginPage() {
     setSuccessMessage('');
 
     const newErrors = {};
-    if (!forgotUsername.trim()) {
-      newErrors.forgotUsername = 'Tên đăng nhập là bắt buộc.';
-    }
     if (!forgotEmail.trim()) {
       newErrors.forgotEmail = 'Email là bắt buộc.';
     }
@@ -97,7 +93,7 @@ export function LoginPage() {
       setIsSubmitting(true);
       await authApi.forgotPassword({
         email: forgotEmail.trim(),
-        username: forgotUsername.trim()
+        username: forgotEmail.trim()
       });
       setSuccessMessage('Mã xác nhận đã được gửi đến email của bạn.');
       setView('reset');
@@ -198,19 +194,30 @@ export function LoginPage() {
         {view === 'login' && (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <TextInput
-              label="Tên đăng nhập"
-              name="username"
-              value={form.username}
+              label={
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <span>Email</span>
+                </span>
+              }
+              name="email"
+              type="email"
+              value={form.email}
               onChange={handleChange}
-              error={errors.username}
-              placeholder="Nhập tên đăng nhập của bạn"
+              error={errors.email}
+              placeholder="Nhập email của bạn"
               disabled={isSubmitting}
               required
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <PasswordInput
-                label="Mật khẩu"
+                label={
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-key-round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+                    <span>Mật khẩu</span>
+                  </span>
+                }
                 name="password"
                 value={form.password}
                 onChange={handleChange}
@@ -282,22 +289,12 @@ export function LoginPage() {
         {view === 'forgot' && (
           <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <TextInput
-              label="Tên đăng nhập"
-              name="forgotUsername"
-              type="text"
-              value={forgotUsername}
-              onChange={(e) => {
-                setForgotUsername(e.target.value);
-                setSubmitError('');
-              }}
-              error={errors.forgotUsername}
-              placeholder="admin"
-              disabled={isSubmitting}
-              required
-            />
-
-            <TextInput
-              label="Địa chỉ Email"
+              label={
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <span>Địa chỉ Email</span>
+                </span>
+              }
               name="forgotEmail"
               type="email"
               value={forgotEmail}
@@ -330,7 +327,6 @@ export function LoginPage() {
                   setSubmitError('');
                   setSuccessMessage('');
                   setErrors({});
-                  setForgotUsername('');
                   setForgotEmail('');
                 }}
                 style={{
@@ -354,7 +350,12 @@ export function LoginPage() {
         {view === 'reset' && (
           <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <TextInput
-              label="Email"
+              label={
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <span>Email</span>
+                </span>
+              }
               name="forgotEmail"
               value={forgotEmail}
               disabled={true}

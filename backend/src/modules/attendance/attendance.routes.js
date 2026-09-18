@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import { requireStoreManager, requireStoreContext } from '../../middlewares/role.middleware.js';
 import * as attendanceController from './attendance.controller.js';
 
 const router = Router();
@@ -13,7 +13,7 @@ router.post('/check-out', attendanceController.checkOut);
 router.get('/today-status', attendanceController.getTodayStatus);
 
 // Admin-only endpoints
-router.get('/qr-token', requireOwner(), attendanceController.getTodayToken);
-router.get('/logs', requireOwner(), attendanceController.getLogs);
+router.get('/qr-token', requireStoreManager(), attendanceController.getTodayToken);
+router.get('/logs', requireStoreManager(), attendanceController.getLogs);
 
 export default router;

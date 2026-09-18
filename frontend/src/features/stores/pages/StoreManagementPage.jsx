@@ -5,8 +5,10 @@ import { PageHeader } from '../../../components/layout/PageHeader.jsx';
 import { Button } from '../../../components/common/Button.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
 import { apiClient } from '../../../services/apiClient.js';
+import { useAuth } from '../../../app/providers/AuthProvider.jsx';
 
 export function StoreManagementPage() {
+  const { workspace } = useAuth();
   const [stores, setStores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,8 +22,13 @@ export function StoreManagementPage() {
   const fetchStores = async () => {
     try {
       setIsLoading(true);
-      const res = await apiClient.get('/stores');
-      setStores(res.data?.items || []);
+      const res = await apiClient.get(`/tenants/${workspace.id}`);
+      // The tenant API returns stores with storeId, storeName instead of id, name
+      setStores(res.data?.stores?.map(s => ({
+        ...s,
+        id: s.storeId || s.id,
+        name: s.storeName || s.name
+      })) || []);
       setError(null);
     } catch (err) {
       setError(err.message || 'Không thể tải danh sách chi nhánh.');
@@ -69,8 +76,8 @@ export function StoreManagementPage() {
     try {
       if (!window.confirm('Bạn có chắc muốn tạo lại mã mời? Mã cũ sẽ không còn hiệu lực.')) return;
       
-      const res = await apiClient.post(`/stores/${storeId}/invite-code`);
-      setStores(stores.map(s => s.id === storeId ? { ...s, invite_code: res.data.store.invite_code } : s));
+      const res = await apiClient.post(`/stores/${storeId}/regenerate-code`);
+      setStores(stores.map(s => s.id === storeId ? { ...s, invite_code: res.data.inviteCode } : s));
       setSuccess('Đã tạo mã mời mới thành công.');
     } catch (err) {
       setError(err.message || 'Lỗi tạo mã mời.');

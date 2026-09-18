@@ -3,7 +3,7 @@ import { useAuth } from '../providers/AuthProvider.jsx';
 import { PageLoader } from '../../components/feedback/PageLoader.jsx';
 import { ROUTES } from '../../constants/routes.js';
 
-export function ProtectedRoute({ children, requireWorkspaceType }) {
+export function ProtectedRoute({ children, requireWorkspaceType, requireWorkspaceRole }) {
   const { user, workspace, isBootstrapping } = useAuth();
 
   if (isBootstrapping) {
@@ -17,6 +17,12 @@ export function ProtectedRoute({ children, requireWorkspaceType }) {
   // If a specific workspace type is required, check it
   if (requireWorkspaceType) {
     if (!workspace || workspace.type !== requireWorkspaceType) {
+      return <Navigate to={ROUTES.WORKSPACES} replace />;
+    }
+  }
+
+  if (requireWorkspaceRole) {
+    if (!workspace || workspace.role !== requireWorkspaceRole) {
       return <Navigate to={ROUTES.WORKSPACES} replace />;
     }
   }

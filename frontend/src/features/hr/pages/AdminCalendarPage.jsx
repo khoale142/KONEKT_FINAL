@@ -7,7 +7,6 @@ import { StatusBadge } from '../../../components/common/StatusBadge.jsx';
 import { formatVND } from '../../../utils/currency.js';
 import { toLocalDateString } from '../../../utils/date.js';
 import { hrApi } from '../api/hrApi.js';
-import { userApi } from '../../users/api/userApi.js';
 import { Calendar as CalendarIcon, Plus, Trash2, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function AdminCalendarPage() {
@@ -42,11 +41,11 @@ export function AdminCalendarPage() {
 
   const loadBaseMetadata = async () => {
     try {
-      const [usersRes, shiftsRes] = await Promise.all([
-        userApi.getUsers({ status: 'ACTIVE' }),
+      const [staffRes, shiftsRes] = await Promise.all([
+        hrApi.getStaffList(),
         hrApi.getShifts(),
       ]);
-      setStaffList(usersRes.data?.users.filter(u => u.role === 'STAFF') || []);
+      setStaffList(staffRes.data?.staff || []);
       setMasterShifts(shiftsRes.data?.shifts || []);
     } catch (err) {
       setError(err.message || 'Không tải được danh mục nhân sự cơ bản.');

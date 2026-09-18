@@ -3,17 +3,20 @@ import crypto from 'crypto';
 
 const ATTENDANCE_SALT = 'mini-coffee-pos-salt-2026';
 
-export function generateTodayToken() {
+export function generateTodayToken(storeId) {
+  if (!storeId) {
+    throw new Error('Store context is required to generate an attendance token.');
+  }
   const todayStr = new Date().toISOString().slice(0, 10);
   return crypto
     .createHash('sha256')
-    .update(ATTENDANCE_SALT + todayStr)
+    .update(ATTENDANCE_SALT + storeId + todayStr)
     .digest('hex');
 }
 
-export async function checkIn(staffId, token) {
+export async function checkIn(staffId, token, storeId) {
   // 1. Verify token
-  const expectedToken = generateTodayToken();
+  const expectedToken = generateTodayToken(storeId);
   if (token !== expectedToken) {
     throw new Error('Mã QR chấm công không hợp lệ hoặc đã hết hạn.');
   }
@@ -24,8 +27,8 @@ export async function checkIn(staffId, token) {
     `SELECT ss.id, ss.custom_start_time, s.start_time, s.name as shift_name
      FROM staff_shifts ss
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.check_in_at IS NULL`,
-    [staffId, today]
+     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.store_id = $3 AND ss.check_in_at IS NULL`,
+    [staffId, today, storeId]
   );
 
   if (activeShiftResult.rows.length === 0) {
@@ -52,15 +55,15 @@ export async function checkIn(staffId, token) {
   const result = await query(
     `UPDATE staff_shifts
      SET check_in_at = NOW(), lateness_minutes = $1, updated_at = NOW()
-     WHERE id = $2
+     WHERE id = $2 AND store_id = $3
      RETURNING *`,
-    [lateness, shiftId]
+    [lateness, shiftId, storeId]
   );
 
   return result.rows[0];
 }
 
-export async function checkOut(staffId) {
+export async function checkOut(staffId, storeId) {
   const today = new Date().toISOString().slice(0, 10);
 
   // 1. Find active shift that is checked in but not checked out
@@ -70,8 +73,8 @@ export async function checkOut(staffId) {
             COALESCE(ss.custom_end_time, s.end_time) as end_time
      FROM staff_shifts ss
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.check_in_at IS NOT NULL AND ss.check_out_at IS NULL`,
-    [staffId, today]
+     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.store_id = $3 AND ss.check_in_at IS NOT NULL AND ss.check_out_at IS NULL`,
+    [staffId, today, storeId]
   );
 
   if (checkedInResult.rows.length === 0) {
@@ -102,15 +105,15 @@ export async function checkOut(staffId) {
   const result = await query(
     `UPDATE staff_shifts
      SET check_out_at = NOW(), actual_hours = $1, total_salary = $2, status = 'COMPLETED', updated_at = NOW()
-     WHERE id = $3
+     WHERE id = $3 AND store_id = $4
      RETURNING *`,
-    [actualHours, totalSalary, shiftId]
+    [actualHours, totalSalary, shiftId, storeId]
   );
 
   return result.rows[0];
 }
 
-export async function getAttendanceLogs(startDate, endDate) {
+export async function getAttendanceLogs(startDate, endDate, storeId) {
   const result = await query(
     `SELECT ss.id, ss.shift_date::text as shift_date, ss.check_in_at, ss.check_out_at, ss.lateness_minutes, ss.actual_hours, ss.total_salary, ss.status,
             u.full_name as staff_name, u.username as staff_username,
@@ -120,14 +123,14 @@ export async function getAttendanceLogs(startDate, endDate) {
      FROM staff_shifts ss
      JOIN app_users u ON u.id = ss.staff_id
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.shift_date BETWEEN $1 AND $2
+     WHERE ss.shift_date BETWEEN $1 AND $2 AND ss.store_id = $3
      ORDER BY ss.shift_date DESC, ss.check_in_at DESC`,
-    [startDate, endDate]
+    [startDate, endDate, storeId]
   );
   return result.rows;
 }
 
-export async function getTodayStaffStatus(staffId) {
+export async function getTodayStaffStatus(staffId, storeId) {
   const today = new Date().toISOString().slice(0, 10);
   const result = await query(
     `SELECT ss.id, ss.check_in_at, ss.check_out_at, ss.lateness_minutes, ss.actual_hours, ss.status,
@@ -136,8 +139,8 @@ export async function getTodayStaffStatus(staffId) {
             COALESCE(ss.custom_end_time, s.end_time) as planned_end
      FROM staff_shifts ss
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.staff_id = $1 AND ss.shift_date = $2`,
-    [staffId, today]
+     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.store_id = $3`,
+    [staffId, today, storeId]
   );
   return result.rows[0] || null;
 }

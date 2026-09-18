@@ -24,45 +24,50 @@ export function Sidebar({ isCollapsed, onToggle }) {
   const { workspace } = useAuth();
 
   const ownerMenu = [
-    { label: 'Bảng điều khiển', path: ROUTES.OWNER_DASHBOARD, icon: <LayoutDashboard size={21} /> },
     { label: 'Quản lý Chi nhánh', path: ROUTES.OWNER_STORES, icon: <Store size={21} /> },
-    { label: 'Sản phẩm & Công thức', path: ROUTES.OWNER_PRODUCTS, icon: <Coffee size={21} /> },
-    { label: 'Quản lý nguyên liệu', path: ROUTES.OWNER_INGREDIENTS, icon: <Milk size={21} /> },
-    { label: 'Báo cáo thống kê', path: ROUTES.OWNER_REPORTS, icon: <BarChart3 size={21} /> },
-    { label: 'Lịch làm nhân sự', path: '/owner/hr/calendar', icon: <Calendar size={21} /> },
-    { label: 'Quản lý nhân sự', path: '/owner/hr', icon: <Users size={21} /> },
-    { label: 'Chấm công nhân sự', path: ROUTES.OWNER_HR_ATTENDANCE, icon: <UserCheck size={21} /> },
   ];
 
-  const storeMenu = [
+  const storeStaffMenu = [
     { label: 'Bán hàng (POS)', path: ROUTES.STORE_POS, icon: <ShoppingCart size={21} /> },
     { label: 'Quản lý ca làm', path: ROUTES.STORE_SESSION, icon: <UserCheck size={21} /> },
-    { label: 'KDS / Bếp', path: ROUTES.STORE_KDS, icon: <ChefHat size={21} /> }, 
-    { label: 'Lịch sử đơn hàng', path: ROUTES.STORE_ORDERS, icon: <History size={21} /> },
+    { label: 'KDS / Bếp', path: ROUTES.STORE_KDS, icon: <ChefHat size={21} /> },
     { label: 'Nhập kho & Kiểm kê', path: ROUTES.STORE_STOCK, icon: <Package size={21} /> },
     { label: 'Nhân sự & Lịch làm', path: '/store/hr', icon: <Calendar size={21} /> },
     { label: 'Chấm công', path: ROUTES.STORE_HR_ATTENDANCE, icon: <UserCheck size={21} /> },
   ];
 
-  // If user is owner of the current store, they might want to see more links, but let's keep it simple: 
-  // Owner uses /owner/* for global store configs, and /store/* for operational stuff.
-  const menu = workspace?.type === WORKSPACE_TYPES.TENANT ? ownerMenu : storeMenu;
+  const storeManagerMenu = [
+    { label: 'Bảng điều khiển', path: '/store/dashboard', icon: <LayoutDashboard size={21} /> },
+    ...storeStaffMenu.slice(0, 3), // POS, Session, KDS
+    { label: 'Lịch sử đơn hàng', path: ROUTES.STORE_ORDERS, icon: <History size={21} /> },
+    { label: 'Sản phẩm & Công thức', path: '/store/products', icon: <Coffee size={21} /> },
+    { label: 'Quản lý nguyên liệu', path: '/store/ingredients', icon: <Milk size={21} /> },
+    { label: 'Báo cáo thống kê', path: '/store/reports', icon: <BarChart3 size={21} /> },
+    ...storeStaffMenu.slice(3, 4), // Stock
+    { label: 'Lịch làm nhân sự', path: '/store/manager-hr/calendar', icon: <Calendar size={21} /> },
+    { label: 'Quản lý nhân sự', path: '/store/manager-hr', icon: <Users size={21} /> },
+    ...storeStaffMenu.slice(5) // Attendance
+  ];
+
+  const menu = workspace?.type === WORKSPACE_TYPES.TENANT
+    ? ownerMenu
+    : (workspace?.role === 'MANAGER' ? storeManagerMenu : storeStaffMenu);
 
   const isLinkActive = (itemPath) => {
     const currentPath = location.pathname;
     const itemPathname = itemPath.split('?')[0];
 
     if (itemPathname === currentPath) return true;
-    
+
     // Check main parent highlights for subroutes
-    if (itemPathname === ROUTES.OWNER_PRODUCTS.split('?')[0]) {
-      if (currentPath.startsWith('/owner/products') || currentPath.startsWith('/owner/recipes')) {
+    if (itemPathname === '/store/products') {
+      if (currentPath.startsWith('/store/products') || currentPath.startsWith('/store/recipes')) {
         return true;
       }
     }
 
-    if (itemPathname === ROUTES.OWNER_INGREDIENTS.split('?')[0]) {
-      if (currentPath.startsWith('/owner/ingredients')) {
+    if (itemPathname === '/store/ingredients') {
+      if (currentPath.startsWith('/store/ingredients')) {
         return true;
       }
     }
@@ -73,12 +78,12 @@ export function Sidebar({ isCollapsed, onToggle }) {
       }
     }
 
-    if (itemPathname === '/owner/hr') {
-      if (currentPath.startsWith('/owner/users') || currentPath.startsWith('/owner/hr')) {
+    if (itemPathname === '/store/manager-hr') {
+      if (currentPath.startsWith('/store/manager-hr')) {
         return true;
       }
     }
-
+    
     if (itemPathname === ROUTES.STORE_ORDERS) {
       if (currentPath.startsWith('/store/orders')) {
         return true;

@@ -40,19 +40,19 @@ async function getUserAuthRowById(userId) {
   return result.rows[0] || null;
 }
 
-export async function loginWithUsernamePassword({ username, password }) {
-  if (!username || !password) {
-    throw new ApiError(400, 'Username and password are required.');
+export async function loginWithEmailPassword({ email, password }) {
+  if (!email || !password) {
+    throw new ApiError(400, 'Email and password are required.');
   }
 
-  const normalizedUsername = normalizeString(username);
+  const normalizedEmail = normalizeEmail(email);
 
   const result = await query(
     `select id, username, email, password_hash, full_name, role, status, last_login_at, created_at, updated_at
      from app_users
-     where lower(username) = lower($1) and deleted_at is null
+     where lower(email) = lower($1) and deleted_at is null
      limit 1`,
-    [normalizedUsername],
+    [normalizedEmail],
   );
 
   const user = result.rows[0];

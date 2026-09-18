@@ -20,7 +20,6 @@ export function WorkspacesPage() {
   const [tenantName, setTenantName] = useState('');
   const [tenantEmail, setTenantEmail] = useState('');
   const [tenantPhone, setTenantPhone] = useState('');
-  const [tenantAddress, setTenantAddress] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
   const { user, selectWorkspace, logout } = useAuth();
@@ -43,12 +42,18 @@ export function WorkspacesPage() {
     fetchWorkspaces();
   }, []);
 
-  const handleSelectWorkspace = async (type, id) => {
+  const handleSelectWorkspace = async (type, id, tenant = null) => {
     try {
       setIsJoining(true);
       await selectWorkspace({ workspaceType: type, workspaceId: id });
       if (type === WORKSPACE_TYPES.TENANT) {
-        navigate(ROUTES.OWNER_DASHBOARD);
+        const stores = tenant?.stores || [];
+        if (stores.length === 1) {
+          await selectWorkspace({ workspaceType: WORKSPACE_TYPES.STORE, workspaceId: stores[0].id });
+          navigate(ROUTES.STORE_POS);
+        } else {
+          navigate('/owner/select-store');
+        }
       } else {
         navigate(ROUTES.STORE_POS);
       }
@@ -67,14 +72,12 @@ export function WorkspacesPage() {
       const res = await apiClient.post('/tenants', { 
         name: tenantName.trim(),
         email: tenantEmail.trim(),
-        phone: tenantPhone.trim(),
-        address: tenantAddress.trim()
+        phone: tenantPhone.trim()
       });
       setShowCreateTenant(false);
       setTenantName('');
       setTenantEmail('');
       setTenantPhone('');
-      setTenantAddress('');
       
       // Auto select the new tenant
       await handleSelectWorkspace(WORKSPACE_TYPES.TENANT, res.data.id);
@@ -201,8 +204,8 @@ export function WorkspacesPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                   {workspaces.ownedTenants.map(tenant => (
                     <div 
-                      key={tenant.tenantId}
-                      onClick={() => !isJoining && handleSelectWorkspace(WORKSPACE_TYPES.TENANT, tenant.tenantId)}
+                      key={tenant.id}
+                      onClick={() => !isJoining && handleSelectWorkspace(WORKSPACE_TYPES.TENANT, tenant.id, tenant)}
                       style={{
                         background: 'white',
                         padding: '1.5rem',
@@ -219,9 +222,9 @@ export function WorkspacesPage() {
                       }}
                       className="workspace-card"
                     >
-                      <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem' }}>{tenant.tenantName}</h3>
+                      <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.125rem' }}>{tenant.name}</h3>
                       <p style={{ margin: 0, color: 'var(--color-secondary)', fontSize: '0.875rem' }}>
-                        {tenant.stores.length} chi nhánh trực thuộc
+                        {tenant.stores?.length || 0} chi nhánh trực thuộc
                       </p>
                       <div style={{ marginTop: '1rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '500' }}>
                         Vào quản trị <ArrowRight size={16} style={{ marginLeft: '4px' }} />
@@ -252,8 +255,8 @@ export function WorkspacesPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                   {workspaces.staffStores.map(store => (
                     <div 
-                      key={store.storeId}
-                      onClick={() => !isJoining && handleSelectWorkspace(WORKSPACE_TYPES.STORE, store.storeId)}
+                      key={store.id}
+                      onClick={() => !isJoining && handleSelectWorkspace(WORKSPACE_TYPES.STORE, store.id)}
                       style={{
                         background: 'white',
                         padding: '1.5rem',
@@ -265,9 +268,9 @@ export function WorkspacesPage() {
                       }}
                       className="workspace-card"
                     >
-                      <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.125rem' }}>{store.storeName}</h3>
+                      <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.125rem' }}>{store.name}</h3>
                       <p style={{ margin: 0, color: 'var(--color-secondary)', fontSize: '0.875rem' }}>
-                        Thuộc: {store.tenantName}
+                        Thuộc: {store.tenant_name || store.tenantName}
                       </p>
                       <div style={{ marginTop: '1rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '500' }}>
                         Vào làm việc <ArrowRight size={16} style={{ marginLeft: '4px' }} />
@@ -320,17 +323,6 @@ export function WorkspacesPage() {
                   placeholder="VD: 0901234567"
                   value={tenantPhone}
                   onChange={(e) => setTenantPhone(e.target.value)}
-                  disabled={isJoining}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Địa chỉ trụ sở</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  placeholder="VD: 123 Nguyễn Huệ, Quận 1"
-                  value={tenantAddress}
-                  onChange={(e) => setTenantAddress(e.target.value)}
                   disabled={isJoining}
                 />
               </div>

@@ -122,7 +122,7 @@ export function OrderHistoryPage() {
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             type="button"
-            onClick={() => navigate(`/staff/orders/${row.id}`)}
+            onClick={() => navigate(`/store/orders/${row.id}`)}
             title="Xem chi tiet don hang"
             style={{ color: 'var(--color-primary)', display: 'flex', padding: 0 }}
           >

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import { requireStoreManager, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
   createNewProduct,
   deleteExistingProduct,
@@ -18,8 +18,8 @@ router.get('/pos/available', getPosAvailableProducts);
 router.get('/', getProducts);
 router.get('/:id', getProduct);
 
-router.post('/', requireOwner(), createNewProduct);
-router.patch('/:id', requireOwner(), updateExistingProduct);
-router.delete('/:id', requireOwner(), deleteExistingProduct);
+router.post('/', requireStoreManager(), createNewProduct);
+router.patch('/:id', requireStoreManager(), updateExistingProduct);
+router.delete('/:id', requireStoreManager(), deleteExistingProduct);
 
 export default router;

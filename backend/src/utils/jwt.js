@@ -9,9 +9,9 @@ export function signAccessToken(user) {
   );
 }
 
-export function signWorkspaceToken({ userId, workspaceType, workspaceId }) {
+export function signWorkspaceToken({ userId, workspaceType, workspaceId, tenantId, role }) {
   return jwt.sign(
-    { userId, workspaceType, workspaceId },
+    { userId, workspaceType, workspaceId, tenantId, role },
     env.jwtSecret,
     { expiresIn: env.jwtExpiresIn },
   );

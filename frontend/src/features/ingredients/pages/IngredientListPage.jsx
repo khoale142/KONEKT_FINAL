@@ -266,7 +266,7 @@ export function IngredientListPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate(`/admin/ingredients/${row.id}/edit`)}
+            onClick={() => navigate(`/store/ingredients/${row.id}/edit`)}
             title="Chỉnh sửa"
             style={{ color: 'var(--color-primary)', display: 'flex', padding: 0 }}
           >
@@ -302,7 +302,7 @@ export function IngredientListPage() {
             </Button>
             <Button
               variant="primary"
-              onClick={() => navigate(ROUTES.ADMIN_INGREDIENTS_NEW)}
+              onClick={() => navigate(ROUTES.STORE_INGREDIENTS_NEW)}
               icon={<Plus size={16} />}
             >
               Thêm nguyên liệu

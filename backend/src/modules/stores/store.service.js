@@ -14,6 +14,21 @@ function generateInviteCode() {
   return result;
 }
 
+async function ensureStoreBelongsToTenant(executor, storeId, tenantId) {
+  const result = await executor.query(
+    `select id, tenant_id, name, status
+     from stores
+     where id = $1 and tenant_id = $2`,
+    [storeId, tenantId],
+  );
+
+  if (!result.rows[0]) {
+    throw new ApiError(404, 'Store not found in the current tenant.');
+  }
+
+  return result.rows[0];
+}
+
 export async function createStore(tenantId, { name, address }, sourceStoreId) {
   const normalizedName = normalizeString(name);
   const normalizedAddress = normalizeString(address);
@@ -26,6 +41,10 @@ export async function createStore(tenantId, { name, address }, sourceStoreId) {
 
   try {
     await client.query('begin');
+
+    if (sourceStoreId) {
+      await ensureStoreBelongsToTenant(client, sourceStoreId, tenantId);
+    }
 
     let inviteCode = generateInviteCode();
     let codeIsUnique = false;
@@ -117,8 +136,8 @@ export async function createStore(tenantId, { name, address }, sourceStoreId) {
       
       // Clone shifts
       await client.query(
-        `insert into shifts (name, start_time, end_time, status, store_id)
-         select name, start_time, end_time, status, $2
+        `insert into shifts (name, start_time, end_time, hourly_rate, store_id)
+         select name, start_time, end_time, hourly_rate, $2
          from shifts where store_id = $1`,
         [sourceStoreId, newStore.id]
       );
@@ -191,7 +210,27 @@ export async function joinStoreByInviteCode(userId, inviteCode) {
   };
 }
 
-export async function regenerateInviteCode(storeId) {
+export async function updateStaffRole(storeId, userId, role, tenantId) {
+  await ensureStoreBelongsToTenant({ query }, storeId, tenantId);
+
+  if (role !== 'MANAGER' && role !== 'STAFF') {
+    throw new ApiError(400, 'Vai trò không hợp lệ.');
+  }
+
+  const result = await query(
+    `update store_staff set role = $1 where store_id = $2 and user_id = $3 returning *`,
+    [role, storeId, userId]
+  );
+
+  if (!result.rows[0]) {
+    throw new ApiError(404, 'Không tìm thấy nhân viên trong chi nhánh này.');
+  }
+  return result.rows[0];
+}
+
+export async function regenerateInviteCode(storeId, tenantId) {
+  await ensureStoreBelongsToTenant({ query }, storeId, tenantId);
+
   let inviteCode = generateInviteCode();
   let codeIsUnique = false;
   
@@ -212,9 +251,11 @@ export async function regenerateInviteCode(storeId) {
   return { inviteCode };
 }
 
-export async function listStoreStaff(storeId) {
+export async function listStoreStaff(storeId, tenantId) {
+  await ensureStoreBelongsToTenant({ query }, storeId, tenantId);
+
   const result = await query(
-    `select u.id, u.username, u.full_name, u.email, ss.joined_at
+    `select u.id, u.username, u.full_name, u.email, ss.role, ss.joined_at
      from store_staff ss
      join app_users u on u.id = ss.user_id
      where ss.store_id = $1
@@ -223,4 +264,19 @@ export async function listStoreStaff(storeId) {
   );
 
   return result.rows;
+}
+
+export async function removeStaffFromStore(storeId, userId, tenantId) {
+  await ensureStoreBelongsToTenant({ query }, storeId, tenantId);
+
+  const result = await query(
+    `delete from store_staff
+     where store_id = $1 and user_id = $2
+     returning user_id`,
+    [storeId, userId],
+  );
+
+  if (!result.rows[0]) {
+    throw new ApiError(404, 'Staff member not found in this store.');
+  }
 }

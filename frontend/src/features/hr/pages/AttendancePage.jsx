@@ -67,7 +67,7 @@ export function AttendancePage() {
     log.shift_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const checkInURL = `${window.location.origin}/staff/hr?token=${qrToken}`;
+  const checkInURL = `${window.location.origin}/store/hr?token=${qrToken}`;
   const qrImageURL = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(checkInURL)}`;
 
   const headers = [

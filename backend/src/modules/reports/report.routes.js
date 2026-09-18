@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireOwner } from '../../middlewares/role.middleware.js';
+import { requireStoreContext, requireStoreManager } from '../../middlewares/role.middleware.js';
 import { getBestSellingProducts, getDiscardReport, getLowStockIngredients, getRevenueReport } from './report.controller.js';
 
 const router = Router();
 
-router.use(requireAuth, requireOwner());
+router.use(requireAuth, requireStoreContext(), requireStoreManager());
 
 router.get('/revenue', getRevenueReport);
 router.get('/best-selling', getBestSellingProducts);

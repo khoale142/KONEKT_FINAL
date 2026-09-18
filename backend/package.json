@@ -7,6 +7,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node src/seed/seed.js",
+    "migrate:tenant": "node src/seed/run_multi_tenant_migration.js",
+    "migrate:tenant-info": "node scripts/add-tenant-info-columns.js",
     "db:test": "node scripts/test-db-connection.js",
     "test": "vitest run"
   },

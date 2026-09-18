@@ -116,8 +116,8 @@ export function StaffHRPage() {
       const sundayStr = toLocalDateString(sunday);
 
       const [shiftsRes, availRes, masterShiftsRes] = await Promise.all([
-        hrApi.getAssignedShifts({ start_date: mondayStr, end_date: sundayStr }),
-        hrApi.getAvailability({ start_date: mondayStr, end_date: sundayStr }),
+        hrApi.getMyAssignedShifts({ start_date: mondayStr, end_date: sundayStr }),
+        hrApi.getMyAvailability({ start_date: mondayStr, end_date: sundayStr }),
         hrApi.getShifts(),
       ]);
 
@@ -136,7 +136,7 @@ export function StaffHRPage() {
     setError('');
     try {
       const [reqsRes, staffRes, shiftsRes] = await Promise.all([
-        hrApi.getRequests(),
+        hrApi.getMyRequests(),
         hrApi.getStaffList(),
         hrApi.getShifts(),
       ]);
@@ -292,7 +292,7 @@ export function StaffHRPage() {
   const handleAvailModalDelete = async (availId) => {
     if (!window.confirm('Bạn có chắc muốn xóa lịch báo rảnh này?')) return;
     try {
-      await hrApi.deleteAvailability(availId);
+      await hrApi.deleteMyAvailability(availId);
       showToast('Đã xóa đăng ký lịch rảnh.');
       setAvailModal(prev => ({
         ...prev,
@@ -728,7 +728,7 @@ export function StaffHRPage() {
                       required
                     >
                       <option value="">-- Chọn nhân viên --</option>
-                      {users.filter(u => u.role === 'STAFF').map((u) => (
+                      {users.map((u) => (
                         <option key={u.id} value={u.id}>{u.fullName} (@{u.username})</option>
                       ))}
                     </select>

@@ -130,7 +130,7 @@ export function ProductFormPage() {
       }
 
       setTimeout(() => {
-        navigate(ROUTES.ADMIN_PRODUCTS);
+        navigate(ROUTES.STORE_PRODUCTS);
       }, 900);
     } catch (saveError) {
       setSubmitError(saveError.message || 'Lưu thông tin sản phẩm thất bại.');
@@ -155,9 +155,9 @@ export function ProductFormPage() {
                 variant="secondary"
                 onClick={() => {
                   if (associatedRecipeId) {
-                    navigate(`/admin/recipes/${associatedRecipeId}/edit`);
+                    navigate(`/store/recipes/${associatedRecipeId}/edit`);
                   } else {
-                    navigate(`/admin/recipes/new?productId=${id}`);
+                    navigate(`/store/recipes/new?productId=${id}`);
                   }
                 }}
                 icon={<ChefHat size={16} />}
@@ -165,7 +165,7 @@ export function ProductFormPage() {
                 {associatedRecipeId ? 'Sửa công thức nhanh' : 'Thiết lập công thức nhanh'}
               </Button>
             )}
-            <Button variant="secondary" onClick={() => navigate(ROUTES.ADMIN_PRODUCTS)} icon={<ArrowLeft size={16} />}>
+            <Button variant="secondary" onClick={() => navigate(ROUTES.STORE_PRODUCTS)} icon={<ArrowLeft size={16} />}>
               Quay lại danh sách
             </Button>
           </div>
@@ -238,7 +238,7 @@ export function ProductFormPage() {
               />
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
-                <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.ADMIN_PRODUCTS)} disabled={isSubmitting}>
+                <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.STORE_PRODUCTS)} disabled={isSubmitting}>
                   Hủy bỏ
                 </Button>
                 <Button type="submit" variant="primary" loading={isSubmitting} icon={<Save size={16} />}>

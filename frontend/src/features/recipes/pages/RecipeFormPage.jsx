@@ -104,7 +104,7 @@ export function RecipeFormPage({ recipeId, onSave, onCancel }) {
     if (onCancel) {
       onCancel();
     } else {
-      navigate(ROUTES.ADMIN_RECIPES);
+      navigate(ROUTES.STORE_RECIPES);
     }
   };
 
@@ -199,7 +199,7 @@ export function RecipeFormPage({ recipeId, onSave, onCancel }) {
         }, 900);
       } else {
         setTimeout(() => {
-          navigate(ROUTES.ADMIN_RECIPES);
+          navigate(ROUTES.STORE_RECIPES);
         }, 900);
       }
     } catch (saveError) {
@@ -219,7 +219,7 @@ export function RecipeFormPage({ recipeId, onSave, onCancel }) {
             {productId && (
               <Button
                 variant="secondary"
-                onClick={() => navigate(`/admin/products/${productId}/edit`)}
+                onClick={() => navigate(`/store/products/${productId}/edit`)}
                 icon={<Coffee size={16} />}
               >
                 Sửa sản phẩm nhanh

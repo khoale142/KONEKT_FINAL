@@ -1,8 +1,8 @@
 import { apiClient } from '../../../services/apiClient.js';
 
 export const authApi = {
-  login({ username, password }) {
-    return apiClient.post('/auth/login', { username, password });
+  login({ email, password }) {
+    return apiClient.post('/auth/login', { email, password });
   },
   register({ username, password, fullName, email, phone }) {
     return apiClient.post('/auth/register', { username, password, fullName, email, phone });

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import { requireStoreManager, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
   createNewOrder,
   getAllOrders,
@@ -11,15 +11,14 @@ import {
 } from './order.controller.js';
 
 const router = Router();
-
 router.use(requireAuth, requireStoreContext());
 
 router.post('/', createNewOrder);
 router.get('/my-orders', getMyOrders);
 router.get('/my-orders/:id', getMyOrderById);
-router.post('/:id/refund', requireOwner(), refundItems);
+router.post('/:id/refund', requireStoreManager(), refundItems);
 
-router.get('/', requireOwner(), getAllOrders);
-router.get('/:id', requireOwner(), getOrderById);
+router.get('/', requireStoreManager(), getAllOrders);
+router.get('/:id', requireStoreManager(), getOrderById);
 
 export default router;

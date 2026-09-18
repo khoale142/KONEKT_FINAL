@@ -53,75 +53,11 @@ export async function createTenant(userId, { name, email, phone, address }) {
       [userId, tenant.id]
     );
 
-    // 3. Create default store
-    let inviteCode = generateInviteCode();
-    let codeIsUnique = false;
-    
-    // Ensure unique invite code
-    while (!codeIsUnique) {
-      const checkResult = await client.query(`select 1 from stores where invite_code = $1`, [inviteCode]);
-      if (checkResult.rows.length === 0) {
-        codeIsUnique = true;
-      } else {
-        inviteCode = generateInviteCode();
-      }
-    }
-
-    const storeResult = await client.query(
-      `insert into stores (tenant_id, name, address, invite_code)
-       values ($1, $2, $3, $4)
-       returning id, name, address, invite_code, status`,
-      [tenant.id, 'Chi nhánh chính', normalizedAddress, inviteCode]
-    );
-    const store = storeResult.rows[0];
-
-    // 4. Create sample data for the first store
-    // Sample Ingredient
-    const ingredientResult = await client.query(
-      `insert into ingredients (name, tag, unit, current_stock, low_stock_threshold, created_by, store_id)
-       values ($1, $2, $3, $4, $5, $6, $7)
-       returning id`,
-      ['Cà phê hạt xay', 'Cà phê', 'Gram', 1000, 200, userId, store.id]
-    );
-    const ingredientId = ingredientResult.rows[0].id;
-    
-    // Sample Product
-    const productResult = await client.query(
-      `insert into products (name, tag, price, status, created_by, store_id)
-       values ($1, $2, $3, $4, $5, $6)
-       returning id`,
-      ['Cà phê đen đá', 'Cà phê', 25000, 'ACTIVE', userId, store.id]
-    );
-    const productId = productResult.rows[0].id;
-    
-    // Sample Recipe
-    const recipeResult = await client.query(
-      `insert into recipes (product_id, store_id)
-       values ($1, $2)
-       returning id`,
-      [productId, store.id]
-    );
-    const recipeId = recipeResult.rows[0].id;
-    
-    // Sample Recipe Item
-    await client.query(
-      `insert into recipe_items (recipe_id, ingredient_id, quantity_required)
-       values ($1, $2, $3)`,
-      [recipeId, ingredientId, 25] // 25g coffee per cup
-    );
-    
-    // Sample Shift
-    await client.query(
-      `insert into shifts (name, start_time, end_time, status, store_id)
-       values ($1, $2, $3, $4, $5)`,
-      ['Ca Sáng', '07:00:00', '15:00:00', 'ACTIVE', store.id]
-    );
-
     await client.query('commit');
 
     return {
       ...tenant,
-      stores: [store],
+      stores: [],
     };
   } catch (error) {
     await client.query('rollback');

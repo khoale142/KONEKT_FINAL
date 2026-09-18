@@ -14,10 +14,20 @@ async function runMigration() {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR(120) NOT NULL,
         slug VARCHAR(120) UNIQUE,
+        email VARCHAR(120),
+        phone VARCHAR(20),
+        address TEXT,
         status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
+    `);
+
+    await client.query(`
+      ALTER TABLE tenants
+      ADD COLUMN IF NOT EXISTS email VARCHAR(120),
+      ADD COLUMN IF NOT EXISTS phone VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS address TEXT
     `);
 
     // 2. Create stores table
@@ -52,6 +62,7 @@ async function runMigration() {
       CREATE TABLE IF NOT EXISTS store_staff (
         user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
         store_id UUID NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL DEFAULT 'STAFF' CHECK (role IN ('MANAGER','STAFF')),
         joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (user_id, store_id)
       )

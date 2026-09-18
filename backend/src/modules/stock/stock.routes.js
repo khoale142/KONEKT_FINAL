@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import { requireStoreManager, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
   discardStockItem,
   getStockForecastList,
@@ -13,15 +13,16 @@ import {
 
 const router = Router();
 
+
 router.use(requireAuth, requireStoreContext());
 
 router.get('/transactions', getStockTransactions);
 router.get('/forecast', getStockForecastList);
 
-router.post('/import', requireOwner(), performStockImport);
-router.post('/import-batch', requireOwner(), performBatchStockImport);
-router.post('/adjust', requireOwner(), performStockAdjustment);
-router.post('/count', requireOwner(), performDailyStockCount);
-router.post('/discard', requireOwner(), discardStockItem);
+router.post('/import', requireStoreManager(), performStockImport);
+router.post('/import-batch', requireStoreManager(), performBatchStockImport);
+router.post('/adjust', requireStoreManager(), performStockAdjustment);
+router.post('/count', requireStoreManager(), performDailyStockCount);
+router.post('/discard', requireStoreManager(), discardStockItem);
 
 export default router;

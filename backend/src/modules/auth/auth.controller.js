@@ -1,6 +1,6 @@
 import { sendSuccess } from '../../utils/apiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { changeCurrentUserPassword, loginWithUsernamePassword, registerUser, updateCurrentUserProfile, requestPasswordReset, resetPasswordWithToken } from './auth.service.js';
+import { changeCurrentUserPassword, loginWithEmailPassword, registerUser, updateCurrentUserProfile, requestPasswordReset, resetPasswordWithToken } from './auth.service.js';
 
 export const register = asyncHandler(async (req, res) => {
   const data = await registerUser(req.body);
@@ -12,7 +12,7 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const data = await loginWithUsernamePassword(req.body);
+  const data = await loginWithEmailPassword(req.body);
 
   return sendSuccess(res, {
     message: 'Login successfully.',

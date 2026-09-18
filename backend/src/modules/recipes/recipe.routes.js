@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireOwner, requireStoreContext } from '../../middlewares/role.middleware.js';
+import { requireStoreManager, requireStoreContext } from '../../middlewares/role.middleware.js';
 import {
   createNewRecipe,
   deleteExistingRecipe,
@@ -12,14 +12,15 @@ import {
 
 const router = Router();
 
+
 router.use(requireAuth, requireStoreContext());
 
 router.get('/', getRecipes);
 router.get('/:id', getRecipe);
 router.get('/products/:productId', getRecipeByProduct);
 
-router.post('/', requireOwner(), createNewRecipe);
-router.put('/:id', requireOwner(), updateExistingRecipe);
-router.delete('/:id', requireOwner(), deleteExistingRecipe);
+router.post('/', requireStoreManager(), createNewRecipe);
+router.put('/:id', requireStoreManager(), updateExistingRecipe);
+router.delete('/:id', requireStoreManager(), deleteExistingRecipe);
 
 export default router;

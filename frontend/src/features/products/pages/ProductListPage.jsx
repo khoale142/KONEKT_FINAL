@@ -181,7 +181,7 @@ export function ProductListPage() {
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
           <button
             type="button"
-            onClick={() => navigate(`/admin/products/${row.id}/edit`)}
+            onClick={() => navigate(`/store/products/${row.id}/edit`)}
             title="Chỉnh sửa sản phẩm"
             style={{ color: 'var(--color-primary)', display: 'flex', padding: 0 }}
           >
@@ -371,7 +371,7 @@ export function ProductListPage() {
               </Button>
               <Button
                 variant="primary"
-                onClick={() => navigate(ROUTES.ADMIN_PRODUCTS_NEW)}
+                onClick={() => navigate(ROUTES.STORE_PRODUCTS_NEW)}
                 icon={<Plus size={16} />}
               >
                 Thêm sản phẩm

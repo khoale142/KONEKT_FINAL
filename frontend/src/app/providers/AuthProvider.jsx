@@ -44,7 +44,8 @@ export function AuthProvider({ children }) {
           setWorkspace({
             type: decoded.workspaceType,
             id: decoded.workspaceId,
-            tenantId: decoded.tenantId, // Assuming we include this if needed, or we fetch details later
+            tenantId: decoded.tenantId,
+            role: decoded.role,
           });
         } catch (e) {
           clearWorkspaceToken();
@@ -66,8 +67,8 @@ export function AuthProvider({ children }) {
     initAuth();
   }, []);
 
-  const login = async ({ username, password }) => {
-    const response = await apiClient.post('/auth/login', { username, password });
+  const login = async ({ email, password }) => {
+    const response = await apiClient.post('/auth/login', { email, password });
     const { token, user: loggedInUser } = response.data;
 
     setAuthToken(token);
@@ -88,12 +89,23 @@ export function AuthProvider({ children }) {
 
   const selectWorkspace = async ({ workspaceType, workspaceId }) => {
     const response = await apiClient.post('/workspaces/select', { workspaceType, workspaceId });
-    const { token, workspace: workspaceData } = response.data;
+    const { token } = response.data;
 
     setWorkspaceToken(token);
     
-    // We can also decode token or just use what server returns
-    setWorkspace(workspaceData);
+    let workspaceData = null;
+    try {
+      const decoded = jwtDecode(token);
+      workspaceData = {
+        type: decoded.workspaceType,
+        id: decoded.workspaceId,
+        tenantId: decoded.tenantId,
+        role: decoded.role,
+      };
+      setWorkspace(workspaceData);
+    } catch (e) {
+      console.error('Failed to decode workspace token', e);
+    }
 
     return workspaceData;
   };
