@@ -48,7 +48,9 @@ export function TenantStoreSelectPage() {
     try {
       setIsJoining(true);
       await selectWorkspace({ workspaceType: WORKSPACE_TYPES.STORE, workspaceId: storeId });
-      navigate(ROUTES.STORE_POS);
+      // This page requires a TENANT workspace. Reload after persisting the STORE
+      // token so its route guard cannot redirect during the workspace transition.
+      window.location.assign(ROUTES.STORE_POS);
     } catch (err) {
       alert('Lỗi truy cập chi nhánh: ' + (err.message || 'Không xác định'));
       setIsJoining(false);
@@ -69,7 +71,7 @@ export function TenantStoreSelectPage() {
       setStoreAddress('');
       
       await selectWorkspace({ workspaceType: WORKSPACE_TYPES.STORE, workspaceId: res.data.id });
-      navigate(ROUTES.STORE_POS);
+      window.location.assign(ROUTES.STORE_POS);
     } catch (err) {
       alert('Lỗi tạo chi nhánh: ' + (err.message || 'Không xác định'));
       setIsJoining(false);

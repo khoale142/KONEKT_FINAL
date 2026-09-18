@@ -42,20 +42,14 @@ export function WorkspacesPage() {
     fetchWorkspaces();
   }, []);
 
-  const handleSelectWorkspace = async (type, id, tenant = null) => {
+  const handleSelectWorkspace = async (type, id) => {
     try {
       setIsJoining(true);
       await selectWorkspace({ workspaceType: type, workspaceId: id });
       if (type === WORKSPACE_TYPES.TENANT) {
-        const stores = tenant?.stores || [];
-        if (stores.length === 1) {
-          await selectWorkspace({ workspaceType: WORKSPACE_TYPES.STORE, workspaceId: stores[0].id });
-          navigate(ROUTES.STORE_POS);
-        } else {
-          navigate('/owner/select-store');
-        }
+        navigate('/owner/select-store');
       } else {
-        navigate(ROUTES.STORE_POS);
+        window.location.assign(ROUTES.STORE_POS);
       }
     } catch (err) {
       alert('Lỗi khi truy cập: ' + (err.message || 'Không xác định'));
@@ -205,7 +199,7 @@ export function WorkspacesPage() {
                   {workspaces.ownedTenants.map(tenant => (
                     <div 
                       key={tenant.id}
-                      onClick={() => !isJoining && handleSelectWorkspace(WORKSPACE_TYPES.TENANT, tenant.id, tenant)}
+                      onClick={() => !isJoining && handleSelectWorkspace(WORKSPACE_TYPES.TENANT, tenant.id)}
                       style={{
                         background: 'white',
                         padding: '1.5rem',
