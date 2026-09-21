@@ -14,6 +14,7 @@ import {
   PackageOpen,
   RotateCcw,
   Trash,
+  Factory,
 } from 'lucide-react';
 import { stockApi } from '../api/stockApi.js';
 import { ingredientApi } from '../../ingredients/api/ingredientApi.js';
@@ -39,6 +40,7 @@ import {
 } from '../utils/stockSpreadsheet.js';
 import { formatDateTime } from '../../../utils/date.js';
 import { STOCK_TRANSACTION_TYPES } from '../../../constants/stockTransactionTypes.js';
+import { ProducePreparationTab } from '../components/ProducePreparationTab.jsx';
 
 const STOCK_MODES = Object.freeze({
   IMPORT: 'IMPORT',
@@ -1013,6 +1015,14 @@ export function StockPage() {
           <Trash size={18} />
           Hủy hàng & Thất thoát
         </button>
+        <button
+          onClick={() => setActiveTab('produce')}
+          className={`btn ${activeTab === 'produce' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Factory size={18} />
+          Sản xuất nội bộ
+        </button>
       </div>
 
       {/* ------------------ TAB 1: STOCK ADJUST (KIỂM KÊ & ĐIỀU CHỈNH) ------------------ */}
@@ -1590,6 +1600,9 @@ export function StockPage() {
           </div>
         </div>
       )}
+
+      {/* ------------------ TAB 5: PRODUCE (SẢN XUẤT NỘI BỘ) ------------------ */}
+      {activeTab === 'produce' && <ProducePreparationTab />}
 
       <Toast message={toastMsg} type={toastType} onClose={() => setToastMsg('')} />
 

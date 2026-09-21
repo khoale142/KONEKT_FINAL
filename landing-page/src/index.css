@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "./styles/variables.css";
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    font-family: var(--font-family);
+  }
+}

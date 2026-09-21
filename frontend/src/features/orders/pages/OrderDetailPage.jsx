@@ -44,6 +44,7 @@ export function OrderDetailPage() {
   const [refundQuantities, setRefundQuantities] = useState({});
   const [refundReason, setRefundReason] = useState('');
   const [returnToStock, setReturnToStock] = useState(true);
+  const [refundOperationId, setRefundOperationId] = useState(null);
   const [refundError, setRefundError] = useState('');
   const [isRefundSubmitting, setIsRefundSubmitting] = useState(false);
 
@@ -123,10 +124,13 @@ export function OrderDetailPage() {
       return;
     }
 
+    const operationId = refundOperationId || crypto.randomUUID();
+    setRefundOperationId(operationId);
     const payload = {
       refundAll,
       returnToStock,
       reason: refundReason.trim(),
+      operationId,
     };
 
     if (!refundAll) {
@@ -152,6 +156,7 @@ export function OrderDetailPage() {
       setRefundReason('');
       setRefundQuantities({});
       setRefundAll(true);
+      setRefundOperationId(null);
     } catch (err) {
       setRefundError(err.message || 'Hoàn tiền thất bại.');
     } finally {

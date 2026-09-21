@@ -11,8 +11,8 @@ function buildQueryString(filters = {}) {
     query.set('status', filters.status);
   }
 
-  if (filters.tag && filters.tag !== 'ALL') {
-    query.set('tag', filters.tag);
+  if (filters.categoryId && filters.categoryId !== 'ALL') {
+    query.set('categoryId', filters.categoryId);
   }
 
   const queryString = query.toString();
@@ -29,8 +29,26 @@ export const productApi = {
   createProduct(data) {
     return apiClient.post('/products', data);
   },
+  bulkCreateProducts(data) {
+    return apiClient.post('/products/bulk', data);
+  },
+  assignProductsToCategory(data) {
+    return apiClient.patch('/products/categories', data);
+  },
   updateProduct(id, data) {
     return apiClient.patch(`/products/${id}`, data);
+  },
+  addSize(id, data) {
+    return apiClient.post(`/products/${id}/sizes`, data);
+  },
+  updateSize(id, sizeId, data) {
+    return apiClient.patch(`/products/${id}/sizes/${sizeId}`, data);
+  },
+  reorderSizes(id, sizeIds) {
+    return apiClient.patch(`/products/${id}/sizes/reorder`, { sizeIds });
+  },
+  deleteSize(id, sizeId) {
+    return apiClient.delete(`/products/${id}/sizes/${sizeId}`);
   },
   deleteProduct(id) {
     return apiClient.delete(`/products/${id}`);

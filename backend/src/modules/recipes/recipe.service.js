@@ -17,15 +17,15 @@ function normalizeId(value, fieldName) {
   return normalizedValue;
 }
 
-function ensurePositiveNumber(value, fieldName) {
+function ensureNonNegativeNumber(value, fieldName) {
   const normalizedValue = Number(value);
 
   if (!Number.isFinite(normalizedValue)) {
     throw new ApiError(400, `${fieldName} is invalid.`);
   }
 
-  if (normalizedValue <= 0) {
-    throw new ApiError(400, `${fieldName} must be greater than 0.`);
+  if (normalizedValue < 0) {
+    throw new ApiError(400, `${fieldName} cannot be negative.`);
   }
 
   return normalizedValue;
@@ -43,7 +43,7 @@ function normalizeRecipeItems(items) {
       item?.ingredientId ?? item?.ingredient_id,
       `Ingredient id at row ${index + 1}`,
     );
-    const quantity = ensurePositiveNumber(item?.quantity, `Quantity at row ${index + 1}`);
+    const quantity = ensureNonNegativeNumber(item?.quantity, `Quantity at row ${index + 1}`);
 
     if (seenIngredientIds.has(ingredientId)) {
       throw new ApiError(400, 'Duplicate ingredient lines are not allowed in one recipe.');
@@ -63,7 +63,9 @@ async function findProductRowById(productId, storeId) {
     `select id,
             name,
             status,
-            price
+            price,
+            is_group,
+            parent_product_id
      from products
      where id = $1
        and store_id = $2
@@ -114,6 +116,7 @@ async function findRecipeHeaderById(recipeId, storeId) {
             p.name as product_name,
             p.status as product_status,
             p.price as product_price,
+            p.is_group as product_is_group,
             r.created_at,
             r.updated_at
      from recipes r
@@ -136,6 +139,7 @@ async function findRecipeHeaderByProductId(productId, storeId) {
             p.name as product_name,
             p.status as product_status,
             p.price as product_price,
+            p.is_group as product_is_group,
             r.created_at,
             r.updated_at
      from recipes r
@@ -180,6 +184,7 @@ async function getRecipeForUpdate(client, recipeId, storeId) {
             p.name as product_name,
             p.status as product_status,
             p.price as product_price,
+            p.is_group as product_is_group,
             r.created_at,
             r.updated_at
      from recipes r
@@ -312,7 +317,10 @@ export async function createRecipe(payload, actorUser, storeId) {
   const productId = normalizeId(payload.productId ?? payload.product_id, 'Product id');
   const items = normalizeRecipeItems(payload.items);
 
-  await ensureProductExists(productId, storeId);
+  const product = await ensureProductExists(productId, storeId);
+  if (product.is_group) {
+    throw new ApiError(400, 'A size group cannot own a sellable recipe. Create the recipe on a size instead.');
+  }
   await ensureRecipeDoesNotExistForProduct(productId, storeId);
   await ensureIngredientsExist(items.map((item) => item.ingredientId), storeId);
 
@@ -361,6 +369,10 @@ export async function updateRecipe(recipeId, payload, storeId) {
       throw new ApiError(404, 'Recipe not found.');
     }
 
+    if (existingRecipe.product_is_group) {
+      throw new ApiError(400, 'A size group recipe is retained only for legacy compatibility and cannot be edited.');
+    }
+
     if (
       payload.productId !== undefined ||
       payload.product_id !== undefined
@@ -402,7 +414,14 @@ export async function updateRecipe(recipeId, payload, storeId) {
 
 export async function softDeleteRecipe(recipeId, storeId) {
   const normalizedRecipeId = normalizeId(recipeId, 'Recipe id');
-  const recipe = await getRecipeById(normalizedRecipeId, storeId);
+  const header = await findRecipeHeaderById(normalizedRecipeId, storeId);
+  if (!header) {
+    throw new ApiError(404, 'Recipe not found.');
+  }
+  if (header.product_is_group) {
+    throw new ApiError(400, 'A size group recipe is retained for legacy compatibility and cannot be deleted.');
+  }
+  const [recipe] = await buildRecipesFromHeaders([header]);
 
   await query(
     `update recipes

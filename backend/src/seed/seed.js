@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import { pool, query } from '../config/db.js';
-import { resolveIngredientTag, resolveProductTag } from '../utils/tagTaxonomy.js';
 
 dotenv.config();
 
@@ -114,24 +113,22 @@ async function upsertStoreStaff(userId, storeId) {
 }
 
 async function upsertIngredient(ingredient, createdBy, storeId) {
-  const tag = resolveIngredientTag(ingredient.tag, ingredient.name);
   const result = await query(
-    `insert into ingredients (name, tag, unit, current_stock, low_stock_threshold, created_by, store_id)
-     values ($1, $2, $3, $4, $5, $6, $7)
+    `insert into ingredients (name, unit, current_stock, low_stock_threshold, created_by, store_id)
+     values ($1, $2, $3, $4, $5, $6)
      returning id, name`,
-    [ingredient.name, tag, ingredient.unit, ingredient.currentStock, ingredient.lowStockThreshold, createdBy, storeId],
+    [ingredient.name, ingredient.unit, ingredient.currentStock, ingredient.lowStockThreshold, createdBy, storeId],
   );
 
   return result.rows[0];
 }
 
 async function upsertProduct(product, createdBy, storeId) {
-  const tag = resolveProductTag(product.tag, product.name);
   const result = await query(
-    `insert into products (name, tag, price, status, created_by, store_id)
-     values ($1, $2, $3, $4, $5, $6)
+    `insert into products (name, price, status, created_by, store_id)
+     values ($1, $2, $3, $4, $5)
      returning id, name`,
-    [product.name, tag, product.price, product.status, createdBy, storeId],
+    [product.name, product.price, product.status, createdBy, storeId],
   );
 
   return result.rows[0];

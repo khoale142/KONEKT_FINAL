@@ -1,0 +1,744 @@
+/* ==========================================================================
+   KONEKT POS - Login Page Styles
+   Matching exact structure & aesthetics from design specification
+   ========================================================================== */
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.konekt-login-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  background-color: #d9cebc;
+  overflow-x: hidden;
+}
+
+@media (min-width: 640px) {
+  .konekt-login-wrapper {
+    padding: 32px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .konekt-login-wrapper {
+    padding: 36px;
+  }
+}
+
+.konekt-login-container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.konekt-portal-card {
+  width: 100%;
+  position: relative;
+  background-color: #f4eee4;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(72, 97, 74, 0.16);
+  box-shadow: 0 20px 45px -12px rgba(24, 38, 28, 0.28), 0 35px 75px -15px rgba(20, 32, 24, 0.24), 0 10px 24px -6px rgba(0, 0, 0, 0.12);
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .konekt-portal-card {
+    grid-template-columns: 1fr 1fr;
+    min-height: 610px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Left Feature Panel (Brand Hero)
+   -------------------------------------------------------------------------- */
+.konekt-left-panel {
+  padding: 28px 24px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(150deg, rgb(72, 97, 74) 0%, rgb(54, 73, 56) 100%);
+  z-index: 10;
+  box-shadow: rgba(18, 30, 22, 0.22) 14px 0px 28px -4px, rgba(18, 30, 22, 0.12) 4px 0px 10px;
+}
+
+@media (min-width: 640px) {
+  .konekt-left-panel {
+    padding: 32px 28px;
+  }
+}
+
+@media (min-width: 900px) {
+  .konekt-left-panel {
+    grid-column: span 1;
+    padding: 44px 42px 30px;
+  }
+}
+
+/* Ambient glow orbs */
+.konekt-glow-orb-1 {
+  position: absolute;
+  top: -96px;
+  left: -96px;
+  width: 320px;
+  height: 320px;
+  background-color: rgba(16, 185, 129, 0.12);
+  border-radius: 9999px;
+  filter: blur(48px);
+  pointer-events: none;
+}
+
+.konekt-glow-orb-2 {
+  position: absolute;
+  bottom: -80px;
+  right: -80px;
+  width: 384px;
+  height: 384px;
+  background-color: rgba(52, 211, 153, 0.12);
+  border-radius: 9999px;
+  filter: blur(48px);
+  pointer-events: none;
+}
+
+/* Header & Brand Identity */
+.konekt-brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.konekt-logo-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.konekt-logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.konekt-brand-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+}
+
+.konekt-category-badge {
+  padding: 5px 11px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #a7f3d0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Value proposition */
+.konekt-value-prop {
+  margin-bottom: 24px;
+}
+
+.konekt-headline {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+
+@media (min-width: 640px) {
+  .konekt-headline {
+    font-size: 28px;
+  }
+}
+
+.konekt-subline {
+  color: #d6d3d1;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .konekt-subline {
+    font-size: 15px;
+  }
+}
+
+/* Micro Feature Grid */
+.konekt-features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .konekt-features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.konekt-feature-card {
+  padding: 14px;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.konekt-feature-card:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.konekt-feature-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.konekt-feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: rgba(52, 211, 153, 0.2);
+  color: #6ee7b7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.konekt-feature-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.konekt-feature-desc {
+  font-size: 12px;
+  color: rgba(214, 211, 209, 0.85);
+  margin: 4px 0 0 0;
+  line-height: 1.35;
+}
+
+/* Left Bottom Status */
+.konekt-status-footer {
+  position: relative;
+  z-index: 10;
+  padding-top: 32px;
+  margin-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(167, 243, 208, 0.85);
+}
+
+.konekt-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.konekt-pulse-wrapper {
+  position: relative;
+  display: flex;
+  width: 8px;
+  height: 8px;
+}
+
+.konekt-pulse-ping {
+  position: absolute;
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: #34d399;
+  opacity: 0.75;
+  animation: konekt-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.konekt-pulse-dot {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+  width: 8px;
+  height: 8px;
+  background-color: #34d399;
+}
+
+@keyframes konekt-ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.konekt-version-tag {
+  display: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: rgba(214, 211, 209, 0.6);
+}
+
+@media (min-width: 640px) {
+  .konekt-version-tag {
+    display: inline;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Right Login Panel (Form Showcase)
+   -------------------------------------------------------------------------- */
+.konekt-right-panel {
+  background-color: #f4eee4;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .konekt-right-panel {
+    padding: 32px 28px;
+  }
+}
+
+@media (min-width: 900px) {
+  .konekt-right-panel {
+    grid-column: span 1;
+    padding: 40px 48px 26px;
+  }
+}
+
+.konekt-edge-shadow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 32px;
+  pointer-events: none;
+  z-index: 10;
+  display: none;
+  background: linear-gradient(to right, rgba(28, 42, 32, 0.18) 0%, rgba(28, 42, 32, 0.07) 40%, transparent 100%);
+}
+
+@media (min-width: 1024px) {
+  .konekt-edge-shadow {
+    display: block;
+  }
+}
+
+/* Center Login Content (No nested popup card inside main portal card) */
+.konekt-floating-card {
+  max-width: 430px;
+  width: 100%;
+  margin: auto auto;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .konekt-floating-card {
+    padding: 0;
+  }
+}
+
+.konekt-form-header {
+  margin-bottom: 24px;
+}
+
+.konekt-form-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.konekt-form-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 4px;
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+@media (min-width: 640px) {
+  .konekt-form-subtitle {
+    font-size: 14px;
+  }
+}
+
+/* Inputs & Form Groups */
+.konekt-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.konekt-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.konekt-input-wrapper {
+  position: relative;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.konekt-input-icon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  padding-left: 14px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  color: #94a3b8;
+}
+
+.konekt-input {
+  display: block;
+  width: 100%;
+  padding: 11px 12px 11px 40px;
+  background-color: #ffffff;
+  border: 1px solid #d6d3d1;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #0f172a;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.konekt-input:focus {
+  border-color: #2a4b39;
+  box-shadow: 0 0 0 3px rgba(42, 75, 57, 0.15);
+}
+
+.konekt-input::placeholder {
+  color: #94a3b8;
+}
+
+.konekt-input-error {
+  border-color: #ef4444 !important;
+}
+
+.konekt-error-text {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.konekt-toggle-pwd-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  padding-right: 14px;
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.konekt-toggle-pwd-btn:hover {
+  color: #475569;
+}
+
+/* Checkbox & Forgot */
+.konekt-form-utilities {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2px;
+  margin-bottom: 14px;
+}
+
+.konekt-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.konekt-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #d6d3d1;
+  accent-color: #2a4b39;
+  cursor: pointer;
+}
+
+.konekt-checkbox-text {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.konekt-forgot-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(72, 97, 74);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.konekt-forgot-link:hover {
+  color: rgb(42, 65, 44);
+  text-decoration: underline;
+}
+
+/* Primary Submit Button */
+.konekt-submit-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: rgb(72, 97, 74);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.konekt-submit-btn:hover:not(:disabled) {
+  background-color: rgb(54, 73, 56);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.konekt-submit-btn:active:not(:disabled) {
+  background-color: rgb(40, 56, 42);
+  transform: translateY(0);
+}
+
+.konekt-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.konekt-submit-arrow {
+  transition: transform 0.2s ease;
+}
+
+.konekt-submit-btn:hover:not(:disabled) .konekt-submit-arrow {
+  transform: translateX(4px);
+}
+
+/* Fast SSO Alternatives */
+.konekt-sso-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgb(222, 214, 199);
+}
+
+.konekt-sso-divider-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  font-size: 11px;
+  margin-top: -24px;
+  margin-bottom: 12px;
+}
+
+.konekt-sso-divider-badge {
+  background-color: #f4eee4;
+  padding: 0 12px;
+  font-weight: 600;
+  color: #a8a29e;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+}
+
+.konekt-sso-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.konekt-sso-btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.konekt-sso-btn:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Registration footer */
+.konekt-register-footer {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.konekt-register-link {
+  font-weight: 600;
+  color: rgb(72, 97, 74);
+  text-decoration: underline;
+  margin-left: 4px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.konekt-register-link:hover {
+  color: rgb(42, 65, 44);
+}
+
+.konekt-terms-note {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 10px 0 14px;
+  text-align: center;
+}
+
+.konekt-terms-note a {
+  color: rgb(72, 97, 74);
+  font-weight: 600;
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+
+.konekt-terms-note a:hover {
+  color: rgb(42, 65, 44);
+}
+
+/* Help & Language Bar */
+.konekt-help-bar {
+  max-width: 430px;
+  width: 100%;
+  margin: 20px auto 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(222, 214, 199, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+  padding-left: 2px;
+  padding-right: 2px;
+  box-sizing: border-box;
+}
+
+.konekt-help-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.konekt-help-link:hover {
+  color: #1e293b;
+}
+
+.konekt-lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+}
+
+.konekt-lang-active {
+  color: #1e293b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.konekt-lang-inactive {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.konekt-lang-inactive:hover {
+  color: #334155;
+}

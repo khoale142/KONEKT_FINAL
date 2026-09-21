@@ -1,0 +1,397 @@
+.catalog-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.catalog-page-header h1 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-headline-lg);
+  font-weight: var(--font-weight-headline-lg);
+  letter-spacing: var(--letter-spacing-headline-lg);
+}
+
+.catalog-page-header p {
+  margin: 6px 0 0;
+  color: var(--color-secondary);
+  font-size: var(--font-size-body-lg);
+}
+
+/* Toolbar */
+.catalog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: flex-end;
+  background: var(--color-surface-container-lowest);
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.catalog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex: 1;
+}
+
+.catalog-filters .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.catalog-filters .field label {
+  font-size: var(--font-size-label-sm);
+  font-weight: var(--font-weight-label-md);
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.catalog-filters .field input,
+.catalog-filters .field select {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-input-border);
+  background: var(--color-input-background);
+  color: var(--color-on-surface);
+  font-family: inherit;
+  font-size: var(--font-size-body-md);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.catalog-filters .field input:focus,
+.catalog-filters .field select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.catalog-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-mode-switch {
+  display: flex;
+  background: var(--color-surface-container-low);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  gap: 4px;
+}
+
+.view-mode-button {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-secondary);
+  font-size: var(--font-size-label-sm);
+  font-weight: var(--font-weight-label-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-mode-button.active {
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-low);
+}
+
+.catalog-actions > button {
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  font-size: var(--font-size-label-md);
+  font-weight: var(--font-weight-label-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalog-actions > button:hover {
+  background: var(--color-surface-container-low);
+  border-color: var(--color-outline);
+}
+
+.catalog-actions > button.primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
+}
+
+.catalog-actions > button.primary:hover {
+  background: var(--color-primary-container);
+}
+
+/* Sections */
+.catalog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.section-header .section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-headline-md);
+  font-weight: var(--font-weight-headline-md);
+}
+
+.section-header span {
+  color: var(--color-secondary);
+  font-size: var(--font-size-body-md);
+}
+
+.section-header p {
+  margin: 4px 0 0;
+  color: var(--color-secondary);
+  font-size: var(--font-size-body-md);
+}
+
+/* Table View */
+.table-wrapper {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-outline-variant);
+  overflow-x: auto;
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.table-wrapper th {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-label-sm);
+  font-weight: var(--font-weight-label-md);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-wrapper tr:last-child td {
+  border-bottom: none;
+}
+
+.table-wrapper td {
+  color: var(--color-on-surface);
+  font-size: var(--font-size-body-md);
+  vertical-align: middle;
+}
+
+.table-wrapper td strong {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.table-wrapper td button {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-wrapper td button:hover {
+  background: var(--color-surface-container-low);
+}
+
+/* Card View */
+.catalog-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.catalog-card {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-outline-variant);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.catalog-card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+.catalog-card-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.catalog-card-header h3 {
+  margin: 0 0 4px 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-body-lg);
+  font-weight: 600;
+}
+
+.catalog-card-header span {
+  color: var(--color-secondary);
+  font-size: var(--font-size-label-sm);
+}
+
+.catalog-card-details {
+  padding: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.catalog-card-details div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.catalog-card-details dt {
+  color: var(--color-secondary);
+  font-size: var(--font-size-label-sm);
+}
+
+.catalog-card-details dd {
+  margin: 0;
+  color: var(--color-on-surface);
+  font-weight: 500;
+  font-size: var(--font-size-body-md);
+}
+
+.catalog-card-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-surface-container-low);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--color-surface-container-lowest);
+}
+
+.catalog-card-footer button {
+  background: transparent;
+  border: 1px solid var(--color-outline-variant);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-size: var(--font-size-label-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.catalog-card-footer button:hover {
+  background: var(--color-surface-container-low);
+  border-color: var(--color-outline);
+}
+
+.product-image-container {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-container-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-secondary);
+}
+
+.product-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-card .catalog-card-header {
+  align-items: flex-start;
+}
+
+.create-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-high);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+  min-width: 200px;
+}
+
+.create-menu-dropdown button {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-on-surface);
+  font-size: var(--font-size-body-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.create-menu-dropdown button:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-primary);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-surface-container-high);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

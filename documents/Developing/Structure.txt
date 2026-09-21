@@ -1,0 +1,6 @@
+Get-ChildItem -Recurse -File |
+Where-Object {
+    $_.FullName -notmatch "node_modules|\.git|\.next|dist|build|coverage|\.cache|\.vscode"
+} |
+Select-Object FullName |
+Out-File project_files.txt

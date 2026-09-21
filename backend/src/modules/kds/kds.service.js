@@ -18,7 +18,7 @@ function buildPlaceholders(values, startIndex = 1) {
   return values.map((_, index) => `$${startIndex + index}`).join(', ');
 }
 
-async function loadOrderItemRows(orderIds) {
+async function loadOrderItemRows(orderIds, storeId) {
   if (!orderIds.length) {
     return [];
   }
@@ -34,8 +34,9 @@ async function loadOrderItemRows(orderIds) {
             created_at
      from order_items
      where order_id in (${buildPlaceholders(orderIds)})
+       and store_id = $${orderIds.length + 1}
      order by created_at asc`,
-    orderIds,
+    [...orderIds, storeId],
   );
 
   return result.rows;
@@ -55,12 +56,12 @@ function groupOrderItemsByOrderId(orderItemRows) {
   return itemMap;
 }
 
-async function buildOrdersWithItems(headers) {
+async function buildOrdersWithItems(headers, storeId) {
   if (!headers.length) {
     return [];
   }
 
-  const orderItemRows = await loadOrderItemRows(headers.map((header) => header.id));
+  const orderItemRows = await loadOrderItemRows(headers.map((header) => header.id), storeId);
   const itemMap = groupOrderItemsByOrderId(orderItemRows);
 
   return headers.map((header) => toPublicOrder(header, itemMap.get(header.id) || []));
@@ -137,8 +138,8 @@ export async function listKdsOrdersForStaff(actorUser, storeId) {
   ]);
 
   const [newOrders, completedOrders] = await Promise.all([
-    buildOrdersWithItems(newHeaders),
-    buildOrdersWithItems(completedHeaders),
+    buildOrdersWithItems(newHeaders, storeId),
+    buildOrdersWithItems(completedHeaders, storeId),
   ]);
 
   return {
@@ -185,7 +186,7 @@ export async function completeKdsOrder(orderId, actorUser, storeId) {
 
   const [order] = await buildOrdersWithItems([
     await findOrderHeaderById(normalizedOrderId, storeId),
-  ]);
+  ], storeId);
 
   return order;
 }

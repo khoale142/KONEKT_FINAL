@@ -11,8 +11,8 @@ function buildQueryString(filters = {}) {
     query.set('lowStock', 'true');
   }
 
-  if (filters.tag && filters.tag !== 'ALL') {
-    query.set('tag', filters.tag);
+  if (filters.categoryId && filters.categoryId !== 'ALL') {
+    query.set('categoryId', filters.categoryId);
   }
 
   const queryString = query.toString();
@@ -29,11 +29,32 @@ export const ingredientApi = {
   createIngredient(data) {
     return apiClient.post('/ingredients', data);
   },
+  createPreparation(data) {
+    return apiClient.post('/ingredients/preparations', data);
+  },
+  updatePreparation(id, data) {
+    return apiClient.put(`/ingredients/preparations/${id}`, data);
+  },
+  bulkCreateIngredients(data) {
+    return apiClient.post('/ingredients/bulk', data);
+  },
+  bulkCreatePreparations(data) {
+    return apiClient.post('/ingredients/preparations/bulk', data);
+  },
+  assignIngredientsToCategory(data) {
+    return apiClient.patch('/ingredients/categories', data);
+  },
   updateIngredient(id, data) {
     return apiClient.patch(`/ingredients/${id}`, data);
   },
   deleteIngredient(id) {
     return apiClient.delete(`/ingredients/${id}`);
+  },
+  getIngredientRecipe(id) {
+    return apiClient.get(`/ingredients/${id}/recipe`);
+  },
+  updateIngredientRecipe(id, data) {
+    return apiClient.put(`/ingredients/${id}/recipe`, data);
   },
 };
 

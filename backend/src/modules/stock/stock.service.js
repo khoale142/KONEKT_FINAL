@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/ApiError.js';
 import { toPublicIngredient } from '../../utils/ingredient.js';
 import { buildStructuredStockNote } from '../../utils/stockNote.js';
 import { toPublicStockTransaction } from '../../utils/stockTransaction.js';
+import { postLegacyIngredientChanges } from '../inventory/inventory-legacy-posting.service.js';
 
 const STOCK_NOTE_CONTEXTS = Object.freeze({
   BATCH_IMPORT: 'BATCH_IMPORT',
@@ -249,27 +250,13 @@ function ensureAllIngredientsFound(ingredientsById, items) {
   }
 }
 
-async function updateIngredientStock(client, ingredientId, nextStock, storeId) {
-  const result = await client.query(
-    `update ingredients
-     set current_stock = $1,
-         updated_at = now()
-     where id = $2
-       and store_id = $3
-     returning id,
-               name,
-               unit,
-               current_stock,
-               low_stock_threshold,
-               created_at,
-               updated_at`,
-    [nextStock, ingredientId, storeId],
-  );
-
-  return result.rows[0] || null;
+function requiredOperationId(value) {
+  const id = normalizeString(value);
+  if (!id) throw new ApiError(400, 'operationId is required for an idempotent inventory operation.');
+  return id;
 }
 
-async function applyStockChange({ actorUser, ingredientId, note, quantity, type, storeId }) {
+async function applyStockChange({ actorUser, ingredientId, note, quantity, type, movementType, storeId, operationId }) {
   const client = await pool.connect();
 
   try {
@@ -281,30 +268,25 @@ async function applyStockChange({ actorUser, ingredientId, note, quantity, type,
       throw new ApiError(404, 'Ingredient not found.');
     }
 
-    const beforeStock = Number(ingredient.current_stock || 0);
-    const afterStock =
-      type === STOCK_TRANSACTION_TYPES.IMPORT ? beforeStock + quantity : beforeStock - quantity;
-
-    if (afterStock < 0) {
-      throw new ApiError(400, `Insufficient stock for ${ingredient.name}.`);
-    }
-
-    const updatedIngredientRow = await updateIngredientStock(client, ingredientId, afterStock, storeId);
-    const transactionRow = await insertStockTransaction(client, {
-      ingredientId,
-      type,
-      quantity,
-      beforeStock,
-      afterStock,
-      note,
-      createdBy: actorUser.id,
+    const quantityDelta = type === STOCK_TRANSACTION_TYPES.IMPORT ? quantity : -quantity;
+    const posted = await postLegacyIngredientChanges(client, {
+      storeId, actorId: actorUser.id, operationKey: `legacy:${requiredOperationId(operationId)}`,
+      changes: [{ ingredientId, quantityDelta, movementType, operation: type }],
+    });
+    const inventoryItem = posted.itemsByIngredient.get(String(ingredientId));
+    const movement = posted.byInventoryItem.get(inventoryItem.id);
+    let transactionRow = null;
+    if (!posted.alreadyPosted) transactionRow = await insertStockTransaction(client, {
+      ingredientId, type, quantity, beforeStock: movement.before_quantity, afterStock: movement.after_quantity,
+      note, createdBy: actorUser.id,
     }, storeId);
+    const updatedIngredientRow = await getIngredientForUpdate(client, ingredientId, storeId);
 
     await client.query('commit');
 
     return {
       ingredient: toPublicIngredient(updatedIngredientRow),
-      transaction: toPublicStockTransaction(transactionRow),
+      transaction: transactionRow ? toPublicStockTransaction(transactionRow) : null,
     };
   } catch (error) {
     await client.query('rollback');
@@ -325,6 +307,7 @@ export async function importStock(payload, actorUser, storeId) {
     note,
     quantity,
     type: STOCK_TRANSACTION_TYPES.IMPORT,
+    movementType: 'RECEIPT_IN', operationId: payload.operationId ?? payload.operation_id,
     storeId,
   });
 }
@@ -340,6 +323,7 @@ export async function adjustStock(payload, actorUser, storeId) {
     note,
     quantity,
     type: STOCK_TRANSACTION_TYPES.ADJUST,
+    movementType: 'MANUAL_ADJUST', operationId: payload.operationId ?? payload.operation_id,
     storeId,
   });
 }
@@ -349,6 +333,7 @@ export async function importStockBatch(payload, actorUser, storeId) {
   const commonNote = normalizeString(payload.note ?? payload.notes);
   const eventDate = getTodayIsoDate();
   const sessionCode = generateSessionCode('IMP');
+  const operationId = requiredOperationId(payload.operationId ?? payload.operation_id);
   const client = await pool.connect();
 
   try {
@@ -359,20 +344,19 @@ export async function importStockBatch(payload, actorUser, storeId) {
 
     ensureAllIngredientsFound(ingredientsById, items);
 
+    const posted = await postLegacyIngredientChanges(client, {
+      storeId, actorId: actorUser.id, operationKey: `legacy:${operationId}`,
+      changes: items.map((item) => ({ ingredientId: item.ingredientId, quantityDelta: item.quantity, movementType: 'RECEIPT_IN', operation: 'IMPORT_BATCH', metadata: { sessionCode } })),
+    });
     const results = [];
-
     for (const item of items) {
       const ingredient = ingredientsById.get(item.ingredientId);
-      const beforeStock = Number(ingredient.current_stock || 0);
-      const afterStock = beforeStock + item.quantity;
       const mergedNote = mergeNotes(commonNote, item.note);
-      const updatedIngredientRow = await updateIngredientStock(client, item.ingredientId, afterStock, storeId);
-      const transactionRow = await insertStockTransaction(client, {
-        ingredientId: item.ingredientId,
-        type: STOCK_TRANSACTION_TYPES.IMPORT,
-        quantity: item.quantity,
-        beforeStock,
-        afterStock,
+      const inventoryItem = posted.itemsByIngredient.get(String(item.ingredientId));
+      const movement = posted.byInventoryItem.get(inventoryItem.id);
+      const transactionRow = posted.alreadyPosted ? null : await insertStockTransaction(client, {
+        ingredientId: item.ingredientId, type: STOCK_TRANSACTION_TYPES.IMPORT, quantity: item.quantity,
+        beforeStock: movement.before_quantity, afterStock: movement.after_quantity,
         note: buildStructuredStockNote({
           context: STOCK_NOTE_CONTEXTS.BATCH_IMPORT,
           eventDate,
@@ -382,7 +366,7 @@ export async function importStockBatch(payload, actorUser, storeId) {
         createdBy: actorUser.id,
       }, storeId);
 
-      ingredientsById.set(item.ingredientId, updatedIngredientRow);
+      const updatedIngredientRow = await getIngredientForUpdate(client, item.ingredientId, storeId);
 
       results.push({
         ingredientId: item.ingredientId,
@@ -390,7 +374,7 @@ export async function importStockBatch(payload, actorUser, storeId) {
         inputQuantity: item.quantity,
         note: mergedNote,
         ingredient: toPublicIngredient(updatedIngredientRow),
-        transaction: toPublicStockTransaction(transactionRow),
+        transaction: transactionRow ? toPublicStockTransaction(transactionRow) : null,
       });
     }
 
@@ -420,6 +404,7 @@ export async function countStockDaily(payload, actorUser, storeId) {
     ? ensureIsoDate(payload.countDate, 'Count date')
     : getTodayIsoDate();
   const sessionCode = generateSessionCode('CNT');
+  const operationId = requiredOperationId(payload.operationId ?? payload.operation_id);
   const client = await pool.connect();
 
   try {
@@ -430,12 +415,22 @@ export async function countStockDaily(payload, actorUser, storeId) {
 
     ensureAllIngredientsFound(ingredientsById, items);
 
+    const authorityRows = await client.query(`select ingredient_id,quantity_on_hand from inventory_items
+      where store_id=$1 and ingredient_id=any($2::uuid[]) for update`, [storeId, ingredientIds]);
+    const authorityByIngredient = new Map(authorityRows.rows.map((row) => [String(row.ingredient_id), row]));
+    if (authorityByIngredient.size !== ingredientIds.length) throw new ApiError(409, 'An Ingredient is missing its authoritative inventory item.');
+    const changes = items.map((item) => ({ ...item, theoreticalStock: Number(authorityByIngredient.get(String(item.ingredientId)).quantity_on_hand) }))
+      .filter((item) => item.actualStock !== item.theoreticalStock);
+    const posted = changes.length ? await postLegacyIngredientChanges(client, {
+      storeId, actorId: actorUser.id, operationKey: `legacy:${operationId}`,
+      changes: changes.map((item) => ({ ingredientId: item.ingredientId, quantityDelta: item.actualStock - item.theoreticalStock, movementType: 'COUNT_ADJUST', operation: 'DAILY_COUNT', metadata: { sessionCode } })),
+    }) : { alreadyPosted: false, itemsByIngredient: new Map(), byInventoryItem: new Map() };
     const results = [];
     let changedCount = 0;
 
     for (const item of items) {
       const ingredient = ingredientsById.get(item.ingredientId);
-      const theoreticalStock = Number(ingredient.current_stock || 0);
+      const theoreticalStock = Number(authorityByIngredient.get(String(item.ingredientId)).quantity_on_hand);
       const actualStock = item.actualStock;
       const differenceQuantity = actualStock - theoreticalStock;
       const mergedNote = mergeNotes(commonNote, item.note);
@@ -444,14 +439,11 @@ export async function countStockDaily(payload, actorUser, storeId) {
 
       if (differenceQuantity !== 0) {
         changedCount += 1;
-        updatedIngredientRow = await updateIngredientStock(client, item.ingredientId, actualStock, storeId);
-
-        const transactionRow = await insertStockTransaction(client, {
-          ingredientId: item.ingredientId,
-          type: STOCK_TRANSACTION_TYPES.ADJUST,
-          quantity: Math.abs(differenceQuantity),
-          beforeStock: theoreticalStock,
-          afterStock: actualStock,
+        const inventoryItem = posted.itemsByIngredient.get(String(item.ingredientId));
+        const movement = posted.byInventoryItem.get(inventoryItem.id);
+        const transactionRow = posted.alreadyPosted ? null : await insertStockTransaction(client, {
+          ingredientId: item.ingredientId, type: STOCK_TRANSACTION_TYPES.ADJUST, quantity: Math.abs(differenceQuantity),
+          beforeStock: movement.before_quantity, afterStock: movement.after_quantity,
           note: buildStructuredStockNote({
             context: STOCK_NOTE_CONTEXTS.DAILY_COUNT,
             eventDate,
@@ -461,8 +453,8 @@ export async function countStockDaily(payload, actorUser, storeId) {
           createdBy: actorUser.id,
         }, storeId);
 
-        transaction = toPublicStockTransaction(transactionRow);
-        ingredientsById.set(item.ingredientId, updatedIngredientRow);
+        transaction = transactionRow ? toPublicStockTransaction(transactionRow) : null;
+        updatedIngredientRow = await getIngredientForUpdate(client, item.ingredientId, storeId);
       }
 
       results.push({
@@ -607,6 +599,7 @@ export async function getStockForecast(storeId) {
 
 export async function discardStock(payload, actorUser, storeId) {
   const note = normalizeString(payload.note ?? payload.notes) || '';
+  const operationId = requiredOperationId(payload.operationId ?? payload.operation_id);
   
   if (payload.productId || payload.product_id) {
     const productId = String(payload.productId ?? payload.product_id ?? '').trim();
@@ -657,7 +650,8 @@ export async function discardStock(payload, actorUser, storeId) {
           throw new ApiError(400, `Không đủ tồn kho cho nguyên liệu "${ingredient.name}". Cần ${totalQtyToDeduct}, hiện có ${beforeStock}.`);
         }
 
-        await client.query('update ingredients set current_stock = $1, updated_at = now() where id = $2 and store_id = $3', [afterStock, ingredientId, storeId]);
+        await postLegacyIngredientChanges(client, { storeId, actorId: actorUser.id, operationKey: `legacy:${operationId}:product:${ingredientId}`,
+          changes: [{ ingredientId, quantityDelta: -totalQtyToDeduct, movementType: 'WASTE_OUT', operation: 'PRODUCT_DISCARD_LEGACY' }] });
         await client.query(
           `insert into stock_transactions (ingredient_id, type, quantity, before_stock, after_stock, note, created_by, store_id)
            values ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -702,7 +696,122 @@ export async function discardStock(payload, actorUser, storeId) {
       note: `[HỦY HÀNG] Hủy nguyên liệu "${ingredientName}": ${note}`.slice(0, 255),
       quantity,
       type: STOCK_TRANSACTION_TYPES.ADJUST,
+      movementType: 'WASTE_OUT', operationId,
       storeId,
     });
+  }
+}
+
+export async function producePreparation(payload, actorUser, storeId) {
+  const ingredientId = normalizeIngredientId(payload.ingredientId ?? payload.ingredient_id);
+  const quantityProduced = ensurePositiveNumber(payload.quantity, 'Quantity produced');
+  const note = normalizeString(payload.note ?? payload.notes);
+  const operationId = requiredOperationId(payload.operationId ?? payload.operation_id);
+
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+
+    // 1. Get the preparation ingredient
+    const preparationResult = await client.query(
+      `select id, name, unit, is_preparation, current_stock from ingredients where id = $1 and store_id = $2 and deleted_at is null for update`,
+      [ingredientId, storeId]
+    );
+    if (preparationResult.rowCount === 0) {
+      throw new ApiError(404, 'Preparation not found.');
+    }
+    const preparation = preparationResult.rows[0];
+    if (!preparation.is_preparation) {
+      throw new ApiError(400, `Ingredient "${preparation.name}" is not a preparation.`);
+    }
+
+    // 2. Get the recipe
+    const recipeResult = await client.query(
+      `select id, yield_amount from recipes where ingredient_id = $1 and store_id = $2 and deleted_at is null`,
+      [ingredientId, storeId]
+    );
+    if (recipeResult.rowCount === 0) {
+      throw new ApiError(400, `Preparation "${preparation.name}" does not have a recipe.`);
+    }
+    const recipe = recipeResult.rows[0];
+    const yieldAmount = Number(recipe.yield_amount);
+
+    const recipeItemsResult = await client.query(
+      `select ingredient_id, quantity_required from recipe_items where recipe_id = $1`,
+      [recipe.id]
+    );
+    if (recipeItemsResult.rowCount === 0) {
+      throw new ApiError(400, `Recipe for "${preparation.name}" has no ingredients.`);
+    }
+
+    // 3. Calculate ratio and deduct raw ingredients
+    const ratio = quantityProduced / yieldAmount;
+    
+    // Sort items to prevent deadlocks
+    const rawIngredientIds = recipeItemsResult.rows.map(row => row.ingredient_id).sort();
+    
+    const rawIngredientsResult = await client.query(
+      `select id, name, current_stock from ingredients where id = any($1::uuid[]) and store_id = $2 and deleted_at is null for update`,
+      [rawIngredientIds, storeId]
+    );
+    const rawIngredientsMap = new Map(rawIngredientsResult.rows.map(row => [row.id, row]));
+
+    for (const row of recipeItemsResult.rows) {
+      const rawIngredient = rawIngredientsMap.get(row.ingredient_id);
+      if (!rawIngredient) {
+        throw new ApiError(404, `Raw ingredient ${row.ingredient_id} not found.`);
+      }
+
+      const requiredQty = Number(row.quantity_required) * ratio;
+      const beforeStock = Number(rawIngredient.current_stock || 0);
+      const afterStock = beforeStock - requiredQty;
+
+      if (afterStock < 0) {
+        throw new ApiError(400, `Không đủ tồn kho cho nguyên liệu "${rawIngredient.name}". Cần ${requiredQty.toFixed(2)}, hiện có ${beforeStock}.`);
+      }
+
+      await postLegacyIngredientChanges(client, { storeId, actorId: actorUser.id, operationKey: `legacy:${operationId}:input:${rawIngredient.id}`,
+        changes: [{ ingredientId: rawIngredient.id, quantityDelta: -requiredQty, movementType: 'PRODUCTION_INPUT', operation: 'PREPARATION_PRODUCTION' }] });
+      
+      await insertStockTransaction(client, {
+        ingredientId: rawIngredient.id,
+        type: STOCK_TRANSACTION_TYPES.PRODUCE_DEDUCT,
+        quantity: requiredQty,
+        beforeStock,
+        afterStock,
+        note: `[SẢN XUẤT] Dùng để pha chế ${quantityProduced} ${preparation.unit} ${preparation.name}`.slice(0, 255),
+        createdBy: actorUser.id,
+      }, storeId);
+    }
+
+    // 4. Add stock to preparation
+    const prepBeforeStock = Number(preparation.current_stock || 0);
+    const prepAfterStock = prepBeforeStock + quantityProduced;
+    
+    await postLegacyIngredientChanges(client, { storeId, actorId: actorUser.id, operationKey: `legacy:${operationId}:output:${preparation.id}`,
+      changes: [{ ingredientId: preparation.id, quantityDelta: quantityProduced, movementType: 'PRODUCTION_OUTPUT', operation: 'PREPARATION_PRODUCTION' }] });
+    const updatedPrepRow = await getIngredientForUpdate(client, preparation.id, storeId);
+    
+    const prepTransactionRow = await insertStockTransaction(client, {
+      ingredientId: preparation.id,
+      type: STOCK_TRANSACTION_TYPES.PRODUCE_ADD,
+      quantity: quantityProduced,
+      beforeStock: prepBeforeStock,
+      afterStock: prepAfterStock,
+      note: `[SẢN XUẤT] Nhập kho mẻ mới. ${note}`.trim().slice(0, 255),
+      createdBy: actorUser.id,
+    }, storeId);
+
+    await client.query('commit');
+
+    return {
+      ingredient: toPublicIngredient(updatedPrepRow),
+      transaction: toPublicStockTransaction(prepTransactionRow),
+    };
+  } catch (err) {
+    await client.query('rollback');
+    throw err;
+  } finally {
+    client.release();
   }
 }

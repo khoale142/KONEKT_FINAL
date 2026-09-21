@@ -1,5 +1,10 @@
 import { apiClient } from '../../../services/apiClient.js';
 
+function withOperationId(data = {}) {
+  if (!data.operationId) data.operationId = crypto.randomUUID();
+  return data;
+}
+
 function buildQueryString(filters = {}) {
   const query = new URLSearchParams();
 
@@ -25,16 +30,16 @@ function buildQueryString(filters = {}) {
 
 export const stockApi = {
   importStock(data) {
-    return apiClient.post('/stock/import', data);
+    return apiClient.post('/stock/import', withOperationId(data));
   },
   importStockBatch(data) {
-    return apiClient.post('/stock/import/batch', data);
+    return apiClient.post('/stock/import-batch', withOperationId(data));
   },
   adjustStock(data) {
-    return apiClient.post('/stock/adjust', data);
+    return apiClient.post('/stock/adjust', withOperationId(data));
   },
   countDailyStock(data) {
-    return apiClient.post('/stock/count/daily', data);
+    return apiClient.post('/stock/count', withOperationId(data));
   },
   getTransactions(filters = {}) {
     return apiClient.get(`/stock/transactions${buildQueryString(filters)}`);
@@ -43,7 +48,10 @@ export const stockApi = {
     return apiClient.get('/stock/forecast');
   },
   discardStock(data) {
-    return apiClient.post('/stock/discard', data);
+    return apiClient.post('/stock/discard', withOperationId(data));
+  },
+  producePreparation(data) {
+    return apiClient.post('/stock/produce', withOperationId(data));
   },
 };
 

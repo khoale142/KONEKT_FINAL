@@ -106,8 +106,16 @@ export function StaffSessionPage() {
     void fetchSessionData();
     void fetchHistory();
 
+    const handleSessionUpdated = () => {
+      void fetchSessionData();
+      void fetchHistory();
+    };
+
+    window.addEventListener('konekt:session-updated', handleSessionUpdated);
+
     return () => {
       isCancelled = true;
+      window.removeEventListener('konekt:session-updated', handleSessionUpdated);
     };
   }, [reloadNonce]);
 
@@ -618,13 +626,13 @@ export function StaffSessionPage() {
                   <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
                     <thead>
                       <tr>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}>Giờ mở</th>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}>Giờ đóng</th>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}>Đầu ca</th>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}>Cuối ca đếm</th>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}>Chênh lệch</th>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}>Trạng thái</th>
-                        <th style={{ padding: '12px 16px', borderBottom: '2px solid var(--color-outline-variant)', color: 'var(--color-secondary)', fontWeight: '600' }}></th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}>Giờ mở</th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}>Giờ đóng</th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}>Đầu ca</th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}>Cuối ca đếm</th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}>Chênh lệch</th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}>Trạng thái</th>
+                        <th style={{ padding: '12px 16px', backgroundColor: '#3c5642', color: '#ffffff', fontWeight: '600', borderBottom: 'none' }}></th>
                       </tr>
                     </thead>
                     <tbody>

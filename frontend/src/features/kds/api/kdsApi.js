@@ -2,10 +2,10 @@ import { apiClient } from '../../../services/apiClient.js';
 
 export const kdsApi = {
   getOrders() {
-    return apiClient.get('/kds/orders');
+    return apiClient.get('/kds');
   },
   completeOrder(orderId) {
-    return apiClient.patch(`/kds/orders/${orderId}/complete`, {});
+    return apiClient.post(`/kds/${orderId}/complete`, {});
   },
 };
 

@@ -9,10 +9,10 @@ import {
   performDailyStockCount,
   performStockAdjustment,
   performStockImport,
+  producePreparationController,
 } from './stock.controller.js';
 
 const router = Router();
-
 
 router.use(requireAuth, requireStoreContext());
 
@@ -24,5 +24,6 @@ router.post('/import-batch', requireStoreManager(), performBatchStockImport);
 router.post('/adjust', requireStoreManager(), performStockAdjustment);
 router.post('/count', requireStoreManager(), performDailyStockCount);
 router.post('/discard', requireStoreManager(), discardStockItem);
+router.post('/produce', requireStoreManager(), producePreparationController);
 
 export default router;

@@ -68,11 +68,33 @@ export async function createStore(tenantId, { name, address }, sourceStoreId) {
 
     // Clone data from source store if provided
     if (sourceStoreId) {
+      // Clone catalog categories first so the copied products and ingredients retain their own-store references.
+      await client.query(
+        `insert into categories (store_id, name, scope, created_by)
+         select $2, name, scope, created_by
+         from categories
+         where store_id = $1 and deleted_at is null`,
+        [sourceStoreId, newStore.id],
+      );
+
       // Clone products
       await client.query(
-        `insert into products (name, tag, price, status, image_url, created_by, store_id)
-         select name, tag, price, status, image_url, created_by, $2
-         from products where store_id = $1 and deleted_at is null`,
+        `insert into products (name, category_id, price, status, image_url, created_by, store_id)
+         select p.name,
+                target_category.id,
+                p.price,
+                p.status,
+                p.image_url,
+                p.created_by,
+                $2
+         from products p
+         left join categories source_category on source_category.id = p.category_id
+         left join categories target_category
+           on target_category.store_id = $2
+          and target_category.deleted_at is null
+          and source_category.deleted_at is null
+          and lower(target_category.name) = lower(source_category.name)
+         where p.store_id = $1 and p.deleted_at is null`,
         [sourceStoreId, newStore.id]
       );
       
@@ -90,9 +112,22 @@ export async function createStore(tenantId, { name, address }, sourceStoreId) {
 
       // Clone ingredients (with current_stock = 0)
       await client.query(
-        `insert into ingredients (name, tag, unit, current_stock, low_stock_threshold, created_by, store_id)
-         select name, tag, unit, 0, low_stock_threshold, created_by, $2
-         from ingredients where store_id = $1 and deleted_at is null`,
+        `insert into ingredients (name, category_id, unit, current_stock, low_stock_threshold, created_by, store_id)
+         select i.name,
+                target_category.id,
+                i.unit,
+                0,
+                i.low_stock_threshold,
+                i.created_by,
+                $2
+         from ingredients i
+         left join categories source_category on source_category.id = i.category_id
+         left join categories target_category
+           on target_category.store_id = $2
+          and target_category.deleted_at is null
+          and source_category.deleted_at is null
+          and lower(target_category.name) = lower(source_category.name)
+         where i.store_id = $1 and i.deleted_at is null`,
         [sourceStoreId, newStore.id]
       );
       

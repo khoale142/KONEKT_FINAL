@@ -8,6 +8,12 @@ import {
   getProduct,
   getProducts,
   updateExistingProduct,
+  bulkCreateProducts,
+  addNewProductSize,
+  updateExistingProductSize,
+  reorderExistingProductSizes,
+  archiveExistingProductSize,
+  assignProductCategories,
 } from './product.controller.js';
 
 const router = Router();
@@ -18,7 +24,13 @@ router.get('/pos/available', getPosAvailableProducts);
 router.get('/', getProducts);
 router.get('/:id', getProduct);
 
+router.post('/bulk', requireStoreManager(), bulkCreateProducts);
+router.patch('/categories', requireStoreManager(), assignProductCategories);
 router.post('/', requireStoreManager(), createNewProduct);
+router.post('/:id/sizes', requireStoreManager(), addNewProductSize);
+router.patch('/:id/sizes/reorder', requireStoreManager(), reorderExistingProductSizes);
+router.patch('/:id/sizes/:sizeId', requireStoreManager(), updateExistingProductSize);
+router.delete('/:id/sizes/:sizeId', requireStoreManager(), archiveExistingProductSize);
 router.patch('/:id', requireStoreManager(), updateExistingProduct);
 router.delete('/:id', requireStoreManager(), deleteExistingProduct);
 

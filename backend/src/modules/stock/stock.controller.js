@@ -1,4 +1,5 @@
 import { sendSuccess } from '../../utils/apiResponse.js';
+
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import {
   adjustStock,
@@ -8,6 +9,7 @@ import {
   listStockTransactions,
   getStockForecast,
   discardStock,
+  producePreparation,
 } from './stock.service.js';
 
 export const performStockImport = asyncHandler(async (req, res) => {
@@ -81,5 +83,15 @@ export const discardStockItem = asyncHandler(async (req, res) => {
   return sendSuccess(res, {
     message: 'Stock discarded successfully.',
     statusCode: 200,
+  });
+});
+
+export const producePreparationController = asyncHandler(async (req, res) => {
+  const storeId = req.workspace.storeId;
+  const data = await producePreparation(req.body, req.user, storeId);
+  return sendSuccess(res, {
+    message: 'Preparation produced successfully.',
+    statusCode: 201,
+    data,
   });
 });

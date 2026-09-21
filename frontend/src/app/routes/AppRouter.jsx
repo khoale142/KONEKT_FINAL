@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider.jsx';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
 import { AppLayout } from '../../components/layout/AppLayout.jsx';
@@ -11,12 +11,8 @@ import { StoreManagementPage } from '../../features/stores/pages/StoreManagement
 
 import { AdminDashboardPage } from '../../features/dashboard/pages/AdminDashboardPage.jsx';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage.jsx';
-import { ProductListPage } from '../../features/products/pages/ProductListPage.jsx';
-import { ProductFormPage } from '../../features/products/pages/ProductFormPage.jsx';
-import { IngredientListPage } from '../../features/ingredients/pages/IngredientListPage.jsx';
-import { IngredientFormPage } from '../../features/ingredients/pages/IngredientFormPage.jsx';
+import { CatalogPage } from '../../features/catalog/pages/CatalogPage.jsx';
 import { StockPage } from '../../features/stock/pages/StockPage.jsx';
-import { RecipeFormPage } from '../../features/recipes/pages/RecipeFormPage.jsx';
 import { ReportsPage } from '../../features/reports/pages/ReportsPage.jsx';
 import { KDSPage } from '../../features/kds/pages/KDSPage.jsx';
 import { POSPage } from '../../features/pos/pages/POSPage.jsx';
@@ -35,6 +31,12 @@ function RoleHomeRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to={ROUTES.LOGIN} replace />;
   return <Navigate to={ROUTES.WORKSPACES} replace />;
+}
+
+function CatalogItemRedirect({ type }) {
+  const { id } = useParams();
+  const key = type === 'PRODUCT' ? 'editProduct' : 'editIngredient';
+  return <Navigate to={`${ROUTES.STORE_CATALOG}?${key}=${encodeURIComponent(id)}`} replace />;
 }
 
 export function AppRouter() {
@@ -82,15 +84,16 @@ export function AppRouter() {
             <AppLayout>
               <Routes>
                 <Route path="dashboard" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><AdminDashboardPage /></ProtectedRoute>} />
-                <Route path="products" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ProductListPage /></ProtectedRoute>} />
-                <Route path="products/new" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ProductFormPage /></ProtectedRoute>} />
-                <Route path="products/:id/edit" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ProductFormPage /></ProtectedRoute>} />
-                <Route path="ingredients" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><IngredientListPage /></ProtectedRoute>} />
-                <Route path="ingredients/new" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><IngredientFormPage /></ProtectedRoute>} />
-                <Route path="ingredients/:id/edit" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><IngredientFormPage /></ProtectedRoute>} />
-                <Route path="recipes" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><Navigate to="/store/products?tab=recipes" replace /></ProtectedRoute>} />
-                <Route path="recipes/new" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><RecipeFormPage /></ProtectedRoute>} />
-                <Route path="recipes/:id/edit" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><RecipeFormPage /></ProtectedRoute>} />
+                <Route path="catalog" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><CatalogPage /></ProtectedRoute>} />
+                <Route path="products" element={<Navigate to={ROUTES.STORE_PRODUCTS} replace />} />
+                <Route path="products/new" element={<Navigate to={ROUTES.STORE_PRODUCTS_NEW} replace />} />
+                <Route path="products/:id/edit" element={<CatalogItemRedirect type="PRODUCT" />} />
+                <Route path="ingredients" element={<Navigate to={ROUTES.STORE_INGREDIENTS} replace />} />
+                <Route path="ingredients/new" element={<Navigate to={ROUTES.STORE_INGREDIENTS_NEW} replace />} />
+                <Route path="ingredients/:id/edit" element={<CatalogItemRedirect type="INGREDIENT" />} />
+                <Route path="recipes" element={<Navigate to={ROUTES.STORE_PRODUCTS} replace />} />
+                <Route path="recipes/new" element={<Navigate to={ROUTES.STORE_PRODUCTS} replace />} />
+                <Route path="recipes/:id/edit" element={<Navigate to={ROUTES.STORE_PRODUCTS} replace />} />
                 <Route path="reports" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><ReportsPage /></ProtectedRoute>} />
                 <Route path="manager-hr/calendar" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><AdminCalendarPage /></ProtectedRoute>} />
                 <Route path="manager-hr" element={<ProtectedRoute requireWorkspaceRole="MANAGER"><AdminHRPage /></ProtectedRoute>} />

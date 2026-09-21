@@ -9,11 +9,10 @@ import { TextInput } from '../../../components/forms/TextInput.jsx';
 import { TextareaInput } from '../../../components/forms/TextareaInput.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
 import { Toast } from '../../../components/feedback/Toast.jsx';
-import { DEFAULT_PRODUCT_TAG, PRODUCT_TAG_SUGGESTIONS } from '../../../constants/productTags.js';
 import { formatVND, parseVND } from '../../../utils/currency.js';
 import { formatDateTime } from '../../../utils/date.js';
 
-const ALL_TAGS_VALUE = 'ALL';
+const ALL_CATEGORIES_VALUE = 'ALL';
 const PAYMENT_METHOD = 'CASH';
 const PAYMENT_METHOD_LABEL = 'Tiền mặt';
 function getQuickCashSuggestions(totalAmount) {
@@ -51,23 +50,13 @@ function getQuickCashSuggestions(totalAmount) {
     .slice(0, 4); // Limit to max 4 options
 }
 
-function normalizeProductTag(tag) {
-  const normalizedTag = String(tag ?? '').trim();
-  return normalizedTag || DEFAULT_PRODUCT_TAG;
+function getProductCategoryName(product) {
+  return String(product.category?.name ?? '').trim() || 'Chưa phân loại';
 }
 
-function buildProductTagOptions(products) {
-  const discoveredTags = Array.from(
-    new Set(products.map((product) => normalizeProductTag(product.tag))),
-  );
-  const orderedTags = [
-    ...PRODUCT_TAG_SUGGESTIONS.filter((tag) => discoveredTags.includes(tag)),
-    ...discoveredTags
-      .filter((tag) => !PRODUCT_TAG_SUGGESTIONS.includes(tag))
-      .sort((left, right) => left.localeCompare(right, 'vi')),
-  ];
-
-  return [ALL_TAGS_VALUE, ...orderedTags];
+function buildProductCategoryOptions(products) {
+  const names = Array.from(new Set(products.map(getProductCategoryName)));
+  return [ALL_CATEGORIES_VALUE, ...names.sort((left, right) => left.localeCompare(right, 'vi'))];
 }
 
 function getOrderItemName(item) {
@@ -491,7 +480,7 @@ export function POSPage() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTag, setActiveTag] = useState(ALL_TAGS_VALUE);
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES_VALUE);
   const [amountReceived, setAmountReceived] = useState(null);
   const [orderNote, setOrderNote] = useState('');
   const [completedOrder, setCompletedOrder] = useState(null);
@@ -565,10 +554,7 @@ export function POSPage() {
 
       try {
         const response = await posApi.getAvailableProducts();
-        const nextProducts = (response.data.products || []).map((product) => ({
-          ...product,
-          tag: normalizeProductTag(product.tag),
-        }));
+        const nextProducts = response.data.products || [];
 
         if (!isCancelled) {
           setProducts(nextProducts);
@@ -592,15 +578,15 @@ export function POSPage() {
     };
   }, [reloadNonce]);
 
-  const tagOptions = useMemo(() => buildProductTagOptions(products), [products]);
+  const categoryOptions = useMemo(() => buildProductCategoryOptions(products), [products]);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
-    if (!tagOptions.includes(activeTag)) {
-      setActiveTag(ALL_TAGS_VALUE);
+    if (!categoryOptions.includes(activeCategory)) {
+      setActiveCategory(ALL_CATEGORIES_VALUE);
     }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [activeTag, tagOptions]);
+  }, [activeCategory, categoryOptions]);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -635,10 +621,10 @@ export function POSPage() {
     const matchesSearch = String(product.name || '')
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesTag =
-      activeTag === ALL_TAGS_VALUE || normalizeProductTag(product.tag) === activeTag;
+    const matchesCategory =
+      activeCategory === ALL_CATEGORIES_VALUE || getProductCategoryName(product) === activeCategory;
 
-    return matchesSearch && matchesTag;
+    return matchesSearch && matchesCategory;
   });
 
   const handleAddToCart = (product) => {
@@ -960,15 +946,15 @@ export function POSPage() {
           />
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            {tagOptions.map((tag) => {
-              const isActive = tag === activeTag;
-              const label = tag === ALL_TAGS_VALUE ? 'Tất cả món' : tag;
+            {categoryOptions.map((categoryName) => {
+              const isActive = categoryName === activeCategory;
+              const label = categoryName === ALL_CATEGORIES_VALUE ? 'Tất cả món' : categoryName;
 
               return (
                 <button
-                  key={tag}
+                  key={categoryName}
                   type="button"
-                  onClick={() => setActiveTag(tag)}
+                  onClick={() => setActiveCategory(categoryName)}
                   style={{
                     padding: '8px 14px',
                     borderRadius: '999px',
@@ -1043,7 +1029,7 @@ export function POSPage() {
                         marginBottom: '0',
                       }}
                     >
-                      {product.tag}
+                      {getProductCategoryName(product)}
                     </p>
                   </div>
 
