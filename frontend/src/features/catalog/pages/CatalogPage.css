@@ -395,3 +395,27 @@
     transform: rotate(360deg);
   }
 }
+/* Custom theme styles from prompt */
+.filter-input {
+  border: 1.5px solid #D8CBBB;
+  background-color: #FFFFFF;
+  color: #3A2E25;
+  height: 42px;
+  transition: all 0.2s ease;
+}
+.filter-input:focus {
+  border-color: #A3856C;
+  box-shadow: 0 0 0 3px rgba(163, 133, 108, 0.15);
+  outline: none;
+}
+.btn-action {
+  border: 1.5px solid #D8CBBB;
+  background-color: #FFFFFF;
+  color: #3A2E25;
+  height: 38px;
+  transition: all 0.15s ease;
+}
+.btn-action:hover {
+  background-color: #F7F1E7;
+  border-color: #C9BAA8;
+}

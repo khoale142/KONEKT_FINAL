@@ -9,7 +9,9 @@ router.use(requireAuth, requireStoreContext(), requireStoreManager());
 
 router.get('/revenue', getRevenueReport);
 router.get('/best-selling', getBestSellingProducts);
+router.get('/best-selling-products', getBestSellingProducts);
 router.get('/low-stock', getLowStockIngredients);
+router.get('/low-stock-ingredients', getLowStockIngredients);
 router.get('/discards', getDiscardReport);
 
 export default router;

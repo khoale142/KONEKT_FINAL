@@ -30,10 +30,10 @@ export function ReportsPage() {
         reportApi.getDiscardsReport(),
       ]);
 
-      setRevenueData(revenueResponse.data || []);
-      setBestSellers(bestSellingResponse.data || []);
-      setLowStock(lowStockResponse.data || []);
-      setDiscards(discardsResponse.data || []);
+      setRevenueData(revenueResponse.data?.items || (Array.isArray(revenueResponse.data) ? revenueResponse.data : []));
+      setBestSellers(bestSellingResponse.data?.items || (Array.isArray(bestSellingResponse.data) ? bestSellingResponse.data : []));
+      setLowStock(lowStockResponse.data?.items || (Array.isArray(lowStockResponse.data) ? lowStockResponse.data : []));
+      setDiscards(discardsResponse.data?.items || (Array.isArray(discardsResponse.data) ? discardsResponse.data : []));
     } catch (loadError) {
       setRevenueData([]);
       setBestSellers([]);

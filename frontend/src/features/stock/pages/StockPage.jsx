@@ -611,9 +611,11 @@ export function StockPage() {
     }
   };
 
-  const handleTemplateDownload = (mode) => {
+  const handleTemplateDownload = async (mode) => {
     try {
-      downloadStockTemplate(ingredients, mode);
+      const templateMode =
+        mode === STOCK_MODES.IMPORT ? STOCK_TEMPLATE_MODES.IMPORT : STOCK_TEMPLATE_MODES.DAILY_COUNT;
+      await downloadStockTemplate({ mode: templateMode, ingredients });
       setToastType('success');
       setToastMsg('Tải file mẫu Excel thành công. Hãy mở file chỉnh sửa và nạp lại.');
     } catch (err) {
@@ -927,30 +929,26 @@ export function StockPage() {
               <Button variant="secondary" onClick={loadIngredients} disabled={isLoading} icon={<RefreshCw size={16} />}>
                 Làm mới danh sách
               </Button>
-              {workspace?.type !== WORKSPACE_TYPES.STORE && (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleTemplateDownload(activeMode)}
-                    disabled={isLoading}
-                    icon={<Download size={16} />}
-                  >
-                    Tải file mẫu Excel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() =>
-                      activeMode === STOCK_MODES.IMPORT
-                        ? importFileInputRef.current?.click()
-                        : countFileInputRef.current?.click()
-                    }
-                    disabled={isLoading || isImportingFile}
-                    icon={<Upload size={16} />}
-                  >
-                    Nạp số liệu từ file Excel
-                  </Button>
-                </>
-              )}
+              <Button
+                variant="secondary"
+                onClick={() => handleTemplateDownload(activeMode)}
+                disabled={isLoading}
+                icon={<Download size={16} />}
+              >
+                Tải file mẫu Excel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() =>
+                  activeMode === STOCK_MODES.IMPORT
+                    ? importFileInputRef.current?.click()
+                    : countFileInputRef.current?.click()
+                }
+                disabled={isLoading || isImportingFile}
+                icon={<Upload size={16} />}
+              >
+                Nạp số liệu từ file Excel
+              </Button>
             </>
           ) : activeTab === 'forecast' ? (
             <Button variant="secondary" onClick={fetchForecast} disabled={isForecastLoading} icon={<RotateCcw size={16} />}>
@@ -987,26 +985,22 @@ export function StockPage() {
           <PackageOpen size={18} />
           Kiểm kê & Điều chỉnh kho
         </button>
-        {workspace?.type === WORKSPACE_TYPES.TENANT && (
-          <>
-            <button
-              onClick={() => setActiveTab('forecast')}
-              className={`btn ${activeTab === 'forecast' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <TrendingUp size={18} />
-              Dự báo & Đề xuất nhập
-            </button>
-            <button
-              onClick={() => setActiveTab('transactions')}
-              className={`btn ${activeTab === 'transactions' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <History size={18} />
-              Lịch sử nhập xuất
-            </button>
-          </>
-        )}
+        <button
+          onClick={() => setActiveTab('forecast')}
+          className={`btn ${activeTab === 'forecast' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <TrendingUp size={18} />
+          Dự báo & Đề xuất nhập
+        </button>
+        <button
+          onClick={() => setActiveTab('transactions')}
+          className={`btn ${activeTab === 'transactions' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <History size={18} />
+          Lịch sử nhập xuất
+        </button>
         <button
           onClick={() => setActiveTab('discard')}
           className={`btn ${activeTab === 'discard' ? 'btn-primary' : 'btn-secondary'}`}
@@ -1048,6 +1042,31 @@ export function StockPage() {
             </div>
 
             <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleTemplateDownload(activeMode)}
+                  disabled={isLoading}
+                  icon={<Download size={14} />}
+                >
+                  Tải mẫu Excel
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    activeMode === STOCK_MODES.IMPORT
+                      ? importFileInputRef.current?.click()
+                      : countFileInputRef.current?.click()
+                  }
+                  disabled={isLoading || isImportingFile}
+                  icon={<Upload size={14} />}
+                >
+                  Nạp Excel
+                </Button>
+              </div>
+
               {activeMode === STOCK_MODES.DAILY_COUNT && (
                 <div style={{ width: '160px' }}>
                   <TextInput
@@ -1060,7 +1079,7 @@ export function StockPage() {
                   />
                 </div>
               )}
-              <div style={{ width: '260px' }}>
+              <div style={{ width: '220px' }}>
                 <TextInput
                   placeholder="Tìm kiếm nguyên liệu..."
                   value={searchQuery}
@@ -1250,23 +1269,23 @@ export function StockPage() {
                       <th style={{ width: '124px' }}>Mã NL</th>
                       <th style={{ minWidth: '240px' }}>Tên nguyên liệu</th>
                       <th style={{ width: '90px', textAlign: 'center' }}>Đơn vị</th>
-                      {workspace?.type !== WORKSPACE_TYPES.STORE && <th style={{ width: '140px', textAlign: 'right' }}>Tồn lý thuyết</th>}
+                      <th style={{ width: '140px', textAlign: 'right' }}>Tồn lý thuyết</th>
                       <th style={{ width: '180px' }}>Tồn thực tế</th>
-                      {workspace?.type !== WORKSPACE_TYPES.STORE && <th style={{ width: '140px', textAlign: 'right' }}>Chênh lệch</th>}
+                      <th style={{ width: '140px', textAlign: 'right' }}>Chênh lệch</th>
                       <th style={{ minWidth: '240px' }}>Ghi chú theo dòng</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td colSpan={workspace?.type === WORKSPACE_TYPES.STORE ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
                           <div className="spinner" style={{ margin: '0 auto 12px' }}></div>
                           <span style={{ color: 'var(--color-secondary)' }}>Đang tải danh sách nguyên liệu...</span>
                         </td>
                       </tr>
                     ) : visibleIngredients.length === 0 ? (
                       <tr>
-                        <td colSpan={workspace?.type === WORKSPACE_TYPES.STORE ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)', color: 'var(--color-secondary)' }}>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)', color: 'var(--color-secondary)' }}>
                           Không có nguyên liệu nào phù hợp với bộ lọc hiện tại.
                         </td>
                       </tr>
@@ -1294,11 +1313,9 @@ export function StockPage() {
                               </div>
                             </td>
                             <td style={{ textAlign: 'center', fontWeight: '600' }}>{ingredient.unit}</td>
-                            {workspace?.type !== WORKSPACE_TYPES.STORE && (
-                              <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                                {formatDisplayNumber(ingredient.currentStock)} {ingredient.unit}
-                              </td>
-                            )}
+                            <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                              {formatDisplayNumber(ingredient.currentStock)} {ingredient.unit}
+                            </td>
                             <td>
                               <input
                                 type="text"
@@ -1316,25 +1333,23 @@ export function StockPage() {
                                 </div>
                               )}
                             </td>
-                            {workspace?.type !== WORKSPACE_TYPES.STORE && (
-                              <td
-                                style={{
-                                  textAlign: 'right',
-                                  fontWeight: '700',
-                                  color:
-                                    differenceQuantity > 0
-                                      ? 'var(--color-tertiary-container)'
-                                      : differenceQuantity < 0
-                                      ? 'var(--color-error)'
-                                      : 'var(--color-secondary)',
-                                  fontVariantNumeric: 'tabular-nums',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {differenceQuantity > 0 ? '+' : ''}
-                                {formatDisplayNumber(differenceQuantity)} {ingredient.unit}
-                              </td>
-                            )}
+                            <td
+                              style={{
+                                textAlign: 'right',
+                                fontWeight: '700',
+                                color:
+                                  differenceQuantity > 0
+                                    ? 'var(--color-tertiary-container)'
+                                    : differenceQuantity < 0
+                                    ? 'var(--color-error)'
+                                    : 'var(--color-secondary)',
+                                fontVariantNumeric: 'tabular-nums',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {differenceQuantity > 0 ? '+' : ''}
+                              {formatDisplayNumber(differenceQuantity)} {ingredient.unit}
+                            </td>
                             <td>
                               <input
                                 type="text"

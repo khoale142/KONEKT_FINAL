@@ -49,7 +49,8 @@ function toCellString(value) {
 }
 
 async function loadXlsxLibrary() {
-  return import('xlsx');
+  const xlsxModule = await import('xlsx');
+  return xlsxModule.default || xlsxModule;
 }
 
 function createInstructionsSheet(XLSX, mode) {
@@ -171,7 +172,22 @@ function parseImportedRow(row, mode) {
   };
 }
 
-export async function downloadStockTemplate({ mode, ingredients, fileNameDate }) {
+export async function downloadStockTemplate(arg1, arg2, arg3) {
+  let mode, ingredients, fileNameDate;
+  if (arg1 && typeof arg1 === 'object' && !Array.isArray(arg1)) {
+    mode = arg1.mode;
+    ingredients = arg1.ingredients || [];
+    fileNameDate = arg1.fileNameDate;
+  } else if (Array.isArray(arg1)) {
+    ingredients = arg1;
+    mode = arg2;
+    fileNameDate = arg3;
+  } else {
+    mode = arg1;
+    ingredients = arg2 || [];
+    fileNameDate = arg3;
+  }
+
   const XLSX = await loadXlsxLibrary();
   const workbook = createWorkbook(XLSX, mode, ingredients);
   const safeDate = toCellString(fileNameDate) || new Date().toISOString().slice(0, 10);

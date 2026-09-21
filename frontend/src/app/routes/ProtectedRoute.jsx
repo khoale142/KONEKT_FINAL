@@ -23,6 +23,9 @@ export function ProtectedRoute({ children, requireWorkspaceType, requireWorkspac
 
   if (requireWorkspaceRole) {
     if (!workspace || workspace.role !== requireWorkspaceRole) {
+      if (workspace?.type === WORKSPACE_TYPES.STORE) {
+        return <Navigate to={ROUTES.STORE_POS} replace />;
+      }
       return <Navigate to={ROUTES.WORKSPACES} replace />;
     }
   }

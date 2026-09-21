@@ -3,10 +3,31 @@ import { query } from '../../config/db.js';
 // --- SHIFTS MASTER DATA ---
 
 export async function listShifts(storeId) {
-  const result = await query(
+  let result = await query(
     `SELECT * FROM shifts WHERE deleted_at IS NULL AND store_id = $1 ORDER BY start_time`,
     [storeId]
   );
+
+  if (result.rows.length === 0 && storeId) {
+    try {
+      await query(
+        `INSERT INTO shifts (name, start_time, end_time, hourly_rate, store_id) VALUES
+         ('Ca Sáng', '06:00:00', '12:00:00', 25000, $1),
+         ('Ca Chiều', '12:00:00', '18:00:00', 25000, $1),
+         ('Ca Tối', '18:00:00', '23:00:00', 28000, $1),
+         ('Ca Cả Ngày', '08:00:00', '17:00:00', 25000, $1)`,
+        [storeId]
+      );
+
+      result = await query(
+        `SELECT * FROM shifts WHERE deleted_at IS NULL AND store_id = $1 ORDER BY start_time`,
+        [storeId]
+      );
+    } catch (err) {
+      console.error('Error auto-seeding default shifts:', err);
+    }
+  }
+
   return result.rows;
 }
 
@@ -181,22 +202,23 @@ export async function assignShift(creatorId, { staff_id, shift_id, shift_date, c
   let hasCustom = false;
 
   if (custom_start_time && custom_end_time) {
+    if (custom_start_time === custom_end_time) {
+      throw new Error('Thời gian bắt đầu và kết thúc không được trùng nhau.');
+    }
+
     const startParts = custom_start_time.split(':');
     const startMin = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
     const endParts = custom_end_time.split(':');
     const endMin = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1], 10);
 
-    // 6 AM is 360 minutes, 11 PM is 1380 minutes
-    if (startMin < 360 || endMin > 1380 || startMin >= endMin) {
-      throw new Error('Chọn giờ tùy chọn trong khoảng 6h sáng tới 11h tối và không qua đêm.');
+    let diffMinutes = endMin - startMin;
+    if (diffMinutes <= 0) {
+      diffMinutes += 24 * 60; // Hỗ trợ ca làm đêm qua ngày
     }
 
-    const start = new Date(`1970-01-01T${custom_start_time}`);
-    const end = new Date(`1970-01-01T${custom_end_time}`);
-    const diffHours = (end - start) / (1000 * 60 * 60);
-
-    if (diffHours < 3 || diffHours > 16) {
-      throw new Error('Thời gian ca làm việc linh động phải từ 3 đến 16 tiếng.');
+    const diffHours = diffMinutes / 60;
+    if (diffHours < 0.5 || diffHours > 24) {
+      throw new Error('Thời gian ca làm việc linh động phải từ 30 phút đến 24 tiếng.');
     }
     start_time = custom_start_time;
     end_time = custom_end_time;

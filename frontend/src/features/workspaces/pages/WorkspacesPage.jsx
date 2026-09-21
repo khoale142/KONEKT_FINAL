@@ -99,9 +99,15 @@ export function WorkspacesPage() {
       setShowJoinStore(false);
       setInviteCode('');
       
-      await handleSelectWorkspace(WORKSPACE_TYPES.STORE, res.data.store.id);
+      const storeId = res.data?.store?.id || res.data?.id;
+      if (storeId) {
+        await handleSelectWorkspace(WORKSPACE_TYPES.STORE, storeId);
+      } else {
+        await fetchWorkspaces();
+      }
     } catch (err) {
       alert('Lỗi tham gia: ' + (err.message || 'Không xác định'));
+      await fetchWorkspaces();
       setIsJoining(false);
     }
   };
