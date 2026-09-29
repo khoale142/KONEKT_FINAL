@@ -1,0 +1,8 @@
+export const ADMIN_ROLES = Object.freeze({
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  SYSTEM_ADMIN: 'SYSTEM_ADMIN',
+  SUPPORT_STAFF: 'SUPPORT_STAFF',
+  AUDITOR: 'AUDITOR',
+});
+
+export default ADMIN_ROLES;

@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+
+<html lang="vi" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{
+  "canvas":"#fbf9f5",
+  "surface":"#fff9ee",
+  "surface-card":"#ffffff",
+  "border-beige":"#e6dfd5",
+  "border-subtle":"#ebe5dc",
+  "olive-primary":"#3c5642",
+  "olive-hover":"#304535",
+  "olive-soft":"#a3bfa8",
+  "olive-border":"#d0e0d3",
+  "text-main":"#263426",
+  "text-sub":"#6f786b",
+  "status-active":"#2e7d32",
+  "status-active-bg":"#e8f5e9",
+  "status-inactive":"#c62828",
+  "status-inactive-bg":"#ffebee"
+},"borderRadius":{"DEFAULT":"0.25rem","md":"0.5rem","lg":"0.5rem","xl":"0.75rem","2xl":"1rem","full":"9999px"},"fontFamily":{"body":["Plus Jakarta Sans","sans-serif"]}}}};</script></head><body class="bg-canvas font-body text-text-main antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-64 bg-olive-primary z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.08)]"><div class="flex flex-col"><div class="h-16 px-6 flex items-center gap-3 bg-black/15 border-b border-olive-border/10"><img alt="KONEKT Logo" class="h-8 w-auto object-contain brightness-0 invert" src="https://lh3.googleusercontent.com/aida/AEtjO1Vu4fnHCyvk_Br6rZzKUR3kgWNG9ObP9epO8oU9dxPhFzVcQB_9XEWxK4Gvt_YkYttKCm5Rb2eBm8loJw59gFKWQRlGukIts314CD4D4XBSoPctjPMOdWy0TLqlKl4_cv2YrKI4UNEzSbfdAWF6lxGs4YH-XrHqOtc-dN05E8bm0bcGkbB5Ku8fpOfOeKq9BwAnta_7CLdbQtC3GYGQVIyCWp0r3YRBKY0c6VuabZMHDzHkfbf853NQeUbT"/><div class="flex flex-col"><span class="text-lg text-white font-bold leading-tight">KONEKT</span><span class="text-[11px] text-olive-soft tracking-wider uppercase leading-none font-semibold">Super Admin</span></div></div><div class="px-4 pt-4 pb-2"><span class="text-[11px] text-olive-soft/75 uppercase tracking-wider px-3 font-semibold">Quản trị hệ thống</span></div><nav class="flex flex-col gap-1 px-3"><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-olive-soft hover:bg-olive-hover hover:text-white transition-all font-medium text-sm" data-path="tong-quan-he-thong" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Tổng quan hệ thống</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-olive-hover text-white shadow-sm transition-all font-semibold text-sm" data-path="quan-ly-to-chuc" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span>Quản lý Tổ chức</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-olive-soft hover:bg-olive-hover hover:text-white transition-all font-medium text-sm" data-path="quan-ly-tai-khoan" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span>Quản lý Tài khoản</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-olive-soft hover:bg-olive-hover hover:text-white transition-all font-medium text-sm" data-path="nhan-su-noi-bo" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span>Nhân sự Nội bộ</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-olive-soft hover:bg-olive-hover hover:text-white transition-all font-medium text-sm" data-path="nhat-ky-kiem-toan" href="#"><span class="material-symbols-outlined text-[20px]">history_toggle_off</span><span>Nhật ký Kiểm toán</span></a><a class="flex items-center gap-3 px-3 py-2 rounded-lg text-olive-soft hover:bg-olive-hover hover:text-white transition-all font-medium text-sm" data-path="ho-so-va-bao-mat" href="#"><span class="material-symbols-outlined text-[20px]">shield_person</span><span>Hồ sơ &amp; Bảo mật</span></a></nav></div><div class="p-4 m-3 rounded-xl bg-black/20 border border-white/5"><div class="flex items-center gap-3"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-olive-soft opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-olive-soft"></span></span><div class="flex flex-col"><span class="text-[11px] text-olive-soft/80 leading-tight">Trạng thái hệ thống</span><span class="text-xs text-white font-semibold">Hoạt động ổn định</span></div></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-card/95 backdrop-blur-xl border-b border-border-beige shadow-[0_1px_6px_rgba(0,0,0,0.03)] z-40 flex items-center justify-between px-8"><div class="flex items-center gap-4 w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-text-sub text-[20px] pointer-events-none">search</span><input class="w-full pl-9 pr-3 py-1.5 bg-canvas text-text-main placeholder:text-text-sub/70 text-sm rounded-lg border border-border-beige focus:outline-none focus:border-olive-primary focus:ring-1 focus:ring-olive-primary/30 transition-all" placeholder="Tìm kiếm tổ chức, tài khoản, mã nhật ký..." type="text"/></div></div><div class="flex items-center gap-6"><div class="flex items-center gap-2 px-3 py-1 rounded-full bg-[#f4eee4] border border-border-beige"><span class="w-2 h-2 rounded-full bg-[#3c5642]"></span><span class="text-xs text-text-main font-semibold uppercase tracking-wider">Môi trường Production</span></div><div class="flex items-center gap-2"><button class="relative p-2 rounded-lg text-text-sub hover:text-text-main hover:bg-canvas transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 bg-status-inactive rounded-full"></span></button><button class="p-2 rounded-lg text-text-sub hover:text-text-main hover:bg-canvas transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">help_outline</span></button></div><div class="h-6 w-[1px] bg-border-beige"></div><div class="flex items-center gap-3"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-border-beige" src="https://lh3.googleusercontent.com/aida/AEtjO1WRPQDwVo9zcIIZP756kY7mxrwWTaDEKF-OLChw9idxQ6izYDfBNO_i5dMzOPrmS5UlttP61Bi-mUXeUc5Uy-w0uRNqkhn3lXfCk4ajr0c_v123JQj6s5EMdYqIQJMs7RdaaXYh-1pCBPy0WomJ0AW5JOIAyFz_et3qSZdhmI4hNTAK4er-nvQn5ziYf-T9EPi6VQepnyeydcT__VLcYZclSKYF-ld6Y6nanz8iXdngrWsXBr6tV6lyMZAj"/><div class="hidden md:flex flex-col text-left"><span class="text-xs text-text-main font-semibold leading-tight">Alex Nguyen</span><span class="text-[11px] text-text-sub leading-tight">Super Administrator</span></div><span class="material-symbols-outlined text-text-sub text-[18px]">expand_more</span></div></div></header><main class="w-full pt-16 bg-canvas min-h-[calc(100vh-4rem)]"><div class="flex flex-col w-full">
+<div class="px-8 py-7 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+<!-- BREADCRUMB / BACK LINK -->
+<div class="flex items-center justify-between">
+<a class="inline-flex items-center gap-1.5 text-sm font-semibold text-text-sub hover:text-olive-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-base">arrow_back</span>
+<span>KONEKT Coffee</span>
+</a>
+</div>
+<!-- STORE HEADER (PHẦN 1) -->
+<div class="bg-surface-card rounded-xl border border-border-beige p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative">
+<div class="flex items-start sm:items-center gap-4">
+<!-- Icon avatar [ST] -->
+<div class="w-14 h-14 rounded-xl border border-olive-primary/20 bg-surface flex items-center justify-center flex-shrink-0 shadow-inner">
+<span class="text-lg font-bold text-olive-primary tracking-wide">ST</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex flex-wrap items-center gap-3">
+<h1 class="text-2xl font-bold text-text-main tracking-tight" id="store-name-display">Cửa hàng A</h1>
+<span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-status-active-bg text-status-active border border-status-active/20" id="store-status-badge">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+          Hoạt động
+        </span>
+</div>
+<div class="flex flex-wrap items-center gap-2 text-xs text-text-sub">
+<span class="inline-flex items-center gap-1 font-mono font-medium text-text-main">
+<span>STR-VN-99210</span>
+<button class="text-text-sub hover:text-olive-primary transition-colors p-0.5" onclick="copyStoreId()" title="Sao chép Store ID">
+<span class="material-symbols-outlined text-[15px]" id="store-id-copy-icon">content_copy</span>
+</button>
+</span>
+<span class="text-border-beige">•</span>
+<span>Thuộc <strong class="text-text-main font-semibold">KONEKT Coffee</strong></span>
+<span class="text-border-beige">•</span>
+<span>Tạo ngày 10/11/2023</span>
+</div>
+</div>
+</div>
+<!-- Header Action Button [...] with dropdown -->
+<div class="relative flex items-center self-end sm:self-center">
+<button class="w-10 h-10 rounded-lg border border-border-beige bg-canvas hover:bg-surface text-text-main flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-olive-primary/30" id="store-menu-btn" onclick="toggleStoreMenu()" type="button">
+<span class="material-symbols-outlined text-xl">more_horiz</span>
+</button>
+<!-- Dropdown Menu -->
+<div class="hidden absolute right-0 top-12 w-56 bg-surface-card rounded-xl border border-border-beige shadow-xl py-1.5 z-30" id="store-dropdown-menu">
+<button class="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-canvas flex items-center gap-2.5 transition-colors" onclick="openEditStoreModal()" type="button">
+<span class="material-symbols-outlined text-[18px] text-text-sub">edit</span>
+<span>Chỉnh sửa thông tin</span>
+</button>
+<button class="w-full px-4 py-2 text-left text-sm text-text-main hover:bg-canvas flex items-center gap-2.5 transition-colors" onclick="openInviteModal()" type="button">
+<span class="material-symbols-outlined text-[18px] text-text-sub">sync</span>
+<span>Đặt lại mã mời</span>
+</button>
+<div class="my-1 border-t border-border-subtle"></div>
+<button class="w-full px-4 py-2 text-left text-sm text-status-inactive hover:bg-status-inactive-bg/60 flex items-center gap-2.5 transition-colors" id="store-toggle-action-btn" onclick="toggleStoreStatus()" type="button">
+<span class="material-symbols-outlined text-[18px]" id="store-toggle-icon">block</span>
+<span id="store-toggle-text">Vô hiệu hóa cửa hàng</span>
+</button>
+</div>
+</div>
+</div>
+<!-- TAB NAVIGATION (PHẦN 2) -->
+<div class="border-b border-border-beige flex items-center gap-8">
+<button class="pb-3 text-sm font-semibold text-olive-primary border-b-2 border-olive-primary flex items-center gap-2 transition-all" id="tab-nav-overview" onclick="switchStoreTab('overview')" type="button">
+<span class="material-symbols-outlined text-base">info</span>
+<span>Tổng quan</span>
+</button>
+<button class="pb-3 text-sm font-semibold text-text-sub border-b-2 border-transparent hover:text-olive-primary flex items-center gap-2 transition-all" id="tab-nav-members" onclick="switchStoreTab('members')" type="button">
+<span class="material-symbols-outlined text-base">group</span>
+<span>Thành viên</span>
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-border-beige/50 text-text-main">12</span>
+</button>
+</div>
+<!-- TAB 1 CONTENT: TỔNG QUAN (PHẦN 3) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="view-tab-overview">
+<!-- Card A: Thông tin cửa hàng -->
+<div class="bg-surface-card rounded-xl border border-border-beige p-6 shadow-sm flex flex-col justify-between">
+<div class="flex flex-col">
+<div class="flex items-center justify-between pb-4 border-b border-border-subtle">
+<h2 class="text-base font-bold text-text-main flex items-center gap-2">
+<span class="material-symbols-outlined text-olive-primary text-xl">storefront</span>
+          Thông tin cửa hàng
+        </h2>
+</div>
+<div class="divide-y divide-border-subtle/70 text-sm">
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Store ID</span>
+<div class="flex items-center gap-1.5">
+<span class="font-mono font-semibold text-text-main select-all" id="store-id-text">STR-VN-99210</span>
+<button class="text-text-sub hover:text-olive-primary transition-colors p-1" onclick="copyStoreId()" title="Sao chép">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Tên cửa hàng</span>
+<span class="font-semibold text-text-main" id="store-name-val">Cửa hàng A</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Tổ chức trực thuộc</span>
+<span class="text-text-main font-medium">KONEKT Coffee</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Khu vực / địa chỉ</span>
+<span class="text-text-main" id="store-address-val">Quận 1, TP.HCM</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Trạng thái</span>
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-status-active-bg text-status-active" id="overview-status-badge">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+            Hoạt động
+          </span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Ngày tạo</span>
+<span class="text-text-main">10/11/2023</span>
+</div>
+</div>
+</div>
+<div class="pt-5 mt-2 border-t border-border-subtle flex justify-end">
+<button class="px-4 py-2 rounded-lg border border-border-beige bg-canvas hover:bg-surface text-text-main text-sm font-semibold transition-colors flex items-center gap-2" onclick="openEditStoreModal()" type="button">
+<span class="material-symbols-outlined text-base">edit</span>
+<span>Chỉnh sửa</span>
+</button>
+</div>
+</div>
+<!-- Card B: Truy cập & Thành viên -->
+<div class="bg-surface-card rounded-xl border border-border-beige p-6 shadow-sm flex flex-col justify-between">
+<div class="flex flex-col">
+<div class="flex items-center justify-between pb-4 border-b border-border-subtle">
+<h2 class="text-base font-bold text-text-main flex items-center gap-2">
+<span class="material-symbols-outlined text-olive-primary text-xl">key</span>
+          Truy cập &amp; Thành viên
+        </h2>
+</div>
+<div class="divide-y divide-border-subtle/70 text-sm">
+<!-- Clickable row to Members Tab -->
+<button class="w-full py-3.5 flex items-center justify-between text-left group hover:bg-canvas/50 px-2 -mx-2 rounded-lg transition-colors" onclick="switchStoreTab('members')" type="button">
+<div class="flex items-center gap-2">
+<span class="text-text-sub font-medium group-hover:text-olive-primary transition-colors">Tổng thành viên:</span>
+<span class="font-bold text-text-main text-base">12</span>
+</div>
+<span class="text-xs font-semibold text-olive-primary flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+            Xem danh sách <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</span>
+</button>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Manager</span>
+<span class="font-semibold text-text-main px-2.5 py-0.5 rounded bg-surface border border-border-beige">2</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Staff</span>
+<span class="font-semibold text-text-main px-2.5 py-0.5 rounded bg-surface border border-border-beige">10</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<span class="text-text-sub font-medium">Trạng thái mã mời</span>
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-status-active-bg text-status-active" id="invite-status-badge">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+            Còn hiệu lực
+          </span>
+</div>
+</div>
+</div>
+<div class="pt-5 mt-2 border-t border-border-subtle flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-olive-primary hover:bg-olive-hover text-white text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm" onclick="openInviteModal()" type="button">
+<span class="material-symbols-outlined text-base">vpn_key</span>
+<span>Quản lý mã mời</span>
+</button>
+</div>
+</div>
+</div>
+<!-- TAB 2 CONTENT: THÀNH VIÊN (PHẦN 4) -->
+<div class="hidden flex-col gap-5" id="view-tab-members">
+<!-- Members List Header & Toolbar -->
+<div class="bg-surface-card rounded-xl border border-border-beige p-5 shadow-sm flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex items-baseline gap-2">
+<h2 class="text-lg font-bold text-text-main">Thành viên</h2>
+<span class="text-xs text-text-sub font-medium" id="member-counter-text">12 thành viên trực thuộc cửa hàng</span>
+</div>
+<button class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-olive-primary hover:bg-olive-hover text-white text-sm font-semibold transition-colors shadow-sm self-start sm:self-auto" onclick="openAddMemberModal()" type="button">
+<span class="material-symbols-outlined text-base">person_add</span>
+<span>Thêm thành viên</span>
+</button>
+</div>
+<!-- Toolbar Filters -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border-subtle">
+<!-- Search Input -->
+<div class="relative w-full sm:w-80">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-text-sub text-[18px] pointer-events-none">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-canvas rounded-lg border border-border-beige text-text-main placeholder:text-text-sub text-sm focus:outline-none focus:border-olive-primary focus:ring-1 focus:ring-olive-primary/30 transition-all" id="member-search-input" onkeyup="filterMemberList()" placeholder="Tìm tên hoặc email..." type="text"/>
+</div>
+<!-- Segmented Role Filters -->
+<div class="flex items-center bg-canvas p-1 rounded-lg border border-border-beige self-start sm:self-auto">
+<button class="px-3 py-1 rounded text-xs font-semibold bg-olive-primary text-white transition-all shadow-sm" id="role-pill-all" onclick="filterRole('all')" type="button">
+          Tất cả
+        </button>
+<button class="px-3 py-1 rounded text-xs font-semibold text-text-sub hover:text-text-main transition-all" id="role-pill-manager" onclick="filterRole('MANAGER')" type="button">
+          Manager
+        </button>
+<button class="px-3 py-1 rounded text-xs font-semibold text-text-sub hover:text-text-main transition-all" id="role-pill-staff" onclick="filterRole('STAFF')" type="button">
+          Staff
+        </button>
+</div>
+</div>
+</div>
+<!-- Members Data Table -->
+<div class="bg-surface-card rounded-xl border border-border-beige shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="members-table">
+<thead>
+<tr class="bg-canvas border-b border-border-beige text-xs uppercase tracking-wider text-text-sub font-semibold">
+<th class="py-3 px-6">Thành viên</th>
+<th class="py-3 px-6">Vai trò</th>
+<th class="py-3 px-6">Trạng thái</th>
+<th class="py-3 px-6">Tham gia</th>
+<th class="py-3 px-6 text-right">Hành động</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle text-sm" id="members-table-body">
+<!-- Row 1: Manager -->
+<tr class="hover:bg-canvas/50 transition-colors member-row-item" data-email="nguyen.vana@gmail.com" data-name="Nguyễn Văn A" data-role="MANAGER">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface border border-border-beige flex items-center justify-center font-bold text-olive-primary text-xs flex-shrink-0">
+                  NA
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-text-main member-name">Nguyễn Văn A</span>
+<span class="text-xs text-text-sub">ngu***@gmail.com</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="role-badge inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-[#edf3ea] text-olive-primary border border-olive-border">
+                MANAGER
+              </span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-status-active">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+                Hoạt động
+              </span>
+</td>
+<td class="py-4 px-6 text-xs text-text-sub">
+              10/11/2023
+            </td>
+<td class="py-4 px-6 text-right relative">
+<button class="w-8 h-8 rounded-lg hover:bg-canvas text-text-sub hover:text-text-main inline-flex items-center justify-center transition-colors" onclick="toggleActionMenu(event, 'menu-row-1')" type="button">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+<div class="row-menu hidden absolute right-6 top-12 w-44 bg-surface-card rounded-lg border border-border-beige shadow-lg py-1 z-20 text-left" id="menu-row-1">
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="viewMemberDetail('Nguyễn Văn A', 'nguyen.vana@gmail.com')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">person</span>
+<span>Xem tài khoản</span>
+</button>
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="openChangeRoleModal('Nguyễn Văn A', 'MANAGER')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">swap_horiz</span>
+<span>Đổi vai trò</span>
+</button>
+<div class="my-1 border-t border-border-subtle"></div>
+<button class="w-full px-3 py-1.5 text-xs text-status-inactive hover:bg-status-inactive-bg/50 flex items-center gap-2" onclick="removeMember('Nguyễn Văn A')" type="button">
+<span class="material-symbols-outlined text-sm">person_remove</span>
+<span>Gỡ khỏi cửa hàng</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Staff -->
+<tr class="hover:bg-canvas/50 transition-colors member-row-item" data-email="nguyen.vanb@gmail.com" data-name="Nguyễn Văn B" data-role="STAFF">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface border border-border-beige flex items-center justify-center font-bold text-olive-primary text-xs flex-shrink-0">
+                  NB
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-text-main member-name">Nguyễn Văn B</span>
+<span class="text-xs text-text-sub">ngu***@gmail.com</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="role-badge inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-canvas text-text-sub border border-border-beige">
+                STAFF
+              </span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-status-active">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+                Hoạt động
+              </span>
+</td>
+<td class="py-4 px-6 text-xs text-text-sub">
+              12/11/2023
+            </td>
+<td class="py-4 px-6 text-right relative">
+<button class="w-8 h-8 rounded-lg hover:bg-canvas text-text-sub hover:text-text-main inline-flex items-center justify-center transition-colors" onclick="toggleActionMenu(event, 'menu-row-2')" type="button">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+<div class="row-menu hidden absolute right-6 top-12 w-44 bg-surface-card rounded-lg border border-border-beige shadow-lg py-1 z-20 text-left" id="menu-row-2">
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="viewMemberDetail('Nguyễn Văn B', 'nguyen.vanb@gmail.com')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">person</span>
+<span>Xem tài khoản</span>
+</button>
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="openChangeRoleModal('Nguyễn Văn B', 'STAFF')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">swap_horiz</span>
+<span>Đổi vai trò</span>
+</button>
+<div class="my-1 border-t border-border-subtle"></div>
+<button class="w-full px-3 py-1.5 text-xs text-status-inactive hover:bg-status-inactive-bg/50 flex items-center gap-2" onclick="removeMember('Nguyễn Văn B')" type="button">
+<span class="material-symbols-outlined text-sm">person_remove</span>
+<span>Gỡ khỏi cửa hàng</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Staff -->
+<tr class="hover:bg-canvas/50 transition-colors member-row-item" data-email="tran.thic@gmail.com" data-name="Trần Thị C" data-role="STAFF">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface border border-border-beige flex items-center justify-center font-bold text-olive-primary text-xs flex-shrink-0">
+                  TC
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-text-main member-name">Trần Thị C</span>
+<span class="text-xs text-text-sub">tra***@gmail.com</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="role-badge inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-canvas text-text-sub border border-border-beige">
+                STAFF
+              </span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-status-active">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+                Hoạt động
+              </span>
+</td>
+<td class="py-4 px-6 text-xs text-text-sub">
+              15/11/2023
+            </td>
+<td class="py-4 px-6 text-right relative">
+<button class="w-8 h-8 rounded-lg hover:bg-canvas text-text-sub hover:text-text-main inline-flex items-center justify-center transition-colors" onclick="toggleActionMenu(event, 'menu-row-3')" type="button">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+<div class="row-menu hidden absolute right-6 top-12 w-44 bg-surface-card rounded-lg border border-border-beige shadow-lg py-1 z-20 text-left" id="menu-row-3">
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="viewMemberDetail('Trần Thị C', 'tran.thic@gmail.com')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">person</span>
+<span>Xem tài khoản</span>
+</button>
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="openChangeRoleModal('Trần Thị C', 'STAFF')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">swap_horiz</span>
+<span>Đổi vai trò</span>
+</button>
+<div class="my-1 border-t border-border-subtle"></div>
+<button class="w-full px-3 py-1.5 text-xs text-status-inactive hover:bg-status-inactive-bg/50 flex items-center gap-2" onclick="removeMember('Trần Thị C')" type="button">
+<span class="material-symbols-outlined text-sm">person_remove</span>
+<span>Gỡ khỏi cửa hàng</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Staff -->
+<tr class="hover:bg-canvas/50 transition-colors member-row-item" data-email="le.hoangd@gmail.com" data-name="Lê Hoàng D" data-role="STAFF">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface border border-border-beige flex items-center justify-center font-bold text-olive-primary text-xs flex-shrink-0">
+                  LD
+                </div>
+<div class="flex flex-col">
+<span class="font-semibold text-text-main member-name">Lê Hoàng D</span>
+<span class="text-xs text-text-sub">leh***@gmail.com</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="role-badge inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-canvas text-text-sub border border-border-beige">
+                STAFF
+              </span>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-status-active">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+                Hoạt động
+              </span>
+</td>
+<td class="py-4 px-6 text-xs text-text-sub">
+              18/11/2023
+            </td>
+<td class="py-4 px-6 text-right relative">
+<button class="w-8 h-8 rounded-lg hover:bg-canvas text-text-sub hover:text-text-main inline-flex items-center justify-center transition-colors" onclick="toggleActionMenu(event, 'menu-row-4')" type="button">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+<div class="row-menu hidden absolute right-6 top-12 w-44 bg-surface-card rounded-lg border border-border-beige shadow-lg py-1 z-20 text-left" id="menu-row-4">
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="viewMemberDetail('Lê Hoàng D', 'le.hoangd@gmail.com')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">person</span>
+<span>Xem tài khoản</span>
+</button>
+<button class="w-full px-3 py-1.5 text-xs text-text-main hover:bg-canvas flex items-center gap-2" onclick="openChangeRoleModal('Lê Hoàng D', 'STAFF')" type="button">
+<span class="material-symbols-outlined text-sm text-text-sub">swap_horiz</span>
+<span>Đổi vai trò</span>
+</button>
+<div class="my-1 border-t border-border-subtle"></div>
+<button class="w-full px-3 py-1.5 text-xs text-status-inactive hover:bg-status-inactive-bg/50 flex items-center gap-2" onclick="removeMember('Lê Hoàng D')" type="button">
+<span class="material-symbols-outlined text-sm">person_remove</span>
+<span>Gỡ khỏi cửa hàng</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ============================================== -->
+<!-- MODAL: QUẢN LÝ MÃ MỜI CỬA HÀNG -->
+<!-- ============================================== -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="modal-invite">
+<div class="bg-surface-card rounded-xl border border-border-beige shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-150">
+<div class="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-olive-primary text-xl">vpn_key</span>
+<h3 class="font-bold text-text-main text-base">Mã mời cửa hàng</h3>
+</div>
+<button class="text-text-sub hover:text-text-main p-1 rounded-lg" onclick="closeInviteModal()">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<div class="p-6 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-xs text-text-sub font-medium">Trạng thái mã</span>
+<span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-status-active-bg text-status-active">
+<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>
+          Còn hiệu lực
+        </span>
+</div>
+<!-- Invite Code Box -->
+<div class="bg-canvas p-4 rounded-xl border border-border-beige flex items-center justify-between">
+<span class="text-lg font-mono font-bold text-olive-primary tracking-wider select-all" id="modal-invite-code-val">KONEKT-D1-FLG-882</span>
+<button class="px-3 py-1.5 rounded-md bg-surface-card hover:bg-surface border border-border-beige text-xs font-semibold text-text-main transition-colors flex items-center gap-1.5 shadow-sm" onclick="copyModalInviteCode()">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+<span>Sao chép</span>
+</button>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-sub">
+<span class="material-symbols-outlined text-sm text-olive-primary">schedule</span>
+<span>Hạn sử dụng: <strong>24/11/2023 lúc 23:59</strong> (Còn hạn 14 ngày)</span>
+</div>
+</div>
+<div class="px-6 py-3.5 bg-canvas border-t border-border-subtle flex items-center justify-between gap-3">
+<button class="px-3.5 py-2 rounded-lg text-status-inactive hover:bg-status-inactive-bg/60 text-xs font-semibold transition-colors" onclick="revokeInviteCode()" type="button">
+        Vô hiệu hóa mã
+      </button>
+<button class="px-4 py-2 rounded-lg bg-olive-primary hover:bg-olive-hover text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm" onclick="resetInviteCode()" type="button">
+<span class="material-symbols-outlined text-sm">autorenew</span>
+<span>Đặt lại mã</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ============================================== -->
+<!-- MODAL: THÊM THÀNH VIÊN -->
+<!-- ============================================== -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="modal-add-member">
+<div class="bg-surface-card rounded-xl border border-border-beige shadow-2xl max-w-md w-full overflow-hidden">
+<div class="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
+<h3 class="font-bold text-text-main text-base flex items-center gap-2">
+<span class="material-symbols-outlined text-olive-primary text-xl">person_add</span>
+        Thêm thành viên vào cửa hàng
+      </h3>
+<button class="text-text-sub hover:text-text-main p-1 rounded-lg" onclick="closeAddMemberModal()">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<form class="p-6 flex flex-col gap-4" onsubmit="submitAddMember(event)">
+<div>
+<label class="block text-xs font-semibold text-text-main mb-1.5">Tìm tài khoản</label>
+<input class="w-full px-3 py-2 bg-canvas rounded-lg border border-border-beige text-text-main text-sm focus:outline-none focus:border-olive-primary focus:ring-1 focus:ring-olive-primary/30" id="add-member-input" placeholder="Nhập email, tên hoặc username..." required="" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-semibold text-text-main mb-2">Chọn vai trò</label>
+<div class="grid grid-cols-2 gap-3">
+<label class="border border-border-beige rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-canvas transition-colors has-[:checked]:border-olive-primary has-[:checked]:bg-[#edf3ea]/50">
+<input checked="" class="text-olive-primary focus:ring-olive-primary" name="member-role" type="radio" value="STAFF"/>
+<div>
+<div class="text-xs font-bold text-text-main">Staff</div>
+<div class="text-[11px] text-text-sub">Nhân viên chi nhánh</div>
+</div>
+</label>
+<label class="border border-border-beige rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-canvas transition-colors has-[:checked]:border-olive-primary has-[:checked]:bg-[#edf3ea]/50">
+<input class="text-olive-primary focus:ring-olive-primary" name="member-role" type="radio" value="MANAGER"/>
+<div>
+<div class="text-xs font-bold text-text-main">Manager</div>
+<div class="text-[11px] text-text-sub">Quản lý chi nhánh</div>
+</div>
+</label>
+</div>
+</div>
+<div class="p-3 bg-canvas rounded-lg border border-border-subtle flex items-start gap-2">
+<span class="material-symbols-outlined text-olive-primary text-base mt-0.5">info</span>
+<span class="text-xs text-text-sub leading-relaxed">Chỉ chọn tài khoản đã tồn tại trong hệ thống. Không tạo tài khoản mới tại đây.</span>
+</div>
+<div class="pt-3 border-t border-border-subtle flex items-center justify-end gap-3">
+<button class="px-4 py-2 rounded-lg border border-border-beige text-xs font-semibold text-text-main hover:bg-canvas transition-colors" onclick="closeAddMemberModal()" type="button">
+          Hủy
+        </button>
+<button class="px-4 py-2 rounded-lg bg-olive-primary hover:bg-olive-hover text-white text-xs font-semibold transition-colors" type="submit">
+          Thêm vào cửa hàng
+        </button>
+</div>
+</form>
+</div>
+</div>
+<!-- ============================================== -->
+<!-- MODAL: ĐỔI VAI TRÒ -->
+<!-- ============================================== -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="modal-change-role">
+<div class="bg-surface-card rounded-xl border border-border-beige shadow-2xl max-w-sm w-full overflow-hidden">
+<div class="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
+<h3 class="font-bold text-text-main text-base">Đổi vai trò thành viên</h3>
+<button class="text-text-sub hover:text-text-main p-1 rounded-lg" onclick="closeChangeRoleModal()">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<form class="p-6 flex flex-col gap-4" onsubmit="submitChangeRole(event)">
+<div>
+<span class="text-xs text-text-sub">Thành viên:</span>
+<div class="font-bold text-text-main text-sm mt-0.5" id="target-member-name">Nguyễn Văn A</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-text-main mb-2">Chọn vai trò mới</label>
+<div class="flex flex-col gap-2">
+<label class="border border-border-beige rounded-lg p-2.5 flex items-center gap-3 cursor-pointer hover:bg-canvas transition-colors has-[:checked]:border-olive-primary has-[:checked]:bg-[#edf3ea]/50">
+<input class="text-olive-primary focus:ring-olive-primary" id="role-radio-manager" name="new-role" type="radio" value="MANAGER"/>
+<span class="text-xs font-bold text-text-main">MANAGER</span>
+</label>
+<label class="border border-border-beige rounded-lg p-2.5 flex items-center gap-3 cursor-pointer hover:bg-canvas transition-colors has-[:checked]:border-olive-primary has-[:checked]:bg-[#edf3ea]/50">
+<input class="text-olive-primary focus:ring-olive-primary" id="role-radio-staff" name="new-role" type="radio" value="STAFF"/>
+<span class="text-xs font-bold text-text-main">STAFF</span>
+</label>
+</div>
+</div>
+<div class="pt-3 border-t border-border-subtle flex items-center justify-end gap-3">
+<button class="px-4 py-2 rounded-lg border border-border-beige text-xs font-semibold text-text-main hover:bg-canvas transition-colors" onclick="closeChangeRoleModal()" type="button">
+          Hủy
+        </button>
+<button class="px-4 py-2 rounded-lg bg-olive-primary hover:bg-olive-hover text-white text-xs font-semibold transition-colors" type="submit">
+          Cập nhật vai trò
+        </button>
+</div>
+</form>
+</div>
+</div>
+<!-- ============================================== -->
+<!-- MODAL: CHỈNH SỬA THÔNG TIN CỬA HÀNG -->
+<!-- ============================================== -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="modal-edit-store">
+<div class="bg-surface-card rounded-xl border border-border-beige shadow-2xl max-w-md w-full overflow-hidden">
+<div class="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
+<h3 class="font-bold text-text-main text-base flex items-center gap-2">
+<span class="material-symbols-outlined text-olive-primary text-xl">edit</span>
+        Chỉnh sửa thông tin cửa hàng
+      </h3>
+<button class="text-text-sub hover:text-text-main p-1 rounded-lg" onclick="closeEditStoreModal()">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<form class="p-6 flex flex-col gap-4" onsubmit="submitEditStore(event)">
+<div>
+<label class="block text-xs font-semibold text-text-main mb-1">Tên cửa hàng</label>
+<input class="w-full px-3 py-2 bg-canvas rounded-lg border border-border-beige text-text-main text-sm focus:outline-none focus:border-olive-primary focus:ring-1 focus:ring-olive-primary/30" id="edit-store-name" required="" type="text" value="Cửa hàng A"/>
+</div>
+<div>
+<label class="block text-xs font-semibold text-text-main mb-1">Khu vực / Địa chỉ</label>
+<input class="w-full px-3 py-2 bg-canvas rounded-lg border border-border-beige text-text-main text-sm focus:outline-none focus:border-olive-primary focus:ring-1 focus:ring-olive-primary/30" id="edit-store-address" required="" type="text" value="Quận 1, TP.HCM"/>
+</div>
+<div>
+<label class="block text-xs font-semibold text-text-main mb-1">Tổ chức trực thuộc</label>
+<input class="w-full px-3 py-2 bg-canvas/60 rounded-lg border border-border-subtle text-text-sub text-sm cursor-not-allowed" disabled="" type="text" value="KONEKT Coffee"/>
+</div>
+<div class="pt-3 border-t border-border-subtle flex items-center justify-end gap-3">
+<button class="px-4 py-2 rounded-lg border border-border-beige text-xs font-semibold text-text-main hover:bg-canvas transition-colors" onclick="closeEditStoreModal()" type="button">
+          Hủy
+        </button>
+<button class="px-4 py-2 rounded-lg bg-olive-primary hover:bg-olive-hover text-white text-xs font-semibold transition-colors" type="submit">
+          Lưu thay đổi
+        </button>
+</div>
+</form>
+</div>
+</div>
+<!-- TOAST NOTIFICATION -->
+<div class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none" id="toast">
+<div class="bg-olive-primary text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold">
+<span class="material-symbols-outlined text-base">check_circle</span>
+<span id="toast-text">Thao tác thành công</span>
+</div>
+</div>
+</main></div>
+<script>
+  let isStoreActive = true;
+  let activeTab = 'overview';
+  let targetMemberToChange = null;
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    const toastText = document.getElementById('toast-text');
+    toastText.innerText = msg;
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    setTimeout(() => {
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('translate-y-20', 'opacity-0');
+    }, 2800);
+  }
+
+  // TAB SWITCHING (Phần 2 & 3 & 4)
+  function switchStoreTab(tab) {
+    activeTab = tab;
+    const tabNavOverview = document.getElementById('tab-nav-overview');
+    const tabNavMembers = document.getElementById('tab-nav-members');
+    const viewOverview = document.getElementById('view-tab-overview');
+    const viewMembers = document.getElementById('view-tab-members');
+
+    if (tab === 'overview') {
+      viewOverview.classList.remove('hidden');
+      viewMembers.classList.add('hidden');
+      tabNavOverview.className = 'pb-3 text-sm font-semibold text-olive-primary border-b-2 border-olive-primary flex items-center gap-2 transition-all';
+      tabNavMembers.className = 'pb-3 text-sm font-semibold text-text-sub border-b-2 border-transparent hover:text-olive-primary flex items-center gap-2 transition-all';
+    } else {
+      viewOverview.classList.add('hidden');
+      viewMembers.classList.remove('hidden');
+      viewMembers.classList.add('flex');
+      tabNavMembers.className = 'pb-3 text-sm font-semibold text-olive-primary border-b-2 border-olive-primary flex items-center gap-2 transition-all';
+      tabNavOverview.className = 'pb-3 text-sm font-semibold text-text-sub border-b-2 border-transparent hover:text-olive-primary flex items-center gap-2 transition-all';
+    }
+  }
+
+  // HEADER STORE MENU [...]
+  function toggleStoreMenu() {
+    const menu = document.getElementById('store-dropdown-menu');
+    menu.classList.toggle('hidden');
+  }
+
+  // Close menus on outside click
+  window.addEventListener('click', function(e) {
+    const menuBtn = document.getElementById('store-menu-btn');
+    const menu = document.getElementById('store-dropdown-menu');
+    if (menuBtn && !menuBtn.contains(e.target) && !menu.contains(e.target)) {
+      menu.classList.add('hidden');
+    }
+    if (!e.target.closest('.relative')) {
+      document.querySelectorAll('.row-menu').forEach(m => m.classList.add('hidden'));
+    }
+  });
+
+  // STORE STATUS TOGGLE (Active <-> Inactive)
+  function toggleStoreStatus() {
+    isStoreActive = !isStoreActive;
+    const badge = document.getElementById('store-status-badge');
+    const overviewBadge = document.getElementById('overview-status-badge');
+    const toggleText = document.getElementById('store-toggle-text');
+    const toggleIcon = document.getElementById('store-toggle-icon');
+    const toggleBtn = document.getElementById('store-toggle-action-btn');
+    const menu = document.getElementById('store-dropdown-menu');
+    menu.classList.add('hidden');
+
+    if (isStoreActive) {
+      badge.className = 'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-status-active-bg text-status-active border border-status-active/20';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>Hoạt động';
+      overviewBadge.className = 'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-status-active-bg text-status-active';
+      overviewBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-status-active"></span>Hoạt động';
+      toggleText.innerText = 'Vô hiệu hóa cửa hàng';
+      toggleIcon.innerText = 'block';
+      toggleBtn.className = 'w-full px-4 py-2 text-left text-sm text-status-inactive hover:bg-status-inactive-bg/60 flex items-center gap-2.5 transition-colors';
+      showToast('Đã kích hoạt lại cửa hàng hoạt động.');
+    } else {
+      badge.className = 'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-status-inactive-bg text-status-inactive border border-status-inactive/20';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-status-inactive"></span>Ngừng hoạt động';
+      overviewBadge.className = 'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-status-inactive-bg text-status-inactive';
+      overviewBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-status-inactive"></span>Ngừng hoạt động';
+      toggleText.innerText = 'Kích hoạt lại cửa hàng';
+      toggleIcon.innerText = 'check_circle';
+      toggleBtn.className = 'w-full px-4 py-2 text-left text-sm text-status-active hover:bg-status-active-bg/60 flex items-center gap-2.5 transition-colors';
+      showToast('Đã vô hiệu hóa cửa hàng.');
+    }
+  }
+
+  // COPY STORE ID
+  function copyStoreId() {
+    const idVal = document.getElementById('store-id-text').innerText;
+    navigator.clipboard.writeText(idVal).then(() => {
+      const copyIcon = document.getElementById('store-id-copy-icon');
+      if (copyIcon) copyIcon.innerText = 'check';
+      showToast('Đã sao chép Store ID: ' + idVal);
+      setTimeout(() => {
+        if (copyIcon) copyIcon.innerText = 'content_copy';
+      }, 1500);
+    });
+  }
+
+  // MODAL INVITE
+  function openInviteModal() {
+    document.getElementById('store-dropdown-menu').classList.add('hidden');
+    document.getElementById('modal-invite').classList.remove('hidden');
+  }
+  function closeInviteModal() {
+    document.getElementById('modal-invite').classList.add('hidden');
+  }
+  function copyModalInviteCode() {
+    const code = document.getElementById('modal-invite-code-val').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('Đã sao chép mã mời: ' + code);
+    });
+  }
+  function resetInviteCode() {
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const newCode = 'KONEKT-D1-FLG-' + randomSuffix;
+    document.getElementById('modal-invite-code-val').innerText = newCode;
+    showToast('Đã đặt lại mã mời mới: ' + newCode);
+  }
+  function revokeInviteCode() {
+    if (confirm('Bạn có chắc chắn muốn vô hiệu hóa mã mời hiện tại?')) {
+      const badge = document.getElementById('invite-status-badge');
+      badge.className = 'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-status-inactive-bg text-status-inactive';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-status-inactive"></span>Hết hiệu lực';
+      closeInviteModal();
+      showToast('Đã vô hiệu hóa mã mời.');
+    }
+  }
+
+  // MODAL EDIT STORE
+  function openEditStoreModal() {
+    document.getElementById('store-dropdown-menu').classList.add('hidden');
+    document.getElementById('modal-edit-store').classList.remove('hidden');
+  }
+  function closeEditStoreModal() {
+    document.getElementById('modal-edit-store').classList.add('hidden');
+  }
+  function submitEditStore(e) {
+    e.preventDefault();
+    const name = document.getElementById('edit-store-name').value;
+    const address = document.getElementById('edit-store-address').value;
+    document.getElementById('store-name-display').innerText = name;
+    document.getElementById('store-name-val').innerText = name;
+    document.getElementById('store-address-val').innerText = address;
+    closeEditStoreModal();
+    showToast('Đã cập nhật thông tin cửa hàng thành công!');
+  }
+
+  // MODAL ADD MEMBER
+  function openAddMemberModal() {
+    document.getElementById('modal-add-member').classList.remove('hidden');
+  }
+  function closeAddMemberModal() {
+    document.getElementById('modal-add-member').classList.add('hidden');
+  }
+  function submitAddMember(e) {
+    e.preventDefault();
+    const input = document.getElementById('add-member-input');
+    const val = input.value.trim();
+    if (!val) return;
+    const role = document.querySelector('input[name="member-role"]:checked').value;
+    showToast('Đã thêm thành viên ' + val + ' (' + role + ') vào cửa hàng!');
+    input.value = '';
+    closeAddMemberModal();
+  }
+
+  // ROW ACTIONS & CHANGE ROLE MODAL
+  function toggleActionMenu(e, menuId) {
+    e.stopPropagation();
+    document.querySelectorAll('.row-menu').forEach(m => {
+      if (m.id !== menuId) m.classList.add('hidden');
+    });
+    const m = document.getElementById(menuId);
+    m.classList.toggle('hidden');
+  }
+
+  function viewMemberDetail(name, email) {
+    showToast('Xem thông tin tài khoản: ' + name);
+    document.querySelectorAll('.row-menu').forEach(m => m.classList.add('hidden'));
+  }
+
+  function openChangeRoleModal(name, currentRole) {
+    targetMemberToChange = name;
+    document.getElementById('target-member-name').innerText = name;
+    document.querySelectorAll('.row-menu').forEach(m => m.classList.add('hidden'));
+
+    if (currentRole === 'MANAGER') {
+      document.getElementById('role-radio-staff').checked = true;
+    } else {
+      document.getElementById('role-radio-manager').checked = true;
+    }
+    document.getElementById('modal-change-role').classList.remove('hidden');
+  }
+
+  function closeChangeRoleModal() {
+    document.getElementById('modal-change-role').classList.add('hidden');
+  }
+
+  function submitChangeRole(e) {
+    e.preventDefault();
+    const newRole = document.querySelector('input[name="new-role"]:checked').value;
+    // update in table rows matching targetMemberToChange
+    const rows = document.querySelectorAll('.member-row-item');
+    rows.forEach(r => {
+      if (r.getAttribute('data-name') === targetMemberToChange) {
+        r.setAttribute('data-role', newRole);
+        const badge = r.querySelector('.role-badge');
+        if (newRole === 'MANAGER') {
+          badge.className = 'role-badge inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-[#edf3ea] text-olive-primary border border-olive-border';
+          badge.innerText = 'MANAGER';
+        } else {
+          badge.className = 'role-badge inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-canvas text-text-sub border border-border-beige';
+          badge.innerText = 'STAFF';
+        }
+      }
+    });
+    closeChangeRoleModal();
+    showToast('Đã cập nhật vai trò của ' + targetMemberToChange + ' sang ' + newRole);
+  }
+
+  function removeMember(name) {
+    document.querySelectorAll('.row-menu').forEach(m => m.classList.add('hidden'));
+    if (confirm('Bạn có chắc muốn gỡ ' + name + ' khỏi cửa hàng này?')) {
+      const rows = document.querySelectorAll('.member-row-item');
+      rows.forEach(r => {
+        if (r.getAttribute('data-name') === name) {
+          r.remove();
+        }
+      });
+      showToast('Đã gỡ ' + name + ' khỏi cửa hàng.');
+    }
+  }
+
+  // FILTER MEMBERS TABLE
+  function filterMemberList() {
+    const q = document.getElementById('member-search-input').value.toLowerCase();
+    const rows = document.querySelectorAll('.member-row-item');
+    rows.forEach(r => {
+      const name = r.getAttribute('data-name').toLowerCase();
+      const email = r.getAttribute('data-email').toLowerCase();
+      if (name.includes(q) || email.includes(q)) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    });
+  }
+
+  function filterRole(role) {
+    const rows = document.querySelectorAll('.member-row-item');
+    const pills = ['all', 'manager', 'staff'];
+    pills.forEach(p => {
+      const el = document.getElementById('role-pill-' + p);
+      if (p.toUpperCase() === role || (p === 'all' && role === 'all')) {
+        el.className = 'px-3 py-1 rounded text-xs font-semibold bg-olive-primary text-white transition-all shadow-sm';
+      } else {
+        el.className = 'px-3 py-1 rounded text-xs font-semibold text-text-sub hover:text-text-main transition-all';
+      }
+    });
+
+    rows.forEach(r => {
+      if (role === 'all' || r.getAttribute('data-role') === role) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    });
+  }
+</script></body></html>

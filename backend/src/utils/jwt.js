@@ -17,6 +17,14 @@ export function signWorkspaceToken({ userId, workspaceType, workspaceId, tenantI
   );
 }
 
+export function signAdminToken({ adminId, role, username, email }) {
+  return jwt.sign(
+    { adminId, role, username, email, isAdmin: true },
+    env.jwtSecret,
+    { expiresIn: env.jwtExpiresIn || '7d' },
+  );
+}
+
 export function verifyAccessToken(token) {
   return jwt.verify(token, env.jwtSecret);
 }

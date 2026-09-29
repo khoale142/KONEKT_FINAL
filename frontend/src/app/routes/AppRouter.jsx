@@ -24,8 +24,22 @@ import { AdminHRPage } from '../../features/hr/pages/AdminHRPage.jsx';
 import { AdminCalendarPage } from '../../features/hr/pages/AdminCalendarPage.jsx';
 import { AttendancePage } from '../../features/hr/pages/AttendancePage.jsx';
 
+import { AdminLoginPage } from '../../features/admin/auth/pages/AdminLoginPage.jsx';
+import { AdminForgotPasswordPage } from '../../features/admin/auth/pages/AdminForgotPasswordPage.jsx';
+import { SystemDashboardPage } from '../../features/admin/dashboard/pages/SystemDashboardPage.jsx';
+import { TenantListPage } from '../../features/admin/tenants/pages/TenantListPage.jsx';
+import { TenantDetailPage } from '../../features/admin/tenants/pages/TenantDetailPage.jsx';
+import { StoreDetailPage } from '../../features/admin/stores/pages/StoreDetailPage.jsx';
+import { AccountListPage } from '../../features/admin/accounts/pages/AccountListPage.jsx';
+import { InternalStaffPage } from '../../features/admin/internal_staff/pages/InternalStaffPage.jsx';
+import { AuditLogPage } from '../../features/admin/audit/pages/AuditLogPage.jsx';
+import { AdminProfilePage } from '../../features/admin/profile/pages/AdminProfilePage.jsx';
+import { AdminLayout } from '../../features/admin/shared/AdminLayout.jsx';
+import { AdminProtectedRoute } from './AdminProtectedRoute.jsx';
+
 import { WORKSPACE_TYPES } from '../../constants/roles.js';
 import { ROUTES } from '../../constants/routes.js';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes.js';
 
 function RoleHomeRedirect() {
   const { user } = useAuth();
@@ -42,6 +56,96 @@ function CatalogItemRedirect({ type }) {
 export function AppRouter() {
   return (
     <Routes>
+      {/* Admin Portal Routes */}
+      <Route path={ADMIN_ROUTES.LOGIN} element={<AdminLoginPage />} />
+      <Route path={ADMIN_ROUTES.FORGOT_PASSWORD} element={<AdminForgotPasswordPage />} />
+      <Route
+        path={ADMIN_ROUTES.DASHBOARD}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <SystemDashboardPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.TENANTS}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <TenantListPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.TENANT_DETAIL}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <TenantDetailPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.STORE_DETAIL}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <StoreDetailPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.STORES}
+        element={<Navigate to={ADMIN_ROUTES.TENANTS} replace />}
+      />
+      <Route
+        path={ADMIN_ROUTES.ACCOUNTS}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AccountListPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.INTERNAL_STAFF}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <InternalStaffPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.AUDIT}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AuditLogPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path={ADMIN_ROUTES.PROFILE}
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminProfilePage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+      />
+      <Route path="/admin" element={<Navigate to={ADMIN_ROUTES.DASHBOARD} replace />} />
+
+      {/* Tenant / POS User Routes */}
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
       
