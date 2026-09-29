@@ -12,8 +12,8 @@ router.post('/check-in', attendanceController.checkIn);
 router.post('/check-out', attendanceController.checkOut);
 router.get('/today-status', attendanceController.getTodayStatus);
 
-// Admin-only endpoints
-router.get('/qr-token', requireStoreManager(), attendanceController.getTodayToken);
+// Attendance endpoints
+router.get('/qr-token', attendanceController.getTodayToken);
 router.get('/logs', requireStoreManager(), attendanceController.getLogs);
 
 export default router;

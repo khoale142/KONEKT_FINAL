@@ -56,7 +56,6 @@ export function AppShell({ children }) {
       <section className="shell-main">
         <header className="topbar">
           <div>
-            <p className="eyebrow">SWT301 v1 Starter</p>
             <h2>Xin chào, {user?.fullName || user?.username}</h2>
           </div>
           <div className="topbar-actions">

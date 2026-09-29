@@ -4,6 +4,8 @@ import { useAuth } from '../../../app/providers/AuthProvider.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
 import { validateEmail, validatePassword } from '../../../utils/validators.js';
 import { ROUTES } from '../../../constants/routes.js';
+import { ADMIN_ROUTES } from '../../../constants/adminRoutes.js';
+import { Shield } from 'lucide-react';
 import { authApi } from '../api/authApi.js';
 import './LoginPage.css';
 
@@ -451,12 +453,42 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Registration Link Footer */}
+                  {/* Registration & Admin Portal Link Footer */}
                   <footer className="konekt-register-footer">
-                    Chưa có tài khoản KONEKT?{' '}
-                    <Link to={ROUTES.REGISTER} className="konekt-register-link">
-                      Đăng ký dùng thử 14 ngày
-                    </Link>
+                    <div>
+                      Chưa có tài khoản KONEKT?{' '}
+                      <Link to={ROUTES.REGISTER} className="konekt-register-link">
+                        Đăng ký dùng thử 14 ngày
+                      </Link>
+                    </div>
+                    <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(226, 232, 240, 0.8)', display: 'flex', justifyContent: 'center' }}>
+                      <Link
+                        to={ADMIN_ROUTES.LOGIN}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          color: '#3c5642',
+                          fontWeight: 600,
+                          fontSize: '12.5px',
+                          textDecoration: 'none',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          backgroundColor: '#edf3ea',
+                          border: '1px solid #ccdac8',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#dcead8';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#edf3ea';
+                        }}
+                      >
+                        <Shield size={14} color="#3c5642" />
+                        <span>Cổng Quản trị Super Admin →</span>
+                      </Link>
+                    </div>
                   </footer>
                 </form>
               )}

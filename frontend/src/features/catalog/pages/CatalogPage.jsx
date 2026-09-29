@@ -49,11 +49,11 @@ function EditorDrawer({ editor, onClose, onSaved }) {
   }
   const isProduct = editor.type === 'PRODUCT';
   const isPreparation = editor.type === 'PREPARATION';
-  
-  const title = editor.id 
-    ? `Chỉnh sửa ${isProduct ? 'sản phẩm' : isPreparation ? 'bán thành phẩm' : 'nguyên liệu'}` 
+
+  const title = editor.id
+    ? `Chỉnh sửa ${isProduct ? 'sản phẩm' : isPreparation ? 'bán thành phẩm' : 'nguyên liệu'}`
     : `Tạo ${isProduct ? 'sản phẩm mới' : isPreparation ? 'bán thành phẩm mới' : 'nguyên liệu mới'}`;
-    
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{ justifyContent: 'flex-end', zIndex: 1000 }}>
       <aside onClick={(event) => event.stopPropagation()} style={{ width: isProduct || isPreparation ? 'min(780px, 100vw)' : 'min(620px, 100vw)', height: '100%', overflow: 'auto', background: 'var(--color-background)', padding: '24px', boxShadow: 'var(--shadow-high)' }}>
@@ -66,10 +66,10 @@ function EditorDrawer({ editor, onClose, onSaved }) {
             <X size={22} />
           </button>
         </div>
-        {isProduct 
-          ? <ProductFormPage productId={editor.id} onClose={onClose} onSaved={onSaved} /> 
-          : isPreparation 
-            ? <PreparationFormPage ingredientId={editor.id} onClose={onClose} onSaved={onSaved} /> 
+        {isProduct
+          ? <ProductFormPage productId={editor.id} onClose={onClose} onSaved={onSaved} />
+          : isPreparation
+            ? <PreparationFormPage ingredientId={editor.id} onClose={onClose} onSaved={onSaved} />
             : <IngredientFormPage ingredientId={editor.id} onClose={onClose} onSaved={onSaved} />}
       </aside>
     </div>
@@ -108,7 +108,7 @@ export function CatalogPage() {
     const productId = searchParams.get('editProduct');
     const ingredientId = searchParams.get('editIngredient');
     const preparationId = searchParams.get('editPreparation');
-    
+
     if (create === 'product') setBulkProductOpen(true);
     else if (create === 'ingredient') setBulkIngredientOpen(true);
     else if (create === 'preparation') setBulkPreparationOpen(true);
@@ -126,8 +126,8 @@ export function CatalogPage() {
       setError('');
       try {
         const [productsResponse, ingredientsResponse, categoriesResponse] = await Promise.all([
-          productApi.getProducts(), 
-          ingredientApi.getIngredients(), 
+          productApi.getProducts(),
+          ingredientApi.getIngredients(),
           categoryApi.getCategories()
         ]);
         if (cancelled) return;
@@ -145,25 +145,25 @@ export function CatalogPage() {
   }, [reloadNonce]);
 
   const categoryOptions = useMemo(() => [
-    { value: 'ALL', label: 'Tất cả danh mục' }, 
+    { value: 'ALL', label: 'Tất cả danh mục' },
     { value: 'uncategorized', label: 'Chưa phân loại' },
     ...categories.map((category) => ({ value: category.id, label: category.name }))
   ], [categories]);
-  
-  const visibleProducts = useMemo(() => products.filter((product) => 
-    matchesSearch(product.name, search) && 
+
+  const visibleProducts = useMemo(() => products.filter((product) =>
+    matchesSearch(product.name, search) &&
     (categoryId === 'ALL' ? true : categoryId === 'uncategorized' ? !product.categoryId : product.categoryId === categoryId)
   ), [products, search, categoryId]);
-  
-  const visibleRawIngredients = useMemo(() => ingredients.filter((ingredient) => 
-    !ingredient.isPreparation && 
-    matchesSearch(ingredient.name, search) && 
+
+  const visibleRawIngredients = useMemo(() => ingredients.filter((ingredient) =>
+    !ingredient.isPreparation &&
+    matchesSearch(ingredient.name, search) &&
     (categoryId === 'ALL' ? true : categoryId === 'uncategorized' ? !ingredient.categoryId : ingredient.categoryId === categoryId)
   ), [ingredients, search, categoryId]);
-  
-  const visiblePreparations = useMemo(() => ingredients.filter((ingredient) => 
-    ingredient.isPreparation && 
-    matchesSearch(ingredient.name, search) && 
+
+  const visiblePreparations = useMemo(() => ingredients.filter((ingredient) =>
+    ingredient.isPreparation &&
+    matchesSearch(ingredient.name, search) &&
     (categoryId === 'ALL' ? true : categoryId === 'uncategorized' ? !ingredient.categoryId : ingredient.categoryId === categoryId)
   ), [ingredients, search, categoryId]);
 
@@ -179,11 +179,11 @@ export function CatalogPage() {
     } finally { setDeleteTarget(null); }
   };
 
-  const handleSaved = () => { 
-    setReloadNonce((value) => value + 1); 
-    setToast({ message: 'Đã lưu thay đổi.', type: 'success' }); 
+  const handleSaved = () => {
+    setReloadNonce((value) => value + 1);
+    setToast({ message: 'Đã lưu thay đổi.', type: 'success' });
   };
-  
+
   const handleBulkCreated = (itemType) => (createdItems) => {
     handleSaved();
     setQuickCategorization({ type: itemType, ids: createdItems.map((item) => item.id) });
@@ -217,8 +217,8 @@ export function CatalogPage() {
           <h1>Sản phẩm & nguyên liệu</h1>
           <p>Quản lý sản phẩm, định lượng, nguyên liệu và danh mục của store trên một màn hình.</p>
         </div>
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => setShowSummaryCards(!showSummaryCards)}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px',
@@ -235,7 +235,7 @@ export function CatalogPage() {
       {/* Summary Cards */}
       {showSummaryCards && (
         <section className="catalog-summary-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-          
+
           <div className="summary-card" style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-outline-variant)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -316,93 +316,146 @@ export function CatalogPage() {
       )}
 
       {/* Filters & Actions */}
-      <section className="catalog-toolbar">
-        <div className="catalog-filters">
-          <div className="field">
-            <label htmlFor="catalog-search">Tìm kiếm</label>
+      <section className="catalog-toolbar" style={{ width: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+        {/* Row 1: Filters */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', alignItems: 'flex-end', gap: '100px' }}>
+          {/* Search */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: 'span 6 / span 6' }}>
+            <label htmlFor="catalog-search" style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-secondary)' }}>
+              TÌM KIẾM
+            </label>
             <input
               id="catalog-search"
               type="text"
               placeholder="Tìm sản phẩm hoặc nguyên liệu..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              style={{ height: '42px', width: '100%', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '0 16px', fontSize: '14px', boxSizing: 'border-box', background: 'white' }}
             />
           </div>
 
-          <div className="field">
-            <label htmlFor="catalog-type">Loại</label>
-            <select id="catalog-type" value={type} onChange={(e) => setType(e.target.value)}>
-              {TYPE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+          {/* Type */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: 'span 3 / span 3' }}>
+            <label htmlFor="catalog-type" style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-secondary)' }}>
+              LOẠI
+            </label>
+            <div style={{ position: 'relative' }}>
+              <select
+                id="catalog-type"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                style={{ height: '42px', width: '100%', appearance: 'none', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '0 36px 0 16px', fontSize: '14px', background: 'white', color: 'var(--color-on-surface)', boxSizing: 'border-box' }}
+              >
+                {TYPE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div style={{ pointerEvents: 'none', position: 'absolute', inset: '0 0 0 auto', display: 'flex', alignItems: 'center', paddingRight: '14px', color: 'var(--color-secondary)' }}>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: '16px', height: '16px' }}>
+                  <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
           </div>
 
-          <div className="field">
-            <label htmlFor="catalog-category">Danh mục</label>
-            <select id="catalog-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              {categoryOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+          {/* Category */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: 'span 3 / span 3' }}>
+            <label htmlFor="catalog-category" style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-secondary)' }}>
+              DANH MỤC
+            </label>
+            <div style={{ position: 'relative' }}>
+              <select
+                id="catalog-category"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                style={{ height: '42px', width: '100%', appearance: 'none', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '0 36px 0 16px', fontSize: '14px', background: 'white', color: 'var(--color-on-surface)', boxSizing: 'border-box' }}
+              >
+                {categoryOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div style={{ pointerEvents: 'none', position: 'absolute', inset: '0 0 0 auto', display: 'flex', alignItems: 'center', paddingRight: '14px', color: 'var(--color-secondary)' }}>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ width: '16px', height: '16px' }}>
+                  <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="catalog-actions">
-          {/* View mode */}
-          <div className="view-mode-switch">
+        {/* Row 2: View + Actions */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start', width: '100%', gap: '480px', borderTop: '1px solid var(--color-outline-variant)', paddingTop: '16px' }}>
+          {/* View switcher */}
+          <div style={{ display: 'inline-flex', height: '38px', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '3px', background: 'white' }}>
             <button
               type="button"
-              className={`view-mode-button ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
-              aria-label="Hiển thị dạng danh sách"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', borderRadius: '9999px', padding: '0 14px', fontSize: '12px', fontWeight: viewMode === 'list' ? '600' : '500', background: viewMode === 'list' ? 'var(--color-surface-container-highest)' : 'transparent', border: 'none', cursor: 'pointer', color: viewMode === 'list' ? 'var(--color-on-surface)' : 'var(--color-secondary)' }}
             >
-              <List size={16} />
-              Danh sách
+              <List size={14} />
+              <span>Danh sách</span>
             </button>
             <button
               type="button"
-              className={`view-mode-button ${viewMode === 'card' ? 'active' : ''}`}
               onClick={() => setViewMode('card')}
-              aria-label="Hiển thị dạng thẻ"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', borderRadius: '9999px', padding: '0 14px', fontSize: '12px', fontWeight: viewMode === 'card' ? '600' : '500', background: viewMode === 'card' ? 'var(--color-surface-container-highest)' : 'transparent', border: 'none', cursor: 'pointer', color: viewMode === 'card' ? 'var(--color-on-surface)' : 'var(--color-secondary)' }}
             >
-              <Grid size={16} />
-              Thẻ
+              <Grid size={14} />
+              <span>Thẻ</span>
             </button>
           </div>
 
-          <button type="button" onClick={() => setReloadNonce(n => n + 1)} disabled={isLoading}>
-            <RefreshCw size={16} />
-            Tải lại
-          </button>
-
-          <button type="button" onClick={() => setCategoriesOpen(true)}>
-            <FolderTree size={16} />
-            Danh mục
-          </button>
-
-          <button type="button" onClick={() => setCategoryAssignmentOpen(true)}>
-            Phân loại nhanh
-          </button>
-
-          <div style={{ position: 'relative' }}>
-            <button type="button" className="primary" onClick={() => setCreateMenuOpen(!createMenuOpen)}>
-              <Plus size={16} />
-              Tạo mới
+          {/* Action buttons */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setReloadNonce(n => n + 1)} disabled={isLoading}
+              style={{ display: 'inline-flex', height: '38px', alignItems: 'center', gap: '6px', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '0 14px', fontSize: '12px', fontWeight: '500', background: 'white', cursor: 'pointer', color: 'var(--color-on-surface)' }}
+            >
+              <RefreshCw size={14} />
+              <span>Tải lại</span>
             </button>
-            {createMenuOpen && (
-              <div className="create-menu-dropdown">
-                <button type="button" onClick={() => { setBulkProductOpen(true); setCreateMenuOpen(false); }}>
-                  <Coffee size={16} /> Sản phẩm
-                </button>
-                <button type="button" onClick={() => { setEditor({ type: 'INGREDIENT', id: null }); setCreateMenuOpen(false); }}>
-                  <Package size={16} /> Nguyên liệu
-                </button>
-                <button type="button" onClick={() => { setEditor({ type: 'PREPARATION', id: null }); setCreateMenuOpen(false); }}>
-                  <Factory size={16} /> Bán thành phẩm
-                </button>
-              </div>
-            )}
+
+            <button
+              type="button"
+              onClick={() => setCategoriesOpen(true)}
+              style={{ display: 'inline-flex', height: '38px', alignItems: 'center', gap: '6px', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '0 14px', fontSize: '12px', fontWeight: '500', background: 'white', cursor: 'pointer', color: 'var(--color-on-surface)' }}
+            >
+              <FolderTree size={14} />
+              <span>Danh mục</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCategoryAssignmentOpen(true)}
+              style={{ display: 'inline-flex', height: '38px', alignItems: 'center', gap: '6px', borderRadius: '9999px', border: '1px solid var(--color-outline-variant)', padding: '0 14px', fontSize: '12px', fontWeight: '500', background: 'white', cursor: 'pointer', color: 'var(--color-on-surface)' }}
+            >
+              <span>Phân loại nhanh</span>
+            </button>
+
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setCreateMenuOpen(!createMenuOpen)}
+                style={{ display: 'inline-flex', height: '38px', alignItems: 'center', gap: '4px', borderRadius: '9999px', border: 'none', padding: '0 16px', fontSize: '12px', fontWeight: '600', background: 'var(--color-primary)', color: 'var(--color-on-primary)', cursor: 'pointer' }}
+              >
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>+</span>
+                <span>Tạo mới</span>
+              </button>
+              {createMenuOpen && (
+                <div className="create-menu-dropdown">
+                  <button type="button" onClick={() => { setBulkProductOpen(true); setCreateMenuOpen(false); }}>
+                    <Coffee size={16} /> Sản phẩm
+                  </button>
+                  <button type="button" onClick={() => { setEditor({ type: 'INGREDIENT', id: null }); setCreateMenuOpen(false); }}>
+                    <Package size={16} /> Nguyên liệu
+                  </button>
+                  <button type="button" onClick={() => { setEditor({ type: 'PREPARATION', id: null }); setCreateMenuOpen(false); }}>
+                    <Factory size={16} /> Bán thành phẩm
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -416,7 +469,7 @@ export function CatalogPage() {
           {/* LIST VIEW */}
           {viewMode === 'list' && (
             <div className="catalog-list-view">
-              
+
               {showProducts && (
                 <section className="catalog-section">
                   <header className="section-header">
@@ -563,7 +616,7 @@ export function CatalogPage() {
           {/* CARD VIEW */}
           {viewMode === 'card' && (
             <div className="catalog-card-view">
-              
+
               {showProducts && (
                 <section className="catalog-section">
                   <header className="section-header">
@@ -591,7 +644,7 @@ export function CatalogPage() {
                               <span>{product.category?.name || 'Chưa phân loại'}</span>
                             </div>
                           </div>
-                          
+
                           <dl className="catalog-card-details">
                             <div>
                               <dt>ĐVT</dt>
@@ -616,7 +669,7 @@ export function CatalogPage() {
                               </dd>
                             </div>
                           </dl>
-                          
+
 
                         </article>
                       ))}
@@ -649,7 +702,7 @@ export function CatalogPage() {
                               <span>{ingredient.category?.name || 'Chưa phân loại'}</span>
                             </div>
                           </div>
-                          
+
                           <dl className="catalog-card-details">
                             <div>
                               <dt>ĐVT</dt>
@@ -662,7 +715,7 @@ export function CatalogPage() {
                               </dd>
                             </div>
                           </dl>
-                          
+
 
                         </article>
                       ))}
@@ -695,14 +748,14 @@ export function CatalogPage() {
                               <span>{ingredient.category?.name || 'Chưa phân loại'}</span>
                             </div>
                           </div>
-                          
+
                           <dl className="catalog-card-details">
                             <div>
                               <dt>ĐVT</dt>
                               <dd>{ingredient.unit}</dd>
                             </div>
                           </dl>
-                          
+
 
                         </article>
                       ))}

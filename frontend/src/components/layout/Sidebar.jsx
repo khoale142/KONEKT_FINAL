@@ -86,82 +86,139 @@ export function Sidebar({ isCollapsed, onToggle }) {
     return storeName.slice(0, 2).toUpperCase() || 'MC';
   }, [storeName]);
 
-  // Menu Groups for Store Workspace matching latest design
-  const storeSections = [
-    {
-      title: 'VẬN HÀNH BÁN HÀNG',
-      counter: '01',
-      items: [
+  const isManager = workspace?.role === 'MANAGER' || workspace?.type === WORKSPACE_TYPES.TENANT;
+
+  // Menu Groups for Store Workspace matching latest design & permissions
+  const storeSections = useMemo(() => {
+    if (!isManager) {
+      return [
         {
-          label: 'Bảng điều khiển',
-          path: '/store/dashboard',
-          icon: <LayoutDashboard size={19} />,
+          title: 'VẬN HÀNH BÁN HÀNG',
+          counter: '01',
+          items: [
+            {
+              label: 'Bán hàng (POS)',
+              path: ROUTES.STORE_POS,
+              icon: <ShoppingCart size={19} />,
+            },
+            {
+              label: 'Quản lý ca làm',
+              path: ROUTES.STORE_SESSION,
+              icon: <UserCheck size={19} />,
+            },
+            {
+              label: 'KDS / Bếp',
+              path: ROUTES.STORE_KDS,
+              icon: <ChefHat size={19} />,
+            },
+          ],
         },
         {
-          label: 'Bán hàng (POS)',
-          path: ROUTES.STORE_POS,
-          icon: <ShoppingCart size={19} />,
+          title: 'KHO HÀNG',
+          counter: '02',
+          items: [
+            {
+              label: 'Nhập kho & Kiểm kê',
+              path: ROUTES.STORE_STOCK,
+              icon: <Package size={19} />,
+            },
+          ],
         },
         {
-          label: 'Quản lý ca làm',
-          path: ROUTES.STORE_SESSION,
-          icon: <UserCheck size={19} />,
+          title: 'NHÂN SỰ & CHẤM CÔNG',
+          counter: '03',
+          items: [
+            {
+              label: 'Chấm công GPS',
+              path: ROUTES.STORE_HR_ATTENDANCE,
+              icon: <ShieldCheck size={19} />,
+            },
+            {
+              label: 'Lịch làm & Lương của tôi',
+              path: ROUTES.STORE_HR,
+              icon: <Calendar size={19} />,
+            },
+          ],
         },
-        {
-          label: 'KDS / Bếp',
-          path: ROUTES.STORE_KDS,
-          icon: <ChefHat size={19} />,
-        },
-      ],
-    },
-    {
-      title: 'KHO & THỰC ĐƠN',
-      counter: '02',
-      items: [
-        {
-          label: 'Lịch sử đơn hàng',
-          path: ROUTES.STORE_ORDERS,
-          icon: <History size={19} />,
-        },
-        {
-          label: 'Sản phẩm & Menu',
-          path: ROUTES.STORE_CATALOG,
-          icon: <Coffee size={19} />,
-        },
-        {
-          label: 'Nhập kho & Kiểm kê',
-          path: ROUTES.STORE_STOCK,
-          icon: <Package size={19} />,
-        },
-      ],
-    },
-    {
-      title: 'BÁO CÁO & ĐỘI NGŨ',
-      counter: '03',
-      items: [
-        {
-          label: 'Báo cáo doanh thu',
-          path: '/store/reports',
-          icon: <BarChart3 size={19} />,
-        },
-        {
-          label: 'Lịch làm nhân sự',
-          path: '/store/manager-hr/calendar',
-          icon: <Calendar size={19} />,
-        },
-        {
-          label: 'Quản lý nhân sự',
-          path: '/store/manager-hr',
-          icon: <Users size={19} />,
-        },
-        {
-          label: 'Chấm công GPS',
-          path: ROUTES.STORE_HR_ATTENDANCE,
-          icon: <ShieldCheck size={19} />,
-        },
-      ],
-    },
-  ];
+      ];
+    }
+
+    return [
+      {
+        title: 'VẬN HÀNH BÁN HÀNG',
+        counter: '01',
+        items: [
+          {
+            label: 'Bảng điều khiển',
+            path: '/store/dashboard',
+            icon: <LayoutDashboard size={19} />,
+          },
+          {
+            label: 'Bán hàng (POS)',
+            path: ROUTES.STORE_POS,
+            icon: <ShoppingCart size={19} />,
+          },
+          {
+            label: 'Quản lý ca làm',
+            path: ROUTES.STORE_SESSION,
+            icon: <UserCheck size={19} />,
+          },
+          {
+            label: 'KDS / Bếp',
+            path: ROUTES.STORE_KDS,
+            icon: <ChefHat size={19} />,
+          },
+        ],
+      },
+      {
+        title: 'KHO & THỰC ĐƠN',
+        counter: '02',
+        items: [
+          {
+            label: 'Lịch sử đơn hàng',
+            path: ROUTES.STORE_ORDERS,
+            icon: <History size={19} />,
+          },
+          {
+            label: 'Sản phẩm & Menu',
+            path: ROUTES.STORE_CATALOG,
+            icon: <Coffee size={19} />,
+          },
+          {
+            label: 'Nhập kho & Kiểm kê',
+            path: ROUTES.STORE_STOCK,
+            icon: <Package size={19} />,
+          },
+        ],
+      },
+      {
+        title: 'BÁO CÁO & ĐỘI NGŨ',
+        counter: '03',
+        items: [
+          {
+            label: 'Báo cáo doanh thu',
+            path: '/store/reports',
+            icon: <BarChart3 size={19} />,
+          },
+          {
+            label: 'Lịch làm nhân sự',
+            path: '/store/manager-hr/calendar',
+            icon: <Calendar size={19} />,
+          },
+          {
+            label: 'Quản lý nhân sự',
+            path: '/store/manager-hr',
+            icon: <Users size={19} />,
+          },
+          {
+            label: 'Chấm công GPS',
+            path: ROUTES.STORE_HR_ATTENDANCE,
+            icon: <ShieldCheck size={19} />,
+          },
+        ],
+      },
+    ];
+  }, [isManager]);
 
   // Owner / Tenant Menu
   const ownerSections = [

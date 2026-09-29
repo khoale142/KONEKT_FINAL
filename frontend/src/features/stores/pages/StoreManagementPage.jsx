@@ -101,13 +101,13 @@ export function StoreManagementPage() {
 
       <div className="card">
         <div className="table-responsive">
-          <table className="table">
+          <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th>Tên chi nhánh</th>
-                <th>Địa chỉ</th>
-                <th>Mã mời (Invite Code)</th>
-                <th>Thao tác</th>
+                <th style={{ width: '33.33%', textAlign: 'center' }}>Tên chi nhánh</th>
+                <th style={{ width: '33.33%', textAlign: 'center' }}>Địa chỉ</th>
+                <th style={{ width: '16.67%', textAlign: 'center' }}>Mã mời (Invite Code)</th>
+                <th style={{ width: '16.67%', textAlign: 'center' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -126,19 +126,21 @@ export function StoreManagementPage() {
               ) : (
                 stores.map((store) => (
                   <tr key={store.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '500' }}>
                         <Store size={18} color="var(--color-secondary)" />
                         {store.name}
                       </div>
                     </td>
-                    <td>{store.address || <span style={{ color: 'var(--color-secondary)' }}>Chưa cập nhật</span>}</td>
-                    <td>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      {store.address || <span style={{ color: 'var(--color-secondary)' }}>Chưa cập nhật</span>}
+                    </td>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       <code style={{ background: 'var(--color-surface-container)', padding: '4px 8px', borderRadius: '4px', fontWeight: '600', letterSpacing: '1px' }}>
                         {store.invite_code}
                       </code>
                     </td>
-                    <td>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                       <Button variant="outline" size="sm" onClick={() => regenerateInviteCode(store.id)}>
                         <KeyRound size={14} style={{ marginRight: '4px' }} />
                         Đổi mã

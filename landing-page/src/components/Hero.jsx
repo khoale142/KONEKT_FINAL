@@ -23,6 +23,10 @@ export function Hero() {
               </a>
               <a
                 href="#features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="text-base font-semibold text-[#496951] underline-offset-4 hover:underline"
               >
                 Xem tính năng

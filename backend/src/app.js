@@ -20,6 +20,13 @@ import workspaceRoutes from './modules/workspaces/workspace.routes.js';
 import tenantRoutes from './modules/tenants/tenant.routes.js';
 import storeRoutes from './modules/stores/store.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
+import adminAuthRoutes from './modules/admin_auth/admin_auth.routes.js';
+import adminDashboardRoutes from './modules/admin_dashboard/admin_dashboard.routes.js';
+import adminTenantRoutes from './modules/admin_tenants/admin_tenant.routes.js';
+import adminStoreRoutes from './modules/admin_stores/admin_store.routes.js';
+import adminAccountRoutes from './modules/admin_accounts/admin_account.routes.js';
+import adminInternalStaffRoutes from './modules/admin_internal_staff/admin_internal_staff.routes.js';
+import adminAuditRoutes from './modules/admin_audit/admin_audit.routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { sendSuccess } from './utils/apiResponse.js';
 
@@ -61,6 +68,13 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/pos-sessions', posSessionRoutes);
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/tenants', adminTenantRoutes);
+app.use('/api/admin/stores', adminStoreRoutes);
+app.use('/api/admin/accounts', adminAccountRoutes);
+app.use('/api/admin/internal-staff', adminInternalStaffRoutes);
+app.use('/api/admin/audit', adminAuditRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -96,6 +96,7 @@ export function StaffHRPage() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     if (token) {
+      setAttendanceToken(token);
       setActiveTab('attendance');
       window.history.replaceState({}, document.title, window.location.pathname);
     }

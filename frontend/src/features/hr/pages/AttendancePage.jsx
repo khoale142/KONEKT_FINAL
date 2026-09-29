@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { RotateCcw, QrCode, List, Clock } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { RotateCcw, QrCode, List, Clock, Copy, Check, ExternalLink } from 'lucide-react';
 import { attendanceApi } from '../api/attendanceApi.js';
 import { PageHeader } from '../../../components/layout/PageHeader.jsx';
 import { Button } from '../../../components/common/Button.jsx';
@@ -8,29 +8,60 @@ import { StatusBadge } from '../../../components/common/StatusBadge.jsx';
 import { Alert } from '../../../components/feedback/Alert.jsx';
 import { TextInput } from '../../../components/forms/TextInput.jsx';
 import { formatVND } from '../../../utils/currency.js';
+import { toLocalDateString } from '../../../utils/date.js';
+import { useAuth } from '../../../app/providers/AuthProvider.jsx';
+import { WORKSPACE_TYPES } from '../../../constants/roles.js';
 
 export function AttendancePage() {
+  const { workspace } = useAuth();
+  const isManager = workspace?.role === 'MANAGER' || workspace?.type === WORKSPACE_TYPES.TENANT;
+
   const [activeTab, setActiveTab] = useState('qr'); // 'qr' or 'logs'
   const [qrToken, setQrToken] = useState('');
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [copied, setCopied] = useState(false);
+  const [qrImgSrc, setQrImgSrc] = useState('');
+  const [startDate, setStartDate] = useState(() => toLocalDateString(new Date()));
+  const [endDate, setEndDate] = useState(() => toLocalDateString(new Date()));
   const [searchQuery, setSearchQuery] = useState('');
+
+  const checkInURL = useMemo(() => {
+    return qrToken ? `${window.location.origin}/store/hr?token=${qrToken}` : '';
+  }, [qrToken]);
+
+  const primaryQrURL = useMemo(() => {
+    return checkInURL ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(checkInURL)}` : '';
+  }, [checkInURL]);
+
+  const fallbackQrURL = useMemo(() => {
+    return checkInURL ? `https://quickchart.io/qr?text=${encodeURIComponent(checkInURL)}&size=280` : '';
+  }, [checkInURL]);
 
   const fetchQRToken = useCallback(async () => {
     try {
       setError('');
+      setIsLoading(true);
       const response = await attendanceApi.getQRToken();
-      setQrToken(response.data.token);
+      const token = response.data?.token || '';
+      setQrToken(token);
     } catch (err) {
       setError(err.message || 'Không lấy được mã QR chấm công.');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
+  useEffect(() => {
+    if (primaryQrURL) {
+      setQrImgSrc(primaryQrURL);
+    }
+  }, [primaryQrURL]);
+
   const fetchLogs = useCallback(async () => {
+    if (!isManager) return;
     try {
       setIsLoading(true);
       setError('');
@@ -41,7 +72,7 @@ export function AttendancePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, isManager]);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -66,9 +97,6 @@ export function AttendancePage() {
     log.staff_username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     log.shift_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const checkInURL = `${window.location.origin}/store/hr?token=${qrToken}`;
-  const qrImageURL = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(checkInURL)}`;
 
   const headers = [
     {
@@ -203,40 +231,48 @@ export function AttendancePage() {
             borderBottom: activeTab === 'qr' ? '2px solid var(--color-primary)' : 'none',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer'
           }}
         >
           <QrCode size={16} />
           Mã QR Chấm công hôm nay
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('logs')}
-          style={{
-            padding: '12px 16px',
-            fontWeight: '600',
-            fontSize: '14px',
-            color: activeTab === 'logs' ? 'var(--color-primary)' : 'var(--color-secondary)',
-            borderBottom: activeTab === 'logs' ? '2px solid var(--color-primary)' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <List size={16} />
-          Lịch sử Chấm công
-        </button>
+        {isManager && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('logs')}
+            style={{
+              padding: '12px 16px',
+              fontWeight: '600',
+              fontSize: '14px',
+              color: activeTab === 'logs' ? 'var(--color-primary)' : 'var(--color-secondary)',
+              borderBottom: activeTab === 'logs' ? '2px solid var(--color-primary)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <List size={16} />
+            Lịch sử Chấm công
+          </button>
+        )}
       </div>
 
       {/* Tab Contents */}
       {activeTab === 'qr' ? (
         <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0' }}>
-          <div className="card" style={{ maxWidth: '420px', width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '32px' }}>
+          <div className="card" style={{ maxWidth: '440px', width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '32px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-primary)' }}>QR CODE ĐIỂM DANH</h3>
-              <p style={{ fontSize: '12px', color: 'var(--color-secondary)' }}>
-                Đặt mã này tại quầy để nhân viên quét QR trên điện thoại khi vào ca. Mã này tự động đổi hàng ngày.
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-primary)', margin: 0 }}>QR CODE ĐIỂM DANH</h3>
+              <p style={{ fontSize: '13px', color: 'var(--color-secondary)', margin: 0 }}>
+                Quét mã này trên điện thoại khi vào ca làm để điểm danh. Mã được làm mới tự động hàng ngày.
               </p>
             </div>
             
@@ -246,25 +282,69 @@ export function AttendancePage() {
               backgroundColor: 'white',
               border: '1px solid var(--color-outline-variant)',
               boxShadow: 'var(--shadow-low)',
-              display: 'inline-block'
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '280px',
+              minHeight: '280px'
             }}>
-              {qrToken ? (
-                <img src={qrImageURL} alt="Attendance QR Code" style={{ display: 'block', width: '280px', height: '280px' }} />
+              {qrToken && qrImgSrc ? (
+                <img
+                  src={qrImgSrc}
+                  alt="Attendance QR Code"
+                  onError={() => {
+                    if (qrImgSrc !== fallbackQrURL && fallbackQrURL) {
+                      setQrImgSrc(fallbackQrURL);
+                    }
+                  }}
+                  style={{ display: 'block', width: '280px', height: '280px', objectFit: 'contain' }}
+                />
               ) : (
-                <div style={{ width: '280px', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-secondary)' }}>
-                  Đang tạo mã QR...
+                <div style={{ width: '280px', height: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--color-secondary)' }}>
+                  <div className="spinner" style={{ width: '24px', height: '24px', borderWidth: '2px' }}></div>
+                  <span style={{ fontSize: '13px' }}>Đang tạo mã QR...</span>
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--color-secondary)', backgroundColor: 'var(--color-surface-container-low)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
+            {qrToken && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '320px', backgroundColor: 'var(--color-surface-container)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-outline-variant)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--color-secondary)' }}>Mã Token</span>
+                  <code style={{ fontSize: '12px', fontWeight: '600', color: 'var(--color-primary)' }}>{qrToken.slice(0, 12)}...{qrToken.slice(-6)}</code>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(qrToken);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '11px' }}
+                >
+                  {copied ? <Check size={13} style={{ color: 'var(--color-success)' }} /> : <Copy size={13} />}
+                  <span>{copied ? 'Đã chép' : 'Sao chép'}</span>
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--color-secondary)', backgroundColor: 'var(--color-surface-container-low)', padding: '8px 14px', borderRadius: 'var(--radius-sm)' }}>
               <Clock size={14} style={{ color: 'var(--color-primary)' }} />
               <span>Cập nhật ngày: {new Date().toLocaleDateString('vi-VN')}</span>
             </div>
             
-            <a href={checkInURL} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', color: 'var(--color-primary)', fontWeight: '600', textDecoration: 'underline' }}>
-              Sử dụng liên kết trực tiếp nếu không thể quét mã QR
-            </a>
+            {checkInURL && (
+              <a
+                href={checkInURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-primary)', fontWeight: '600', textDecoration: 'none' }}
+              >
+                <span>Mở liên kết điểm danh trực tiếp</span>
+                <ExternalLink size={14} />
+              </a>
+            )}
           </div>
         </div>
       ) : (

@@ -41,6 +41,7 @@ import {
 import { formatDateTime } from '../../../utils/date.js';
 import { STOCK_TRANSACTION_TYPES } from '../../../constants/stockTransactionTypes.js';
 import { ProducePreparationTab } from '../components/ProducePreparationTab.jsx';
+import '../styles/stockPage.css';
 
 const STOCK_MODES = Object.freeze({
   IMPORT: 'IMPORT',
@@ -611,9 +612,11 @@ export function StockPage() {
     }
   };
 
-  const handleTemplateDownload = (mode) => {
+  const handleTemplateDownload = async (mode) => {
     try {
-      downloadStockTemplate(ingredients, mode);
+      const templateMode =
+        mode === STOCK_MODES.IMPORT ? STOCK_TEMPLATE_MODES.IMPORT : STOCK_TEMPLATE_MODES.DAILY_COUNT;
+      await downloadStockTemplate({ mode: templateMode, ingredients });
       setToastType('success');
       setToastMsg('Tải file mẫu Excel thành công. Hãy mở file chỉnh sửa và nạp lại.');
     } catch (err) {
@@ -917,139 +920,249 @@ export function StockPage() {
   }, [activeTab]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-      <PageHeader
-        title="Quản lý kho & Dự báo"
-        description="Theo dõi số lượng hàng tồn, thống kê lượng nhập xuất, dự báo thời điểm hết nguyên liệu thông minh."
-        actions={
-          activeTab === 'adjust' ? (
-            <>
-              <Button variant="secondary" onClick={loadIngredients} disabled={isLoading} icon={<RefreshCw size={16} />}>
-                Làm mới danh sách
-              </Button>
-              {workspace?.type !== WORKSPACE_TYPES.STORE && (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => handleTemplateDownload(activeMode)}
-                    disabled={isLoading}
-                    icon={<Download size={16} />}
-                  >
-                    Tải file mẫu Excel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() =>
-                      activeMode === STOCK_MODES.IMPORT
-                        ? importFileInputRef.current?.click()
-                        : countFileInputRef.current?.click()
-                    }
-                    disabled={isLoading || isImportingFile}
-                    icon={<Upload size={16} />}
-                  >
-                    Nạp số liệu từ file Excel
-                  </Button>
-                </>
-              )}
-            </>
+    <div className="stitch-container">
+      {/* Stitch Header */}
+      <section className="stitch-header-row">
+        <div>
+          <h1 className="stitch-title">Quản lý kho & Dự báo</h1>
+          <p className="stitch-description">
+            Theo dõi tồn kho thực tế, thống kê biến động và tự động đề xuất số lượng nhập theo chu kỳ tiêu thụ.
+          </p>
+        </div>
+        <div className="stitch-header-actions">
+          {activeTab === 'adjust' ? (
+            <button
+              className="stitch-icon-btn"
+              onClick={loadIngredients}
+              disabled={isLoading}
+              title="Làm mới danh sách"
+              type="button"
+            >
+              <RefreshCw size={15} />
+            </button>
           ) : activeTab === 'forecast' ? (
-            <Button variant="secondary" onClick={fetchForecast} disabled={isForecastLoading} icon={<RotateCcw size={16} />}>
-              Tải lại dự báo
-            </Button>
-          ) : (
-            <Button variant="secondary" onClick={fetchTransactions} disabled={isTxLoading} icon={<RotateCcw size={16} />}>
-              Tải lại lịch sử
-            </Button>
-          )
-        }
-      />
+            <button
+              className="stitch-icon-btn"
+              onClick={fetchForecast}
+              disabled={isForecastLoading}
+              title="Tải lại dự báo"
+              type="button"
+            >
+              <RotateCcw size={15} />
+            </button>
+          ) : activeTab === 'transactions' ? (
+            <button
+              className="stitch-icon-btn"
+              onClick={fetchTransactions}
+              disabled={isTxLoading}
+              title="Tải lại lịch sử"
+              type="button"
+            >
+              <RotateCcw size={15} />
+            </button>
+          ) : null}
+        </div>
+      </section>
 
       {submitError && <Alert type="error" message={submitError} onClose={() => setSubmitError('')} />}
       {forecastError && <Alert type="error" message={forecastError} onClose={() => setForecastError('')} />}
       {txError && <Alert type="error" message={txError} onClose={() => setTxError('')} />}
 
-      {/* Tab Navigation */}
-      <div
-        className="tab-container"
-        style={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: 'var(--spacing-md)',
-          borderBottom: '1px solid var(--color-surface-container-high)',
-          paddingBottom: '8px',
-        }}
-      >
+      {/* Stitch Modern Underline Tab Navigation */}
+      <section className="stitch-tabs-nav">
         <button
+          type="button"
           onClick={() => setActiveTab('adjust')}
-          className={`btn ${activeTab === 'adjust' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          className={`stitch-tab-item ${activeTab === 'adjust' ? 'active' : ''}`}
         >
-          <PackageOpen size={18} />
-          Kiểm kê & Điều chỉnh kho
+          <PackageOpen size={16} />
+          <span>Nhập kho & kiểm kê</span>
         </button>
-        {workspace?.type === WORKSPACE_TYPES.TENANT && (
-          <>
-            <button
-              onClick={() => setActiveTab('forecast')}
-              className={`btn ${activeTab === 'forecast' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <TrendingUp size={18} />
-              Dự báo & Đề xuất nhập
-            </button>
-            <button
-              onClick={() => setActiveTab('transactions')}
-              className={`btn ${activeTab === 'transactions' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <History size={18} />
-              Lịch sử nhập xuất
-            </button>
-          </>
-        )}
         <button
+          type="button"
+          onClick={() => setActiveTab('forecast')}
+          className={`stitch-tab-item ${activeTab === 'forecast' ? 'active' : ''}`}
+        >
+          <TrendingUp size={16} />
+          <span>Dự báo & Đề xuất nhập</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('transactions')}
+          className={`stitch-tab-item ${activeTab === 'transactions' ? 'active' : ''}`}
+        >
+          <History size={16} />
+          <span>Lịch sử nhập xuất</span>
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab('discard')}
-          className={`btn ${activeTab === 'discard' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          className={`stitch-tab-item ${activeTab === 'discard' ? 'active' : ''}`}
         >
-          <Trash size={18} />
-          Hủy hàng & Thất thoát
+          <Trash size={16} />
+          <span>Hủy hàng & Thất thoát</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('produce')}
-          className={`btn ${activeTab === 'produce' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          className={`stitch-tab-item ${activeTab === 'produce' ? 'active' : ''}`}
         >
-          <Factory size={18} />
-          Sản xuất nội bộ
+          <Factory size={16} />
+          <span>Sản xuất nội bộ</span>
         </button>
-      </div>
+      </section>
+
+      {/* Hidden file inputs for Excel template upload */}
+      <input
+        type="file"
+        ref={importFileInputRef}
+        accept=".xlsx,.xls,.csv"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          void handleTemplateUpload(STOCK_MODES.IMPORT, file);
+          e.target.value = '';
+        }}
+      />
+      <input
+        type="file"
+        ref={countFileInputRef}
+        accept=".xlsx,.xls,.csv"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          void handleTemplateUpload(STOCK_MODES.DAILY_COUNT, file);
+          e.target.value = '';
+        }}
+      />
 
       {/* ------------------ TAB 1: STOCK ADJUST (KIỂM KÊ & ĐIỀU CHỈNH) ------------------ */}
       {activeTab === 'adjust' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          {/* Sub-mode selections (Import vs Daily count) */}
-          <div className="card" style={{ display: 'flex', gap: 'var(--spacing-md)', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                className={`btn ${activeMode === STOCK_MODES.IMPORT ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setActiveMode(STOCK_MODES.IMPORT)}
-              >
-                Nhập kho hàng loạt
-              </button>
-              <button
-                type="button"
-                className={`btn ${activeMode === STOCK_MODES.DAILY_COUNT ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setActiveMode(STOCK_MODES.DAILY_COUNT)}
-              >
-                Kiểm kê tồn thực tế hàng ngày
-              </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Card: Batch Operations & Note Section */}
+          <section className="stitch-card">
+            <div className="stitch-card-header">
+              <div className="stitch-card-title-group">
+                <div className="stitch-dot" />
+                <h2 className="stitch-card-title">
+                  {activeMode === STOCK_MODES.IMPORT
+                    ? 'Thông tin phiếu nhập kho hiện hành'
+                    : 'Thông tin phiếu kiểm kê tồn thực tế'}
+                </h2>
+              </div>
+              <div className="stitch-header-toolbar">
+                {/* Segmented Pill Switch */}
+                <div className="stitch-segmented-pill">
+                  <button
+                    type="button"
+                    className={`stitch-pill-btn ${activeMode === STOCK_MODES.IMPORT ? 'active' : ''}`}
+                    onClick={() => setActiveMode(STOCK_MODES.IMPORT)}
+                  >
+                    Nhập kho hàng loạt
+                  </button>
+                  <button
+                    type="button"
+                    className={`stitch-pill-btn ${activeMode === STOCK_MODES.DAILY_COUNT ? 'active' : ''}`}
+                    onClick={() => setActiveMode(STOCK_MODES.DAILY_COUNT)}
+                  >
+                    Kiểm kê tồn thực tế
+                  </button>
+                </div>
+
+                <div className="stitch-divider-vertical" />
+
+                <button
+                  type="button"
+                  className="stitch-tool-btn"
+                  onClick={() => handleTemplateDownload(activeMode)}
+                  disabled={isLoading}
+                  title="Tải file mẫu Excel"
+                >
+                  <Download size={13} style={{ color: 'var(--palette-olive-500, #597d62)' }} />
+                  <span>Tải file mẫu Excel</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="stitch-tool-btn"
+                  onClick={() =>
+                    activeMode === STOCK_MODES.IMPORT
+                      ? importFileInputRef.current?.click()
+                      : countFileInputRef.current?.click()
+                  }
+                  disabled={isLoading || isImportingFile}
+                  title="Nạp file Excel"
+                >
+                  <Upload size={13} style={{ color: 'var(--palette-olive-500, #597d62)' }} />
+                  <span>Nạp file Excel</span>
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="stitch-form-grid">
+              <div>
+                <label
+                  htmlFor="batch-notes"
+                  style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--palette-text-900, #263426)', marginBottom: '6px' }}
+                >
+                  {activeMode === STOCK_MODES.IMPORT
+                    ? 'Ghi chú chung cho đợt nhập'
+                    : 'Ghi chú chung cho phiên kiểm kê'}
+                </label>
+                <textarea
+                  id="batch-notes"
+                  className="stitch-textarea"
+                  rows={2}
+                  placeholder={
+                    activeMode === STOCK_MODES.IMPORT
+                      ? 'Ví dụ: Nhập hàng đầu ngày từ NCC số 25, nguyên liệu pha chế cho cuối tuần...'
+                      : 'Ví dụ: Kiểm kê chốt ca tối, đối chiếu tồn kho cuối tuần...'
+                  }
+                  value={activeMode === STOCK_MODES.IMPORT ? importBatchNote : countBatchNote}
+                  onChange={(e) =>
+                    activeMode === STOCK_MODES.IMPORT
+                      ? setImportBatchNote(e.target.value)
+                      : setCountBatchNote(e.target.value)
+                  }
+                  disabled={isLoading || isSubmitting}
+                />
+              </div>
+
+              <div className="stitch-helper-box">
+                <div className="stitch-helper-header">
+                  <PackageOpen size={14} style={{ color: 'var(--palette-olive-500, #597d62)' }} />
+                  <span>Hướng dẫn nhập nhanh</span>
+                </div>
+                <p style={{ margin: 0, lineHeight: 1.45 }}>
+                  {activeMode === STOCK_MODES.IMPORT
+                    ? 'Bạn có thể chỉnh sửa trực tiếp các ô "Số lượng nhập" ở bảng bên dưới, hoặc nạp file Excel để tự động khớp toàn bộ danh mục nguyên liệu.'
+                    : 'Nhập số lượng đếm thực tế vào cột "Tồn thực tế". Hệ thống sẽ tự động đối chiếu với tồn lý thuyết và ghi nhận chênh lệch.'}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Card: Materials Inventory Table */}
+          <section className="stitch-table-card">
+            {/* Toolbar: Search + Count Date + Clear inputs button */}
+            <div className="stitch-table-toolbar">
+              <div className="stitch-search-wrap">
+                <span className="stitch-search-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '15px', height: '15px' }}>
+                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  className="stitch-search-input"
+                  placeholder="Tìm kiếm nguyên liệu..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
               {activeMode === STOCK_MODES.DAILY_COUNT && (
-                <div style={{ width: '160px' }}>
+                <div style={{ width: '170px' }}>
                   <TextInput
                     type="date"
                     label=""
@@ -1060,320 +1173,315 @@ export function StockPage() {
                   />
                 </div>
               )}
-              <div style={{ width: '260px' }}>
-                <TextInput
-                  placeholder="Tìm kiếm nguyên liệu..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+
+              {/* Clear inputs button moved to the right of search bar */}
+              {activeMode === STOCK_MODES.IMPORT ? (
+                <button
+                  type="button"
+                  className="stitch-tool-btn-danger"
+                  onClick={clearImportInputs}
+                  disabled={isLoading || isSubmitting}
+                  style={{ whiteSpace: 'nowrap', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--palette-error-200, #e7c9c3)', backgroundColor: 'var(--palette-error-100, #f8ece9)' }}
+                  title="Xóa toàn bộ số lượng nhập đang soạn thảo"
+                >
+                  <Eraser size={14} />
+                  <span>Xóa các ô đã nhập</span>
+                </button>
+              ) : (
+                workspace?.type !== WORKSPACE_TYPES.STORE && (
+                  <button
+                    type="button"
+                    className="stitch-tool-btn-danger"
+                    onClick={resetCountInputs}
+                    disabled={isLoading || isSubmitting}
+                    style={{ whiteSpace: 'nowrap', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--palette-beige-300, #d1c1a9)', backgroundColor: 'var(--palette-cream-200, #ede3d2)', color: 'var(--palette-text-900, #263426)' }}
+                    title="Đặt lại toàn bộ số lượng tồn thực tế bằng tồn lý thuyết"
+                  >
+                    <RotateCcw size={14} />
+                    <span>Đặt lại theo tồn lý thuyết</span>
+                  </button>
+                )
+              )}
             </div>
-          </div>
 
-          {/* Excel spreadsheet templates file input tags */}
-          <input
-            type="file"
-            ref={importFileInputRef}
-            accept=".xlsx,.xls,.csv"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              void handleTemplateUpload(STOCK_MODES.IMPORT, file);
-              e.target.value = '';
-            }}
-          />
-          <input
-            type="file"
-            ref={countFileInputRef}
-            accept=".xlsx,.xls,.csv"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              void handleTemplateUpload(STOCK_MODES.DAILY_COUNT, file);
-              e.target.value = '';
-            }}
-          />
 
-          {/* Tab 1 content mode forms */}
-          {activeMode === STOCK_MODES.IMPORT ? (
-            <form onSubmit={handleImportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-              <div className="responsive-split-layout">
-                <TextareaInput
-                  label="Ghi chú chung cho đợt nhập"
-                  name="importBatchNote"
-                  value={importBatchNote}
-                  onChange={(e) => setImportBatchNote(e.target.value)}
-                  placeholder="Ví dụ: nhập hàng đầu ngày, nhập theo phiếu NCC số 25..."
-                  rows={3}
-                  disabled={isLoading || isSubmitting}
-                />
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--color-secondary)' }}>
-                    Mẫu Excel đã có sẵn toàn bộ nguyên liệu. Bạn chỉ cần sửa cột số lượng nhập rồi nạp lại file để điền hàng loạt.
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button variant="secondary" onClick={clearImportInputs} disabled={isLoading || isSubmitting} icon={<Eraser size={16} />}>
-                      Xóa các ô đã nhập
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="table-container">
-                <table className="data-table" style={{ minWidth: '1100px' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: '124px' }}>Mã NL</th>
-                      <th style={{ minWidth: '240px' }}>Tên nguyên liệu</th>
-                      <th style={{ width: '90px', textAlign: 'center' }}>Đơn vị</th>
-                      <th style={{ width: '130px', textAlign: 'right' }}>Tồn hiện tại</th>
-                      <th style={{ width: '180px' }}>Số lượng nhập</th>
-                      <th style={{ minWidth: '240px' }}>Ghi chú theo dòng</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
+            {/* Table View */}
+            {activeMode === STOCK_MODES.IMPORT ? (
+              <form onSubmit={handleImportSubmit}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="stitch-table">
+                    <thead>
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
-                          <div className="spinner" style={{ margin: '0 auto 12px' }}></div>
-                          <span style={{ color: 'var(--color-secondary)' }}>Đang tải danh sách nguyên liệu...</span>
-                        </td>
+                        <th style={{ width: '110px' }}>Mã nguyên liệu</th>
+                        <th>Tên nguyên liệu</th>
+                        <th style={{ width: '80px', textAlign: 'center' }}>ĐVT</th>
+                        <th style={{ width: '130px', textAlign: 'right' }}>Tồn hiện tại</th>
+                        <th style={{ width: '150px', textAlign: 'center' }}>Số lượng nhập</th>
+                        <th>Ghi chú</th>
                       </tr>
-                    ) : visibleIngredients.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--spacing-xl)', color: 'var(--color-secondary)' }}>
-                          Không có nguyên liệu nào phù hợp với bộ lọc hiện tại.
-                        </td>
-                      </tr>
-                    ) : (
-                      visibleIngredients.map((ingredient) => {
-                        const row = importRows[ingredient.id] || { quantity: '', note: '' };
-                        const rowError = importErrors[ingredient.id];
+                    </thead>
+                    <tbody>
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '36px' }}>
+                            <div className="spinner" style={{ margin: '0 auto 10px' }} />
+                            <span style={{ color: 'var(--palette-text-600, #6f786b)', fontSize: '13px' }}>
+                              Đang tải danh sách nguyên liệu...
+                            </span>
+                          </td>
+                        </tr>
+                      ) : visibleIngredients.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '36px', color: 'var(--palette-text-600, #6f786b)' }}>
+                            Không tìm thấy nguyên liệu nào phù hợp.
+                          </td>
+                        </tr>
+                      ) : (
+                        visibleIngredients.map((ingredient) => {
+                          const row = importRows[ingredient.id] || { quantity: '', note: '' };
+                          const rowError = importErrors[ingredient.id];
+                          const currentStockNum = Number(ingredient.currentStock || 0);
+                          const minThreshold = Number(ingredient.minQuantity || 0);
+                          const isLowStock = minThreshold > 0 && currentStockNum < minThreshold;
 
-                        return (
-                          <tr key={ingredient.id}>
-                            <td>
-                              <CompactCode value={ingredient.id} prefix="NL" />
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <strong style={{ color: 'var(--color-primary)' }}>{ingredient.name}</strong>
-                                <span style={{ fontSize: '12px', color: 'var(--color-secondary)' }}>
-                                  ID: {ingredient.id}
-                                </span>
-                              </div>
-                            </td>
-                            <td style={{ textAlign: 'center', fontWeight: '600' }}>{ingredient.unit}</td>
-                            <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                              {formatDisplayNumber(ingredient.currentStock)} {ingredient.unit}
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                value={row.quantity}
-                                onChange={(e) => handleImportRowChange(ingredient.id, 'quantity', e.target.value)}
-                                onKeyDown={handleNumberKeyDownBlock}
-                                placeholder="Ví dụ: 500"
-                                disabled={isSubmitting}
-                                className="form-control"
-                                style={buildInputStyle(Boolean(rowError))}
-                              />
-                              {rowError && (
-                                <div style={{ color: 'var(--color-error)', fontSize: '12px', marginTop: '6px' }}>
-                                  {rowError}
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                value={row.note}
-                                onChange={(e) => handleImportRowChange(ingredient.id, 'note', e.target.value)}
-                                placeholder="Ghi chú tùy chọn"
-                                disabled={isSubmitting}
-                                className="form-control"
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="submit" variant="primary" loading={isSubmitting} icon={<PackagePlus size={16} />} disabled={isLoading || isImportingFile}>
-                  Xác nhận nhập kho hàng loạt
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleDailyCountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-              <div className="responsive-split-layout">
-                <TextareaInput
-                  label="Ghi chú chung cho phiên kiểm kê"
-                  name="countBatchNote"
-                  value={countBatchNote}
-                  onChange={(e) => setCountBatchNote(e.target.value)}
-                  placeholder="Ví dụ: kiểm kê cuối ngày, đối chiếu ca tối..."
-                  rows={3}
-                  disabled={isLoading || isSubmitting}
-                />
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {workspace?.type === WORKSPACE_TYPES.STORE ? (
-                    <div style={{ fontSize: '14px', color: 'var(--color-secondary)' }}>
-                      Vui lòng đếm thực tế và nhập chính xác số lượng tồn thực tế của từng nguyên liệu có tại cửa hàng.
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '14px', color: 'var(--color-secondary)' }}>
-                      Mỗi dòng sẽ so sánh tồn lý thuyết hiện có với tồn thực tế bạn nhập. Những dòng có chênh lệch sẽ được ghi thành điều chỉnh kho để đưa vào báo cáo sau này.
-                    </div>
-                  )}
-                  {workspace?.type !== WORKSPACE_TYPES.STORE && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button variant="secondary" onClick={resetCountInputs} disabled={isLoading || isSubmitting} icon={<Eraser size={16} />}>
-                        Đặt lại theo tồn lý thuyết
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="table-container">
-                <table className="data-table" style={{ minWidth: '1180px' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: '124px' }}>Mã NL</th>
-                      <th style={{ minWidth: '240px' }}>Tên nguyên liệu</th>
-                      <th style={{ width: '90px', textAlign: 'center' }}>Đơn vị</th>
-                      {workspace?.type !== WORKSPACE_TYPES.STORE && <th style={{ width: '140px', textAlign: 'right' }}>Tồn lý thuyết</th>}
-                      <th style={{ width: '180px' }}>Tồn thực tế</th>
-                      {workspace?.type !== WORKSPACE_TYPES.STORE && <th style={{ width: '140px', textAlign: 'right' }}>Chênh lệch</th>}
-                      <th style={{ minWidth: '240px' }}>Ghi chú theo dòng</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
-                      <tr>
-                        <td colSpan={workspace?.type === WORKSPACE_TYPES.STORE ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
-                          <div className="spinner" style={{ margin: '0 auto 12px' }}></div>
-                          <span style={{ color: 'var(--color-secondary)' }}>Đang tải danh sách nguyên liệu...</span>
-                        </td>
-                      </tr>
-                    ) : visibleIngredients.length === 0 ? (
-                      <tr>
-                        <td colSpan={workspace?.type === WORKSPACE_TYPES.STORE ? 5 : 7} style={{ textAlign: 'center', padding: 'var(--spacing-xl)', color: 'var(--color-secondary)' }}>
-                          Không có nguyên liệu nào phù hợp với bộ lọc hiện tại.
-                        </td>
-                      </tr>
-                    ) : (
-                      visibleIngredients.map((ingredient) => {
-                        const row = countRows[ingredient.id] || {
-                          actualStock: '',
-                          note: '',
-                        };
-                        const rowError = countErrors[ingredient.id];
-                        const actualStock = row.actualStock !== '' ? Number(row.actualStock) : Number(ingredient.currentStock || 0);
-                        const differenceQuantity = actualStock - Number(ingredient.currentStock || 0);
-
-                        return (
-                          <tr key={ingredient.id}>
-                            <td>
-                              <CompactCode value={ingredient.id} prefix="NL" />
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <strong style={{ color: 'var(--color-primary)' }}>{ingredient.name}</strong>
-                                <span style={{ fontSize: '12px', color: 'var(--color-secondary)' }}>
-                                  ID: {ingredient.id}
-                                </span>
-                              </div>
-                            </td>
-                            <td style={{ textAlign: 'center', fontWeight: '600' }}>{ingredient.unit}</td>
-                            {workspace?.type !== WORKSPACE_TYPES.STORE && (
-                              <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                                {formatDisplayNumber(ingredient.currentStock)} {ingredient.unit}
+                          return (
+                            <tr key={ingredient.id}>
+                              <td className="stitch-cell-code">
+                                <CompactCode value={ingredient.id} prefix="NL" />
                               </td>
-                            )}
-                            <td>
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                value={row.actualStock}
-                                onChange={(e) => handleCountRowChange(ingredient.id, 'actualStock', e.target.value)}
-                                onKeyDown={handleNumberKeyDownBlock}
-                                disabled={isSubmitting}
-                                className="form-control"
-                                style={buildInputStyle(Boolean(rowError))}
-                              />
-                              {rowError && (
-                                <div style={{ color: 'var(--color-error)', fontSize: '12px', marginTop: '6px' }}>
-                                  {rowError}
-                                </div>
-                              )}
-                            </td>
-                            {workspace?.type !== WORKSPACE_TYPES.STORE && (
+                              <td>
+                                <div className="stitch-cell-title">{ingredient.name}</div>
+                              </td>
+                              <td style={{ textAlign: 'center', color: 'var(--palette-text-600, #6f786b)', fontWeight: 500 }}>
+                                {ingredient.unit}
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: 600, color: isLowStock ? 'var(--palette-error-800, #8b5250)' : 'var(--palette-text-900, #263426)' }}>
+                                {formatDisplayNumber(ingredient.currentStock)}
+                                {minThreshold > 0 && (
+                                  <span style={{ display: 'block', fontSize: '10px', color: 'var(--palette-text-600, #6f786b)', fontWeight: 400 }}>
+                                    Min: {minThreshold}
+                                  </span>
+                                )}
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  className="stitch-input-qty"
+                                  value={row.quantity}
+                                  onChange={(e) => handleImportRowChange(ingredient.id, 'quantity', e.target.value)}
+                                  onKeyDown={handleNumberKeyDownBlock}
+                                  placeholder="0"
+                                  disabled={isSubmitting}
+                                  style={buildInputStyle(Boolean(rowError))}
+                                />
+                                {rowError && (
+                                  <div style={{ color: 'var(--palette-error-700, #9a5d5a)', fontSize: '11px', marginTop: '4px' }}>
+                                    {rowError}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="stitch-input-note"
+                                  value={row.note}
+                                  onChange={(e) => handleImportRowChange(ingredient.id, 'note', e.target.value)}
+                                  placeholder="Ghi chú theo dòng..."
+                                  disabled={isSubmitting}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Table Footer */}
+                <div className="stitch-table-footer">
+                  <div>
+                    <span>
+                      Đã chọn nhập: <strong>{readyImportRows.length}</strong> nguyên liệu (Tổng: {formatDisplayNumber(totalImportQuantity)})
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      className="stitch-btn-secondary"
+                      onClick={clearImportInputs}
+                      disabled={isLoading || isSubmitting}
+                    >
+                      Xóa nháp
+                    </button>
+                    <button
+                      type="submit"
+                      className="stitch-btn-primary"
+                      disabled={isLoading || isImportingFile || isSubmitting}
+                    >
+                      <PackagePlus size={14} />
+                      <span>Xác nhận nhập kho</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleDailyCountSubmit}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="stitch-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '110px' }}>Mã nguyên liệu</th>
+                        <th>Tên nguyên liệu</th>
+                        <th style={{ width: '80px', textAlign: 'center' }}>ĐVT</th>
+                        <th style={{ width: '130px', textAlign: 'right' }}>Tồn lý thuyết</th>
+                        <th style={{ width: '150px', textAlign: 'center' }}>Tồn thực tế</th>
+                        <th style={{ width: '130px', textAlign: 'right' }}>Chênh lệch</th>
+                        <th>Ghi chú</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan={7} style={{ textAlign: 'center', padding: '36px' }}>
+                            <div className="spinner" style={{ margin: '0 auto 10px' }} />
+                            <span style={{ color: 'var(--palette-text-600, #6f786b)', fontSize: '13px' }}>
+                              Đang tải danh sách nguyên liệu...
+                            </span>
+                          </td>
+                        </tr>
+                      ) : visibleIngredients.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} style={{ textAlign: 'center', padding: '36px', color: 'var(--palette-text-600, #6f786b)' }}>
+                            Không tìm thấy nguyên liệu nào phù hợp.
+                          </td>
+                        </tr>
+                      ) : (
+                        visibleIngredients.map((ingredient) => {
+                          const row = countRows[ingredient.id] || { actualStock: '', note: '' };
+                          const rowError = countErrors[ingredient.id];
+                          const actualStock = row.actualStock !== '' ? Number(row.actualStock) : Number(ingredient.currentStock || 0);
+                          const differenceQuantity = actualStock - Number(ingredient.currentStock || 0);
+
+                          return (
+                            <tr key={ingredient.id}>
+                              <td className="stitch-cell-code">
+                                <CompactCode value={ingredient.id} prefix="NL" />
+                              </td>
+                              <td>
+                                <div className="stitch-cell-title">{ingredient.name}</div>
+                              </td>
+                              <td style={{ textAlign: 'center', color: 'var(--palette-text-600, #6f786b)', fontWeight: 500 }}>
+                                {ingredient.unit}
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--palette-text-900, #263426)' }}>
+                                {formatDisplayNumber(ingredient.currentStock)}
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  className="stitch-input-qty"
+                                  value={row.actualStock}
+                                  onChange={(e) => handleCountRowChange(ingredient.id, 'actualStock', e.target.value)}
+                                  onKeyDown={handleNumberKeyDownBlock}
+                                  disabled={isSubmitting}
+                                  style={buildInputStyle(Boolean(rowError))}
+                                />
+                                {rowError && (
+                                  <div style={{ color: 'var(--palette-error-700, #9a5d5a)', fontSize: '11px', marginTop: '4px' }}>
+                                    {rowError}
+                                  </div>
+                                )}
+                              </td>
                               <td
                                 style={{
                                   textAlign: 'right',
-                                  fontWeight: '700',
+                                  fontWeight: 700,
                                   color:
                                     differenceQuantity > 0
-                                      ? 'var(--color-tertiary-container)'
+                                      ? 'var(--palette-success-700, #587055)'
                                       : differenceQuantity < 0
-                                      ? 'var(--color-error)'
-                                      : 'var(--color-secondary)',
-                                  fontVariantNumeric: 'tabular-nums',
-                                  whiteSpace: 'nowrap',
+                                      ? 'var(--palette-error-800, #8b5250)'
+                                      : 'var(--palette-text-600, #6f786b)',
                                 }}
                               >
                                 {differenceQuantity > 0 ? '+' : ''}
                                 {formatDisplayNumber(differenceQuantity)} {ingredient.unit}
                               </td>
-                            )}
-                            <td>
-                              <input
-                                type="text"
-                                value={row.note}
-                                onChange={(e) => handleCountRowChange(ingredient.id, 'note', e.target.value)}
-                                placeholder="Ví dụ: đổ vỡ, thất thoát, kiểm kê thừa..."
-                                disabled={isSubmitting}
-                                className="form-control"
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="stitch-input-note"
+                                  value={row.note}
+                                  onChange={(e) => handleCountRowChange(ingredient.id, 'note', e.target.value)}
+                                  placeholder="Ghi chú theo dòng..."
+                                  disabled={isSubmitting}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="submit" variant="primary" loading={isSubmitting} icon={<ClipboardCheck size={16} />} disabled={isLoading || isImportingFile}>
-                  Ghi nhận kiểm kê ngày
-                </Button>
-              </div>
-            </form>
-          )}
+                {/* Table Footer */}
+                <div className="stitch-table-footer">
+                  <div>
+                    <span>
+                      Chênh lệch: <strong>{changedCountRows.length}</strong> nguyên liệu (Tổng: {formatStockDelta(totalCountDifference)})
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {workspace?.type !== WORKSPACE_TYPES.STORE && (
+                      <button
+                        type="button"
+                        className="stitch-btn-secondary"
+                        onClick={resetCountInputs}
+                        disabled={isLoading || isSubmitting}
+                      >
+                        Đặt lại lý thuyết
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      className="stitch-btn-primary"
+                      disabled={isLoading || isImportingFile || isSubmitting}
+                    >
+                      <ClipboardCheck size={14} />
+                      <span>Ghi nhận kiểm kê ngày</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </section>
         </div>
       )}
 
       {/* ------------------ TAB 2: SMART FORECAST (DỰ BÁO TỒN KHO) ------------------ */}
       {activeTab === 'forecast' && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-lg)', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'flex-start' }}>
           {/* Main Forecast table (left) */}
           <div style={{ flex: '2 1 600px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="card" style={{ padding: 'var(--spacing-sm)' }}>
-              <TextInput
-                placeholder="Tìm kiếm nguyên liệu dự báo..."
-                value={forecastSearch}
-                onChange={(e) => setForecastSearch(e.target.value)}
-              />
+            <div className="stitch-card" style={{ padding: '12px 16px' }}>
+              <div className="stitch-search-wrap">
+                <span className="stitch-search-icon">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '15px', height: '15px' }}>
+                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  className="stitch-search-input"
+                  placeholder="Tìm kiếm nguyên liệu dự báo..."
+                  value={forecastSearch}
+                  onChange={(e) => setForecastSearch(e.target.value)}
+                />
+              </div>
             </div>
 
             <DataTable
@@ -1386,15 +1494,26 @@ export function StockPage() {
 
           {/* Warnings & Suggestions panel (right) */}
           <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Warning block */}
-            <div className="card" style={{ borderLeft: criticalItems.length > 0 ? '4px solid var(--color-error)' : '4px solid var(--color-status-success-text)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-primary)', marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {criticalItems.length > 0 ? <AlertTriangle size={18} style={{ color: 'var(--color-error)' }} /> : <CheckCircle2 size={18} style={{ color: 'var(--color-status-success-text)' }} />}
+            {/* Safety Level Card */}
+            <div
+              className="stitch-card"
+              style={{
+                borderLeft: criticalItems.length > 0
+                  ? '4px solid var(--palette-error-700, #9a5d5a)'
+                  : '4px solid var(--palette-success-700, #587055)',
+              }}
+            >
+              <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--palette-text-900, #263426)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {criticalItems.length > 0 ? (
+                  <AlertTriangle size={17} style={{ color: 'var(--palette-error-700, #9a5d5a)' }} />
+                ) : (
+                  <CheckCircle2 size={17} style={{ color: 'var(--palette-success-700, #587055)' }} />
+                )}
                 Mức độ an toàn tồn kho
               </h3>
               {criticalItems.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-on-surface)' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--palette-text-900, #263426)' }}>
                     Phát hiện <strong>{criticalItems.length} nguyên liệu</strong> sắp hết hàng trong vòng 5 ngày tới:
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
@@ -1416,11 +1535,11 @@ export function StockPage() {
                         style={{
                           fontSize: '11px',
                           padding: '4px 8px',
-                          borderRadius: 'var(--radius-sm)',
-                          backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                          color: 'var(--color-error)',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          fontWeight: '600',
+                          borderRadius: '6px',
+                          backgroundColor: 'var(--palette-error-100, #f8ece9)',
+                          color: 'var(--palette-error-700, #9a5d5a)',
+                          border: '1px solid var(--palette-error-200, #e7c9c3)',
+                          fontWeight: 600,
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -1434,42 +1553,55 @@ export function StockPage() {
                   </div>
                 </div>
               ) : (
-                <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-secondary)' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--palette-text-600, #6f786b)' }}>
                   Tất cả nguyên liệu hiện đang ở mức an toàn ổn định trên 5 ngày sử dụng.
                 </p>
               )}
             </div>
 
             {/* Reorder Recommendation sheet */}
-            <div className="card">
-              <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-primary)', marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TrendingUp size={18} />
+            <div className="stitch-card">
+              <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--palette-text-900, #263426)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={17} style={{ color: 'var(--palette-olive-700, #3c5642)' }} />
                 Phiếu đề xuất mua hàng
               </h3>
-              <p style={{ fontSize: '12px', color: 'var(--color-secondary)', margin: '0 0 12px 0' }}>
+              <p style={{ fontSize: '12px', color: 'var(--palette-text-600, #6f786b)', margin: '0' }}>
                 Danh sách đề xuất số lượng nhập thêm nhằm đảm bảo hoạt động pha chế ổn định trong 14 ngày tới.
               </p>
 
               {reorderList.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '220px', overflowY: 'auto', border: '1px dashed var(--color-outline-variant)', borderRadius: 'var(--radius-sm)', padding: '10px', backgroundColor: 'var(--color-surface-container-low)' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      border: '1px dashed var(--palette-beige-300, #d1c1a9)',
+                      borderRadius: '8px',
+                      padding: '10px',
+                      backgroundColor: 'var(--palette-cream-200, #ede3d2)',
+                    }}
+                  >
                     {reorderList.map((item) => (
-                      <div key={item.ingredient_id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                        <span>{item.name}</span>
-                        <strong style={{ color: 'var(--color-error)' }}>
+                      <div key={item.ingredient_id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                        <span style={{ color: 'var(--palette-text-900, #263426)' }}>{item.name}</span>
+                        <strong style={{ color: 'var(--palette-error-700, #9a5d5a)' }}>
                           +{item.suggested_reorder} {item.unit}
                         </strong>
                       </div>
                     ))}
                   </div>
-                  <Button variant="primary" onClick={handleCopyReorders} icon={<Download size={14} />}>
-                    Sao chép đề xuất
-                  </Button>
+                  <button type="button" className="stitch-btn-primary" onClick={handleCopyReorders}>
+                    <Download size={13} />
+                    <span>Sao chép đề xuất</span>
+                  </button>
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--color-secondary)' }}>
-                  <CheckCircle2 size={32} style={{ color: 'var(--color-status-success-text)', margin: '0 auto 8px', display: 'block' }} />
-                  <span style={{ fontSize: '13px', fontWeight: '600' }}>Tồn kho đã được đảm bảo đầy đủ!</span>
+                <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--palette-text-600, #6f786b)' }}>
+                  <CheckCircle2 size={28} style={{ color: 'var(--palette-success-700, #587055)', margin: '0 auto 6px', display: 'block' }} />
+                  <span style={{ fontSize: '12.5px', fontWeight: 600 }}>Tồn kho đã được đảm bảo đầy đủ!</span>
                 </div>
               )}
             </div>
@@ -1489,41 +1621,43 @@ export function StockPage() {
 
       {/* ------------------ TAB 4: DISCARD (HỦY HÀNG & THẤT THOÁT) ------------------ */}
       {activeTab === 'discard' && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-lg)', alignItems: 'flex-start' }}>
-          <div className="card" style={{ flex: '1 1 450px', padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-            <h3 style={{ margin: 0, color: 'var(--color-primary)' }}>Tạo phiếu hủy hàng</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-secondary)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'flex-start' }}>
+          <div className="stitch-card" style={{ flex: '1 1 450px' }}>
+            <h3 style={{ margin: 0, color: 'var(--palette-text-900, #263426)', fontSize: '15px', fontWeight: 700 }}>
+              Tạo phiếu hủy hàng
+            </h3>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--palette-text-600, #6f786b)' }}>
               Hao hụt nguyên vật liệu/nguyên liệu hết hạn hoặc sản phẩm lỗi/pha nhầm của cửa hàng.
             </p>
 
             {discardError && <Alert type="error" message={discardError} onClose={() => setDiscardError('')} />}
 
-            <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--color-surface-container-high)', paddingBottom: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                className={`btn ${discardMode === 'INGREDIENT' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '6px 12px', fontSize: '13px' }}
-                onClick={() => {
-                  setDiscardMode('INGREDIENT');
-                  setDiscardError('');
-                }}
-              >
-                Hủy nguyên liệu hao hụt
-              </button>
-              <button
-                type="button"
-                className={`btn ${discardMode === 'PRODUCT' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '6px 12px', fontSize: '13px' }}
-                onClick={() => {
-                  setDiscardMode('PRODUCT');
-                  setDiscardError('');
-                }}
-              >
-                Hủy thành phẩm lỗi/pha sai
-              </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="stitch-segmented-pill">
+                <button
+                  type="button"
+                  className={`stitch-pill-btn ${discardMode === 'INGREDIENT' ? 'active' : ''}`}
+                  onClick={() => {
+                    setDiscardMode('INGREDIENT');
+                    setDiscardError('');
+                  }}
+                >
+                  Hủy nguyên liệu hao hụt
+                </button>
+                <button
+                  type="button"
+                  className={`stitch-pill-btn ${discardMode === 'PRODUCT' ? 'active' : ''}`}
+                  onClick={() => {
+                    setDiscardMode('PRODUCT');
+                    setDiscardError('');
+                  }}
+                >
+                  Hủy thành phẩm lỗi
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleDiscardSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleDiscardSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {discardMode === 'INGREDIENT' ? (
                 <SelectInput
                   label="Chọn nguyên liệu"
@@ -1555,7 +1689,7 @@ export function StockPage() {
               )}
 
               <TextInput
-                label={discardMode === 'INGREDIENT' ? "Số lượng nguyên liệu hủy" : "Số lượng sản phẩm hủy (ly/cốc)"}
+                label={discardMode === 'INGREDIENT' ? 'Số lượng nguyên liệu hủy' : 'Số lượng sản phẩm hủy (ly/cốc)'}
                 type="number"
                 value={discardQty}
                 onChange={(e) => setDiscardQty(e.target.value)}
@@ -1571,26 +1705,37 @@ export function StockPage() {
                 required
               />
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-                <Button type="submit" variant="primary" loading={isSubmitting || isProductsLoading}>
-                  Xác nhận hủy hàng
-                </Button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                <button
+                  type="submit"
+                  className="stitch-btn-primary"
+                  disabled={isSubmitting || isProductsLoading}
+                >
+                  <Trash size={14} />
+                  <span>Xác nhận hủy hàng</span>
+                </button>
               </div>
             </form>
           </div>
 
           <div style={{ flex: '1 1 450px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="card" style={{ borderLeft: '4px solid var(--color-warning)' }}>
-              <h4 style={{ margin: 0, color: 'var(--color-warning)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle size={18} />
+            <div
+              className="stitch-card"
+              style={{
+                borderLeft: '4px solid var(--palette-warning-700, #8a6a3e)',
+                backgroundColor: 'var(--palette-warning-100, #f7eedf)',
+              }}
+            >
+              <h4 style={{ margin: 0, color: 'var(--palette-warning-700, #8a6a3e)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700 }}>
+                <AlertTriangle size={17} />
                 Lưu ý quan trọng
               </h4>
-              <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', fontSize: '13px', color: 'var(--color-secondary)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', fontSize: '12.5px', color: 'var(--palette-text-900, #263426)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <li>
                   <strong>Hủy nguyên liệu:</strong> Khấu trừ trực tiếp số lượng nguyên liệu lẻ theo đơn vị tính tương ứng.
                 </li>
                 <li>
-                  <strong>Hủy thành phẩm:</strong> Hệ thống bắt buộc sản phẩm đã được cấu hình **Định lượng công thức**. Khi thực hiện, toàn bộ nguyên liệu tương ứng sẽ tự động bị trừ khỏi kho.
+                  <strong>Hủy thành phẩm:</strong> Hệ thống bắt buộc sản phẩm đã được cấu hình <strong>Định lượng công thức</strong>. Khi thực hiện, toàn bộ nguyên liệu tương ứng sẽ tự động bị trừ khỏi kho.
                 </li>
                 <li>
                   Nếu kho hiện tại của một hoặc nhiều nguyên liệu không đủ để phục vụ số lượng sản phẩm hủy, hệ thống sẽ từ chối thao tác và hiển thị lỗi cảnh báo.
@@ -1616,9 +1761,11 @@ export function StockPage() {
 
       {quickImportData.isOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: '400px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
-            <h3 style={{ margin: 0, color: 'var(--color-primary)' }}>Nhập kho nhanh</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-secondary)' }}>
+          <div className="stitch-card" style={{ width: '420px', padding: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
+            <h3 style={{ margin: 0, color: 'var(--palette-olive-700, #3c5642)', fontSize: '16px', fontWeight: 700 }}>
+              Nhập kho nhanh
+            </h3>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--palette-text-600, #6f786b)' }}>
               Nguyên liệu: <strong>{quickImportData.ingredientName}</strong>
             </p>
             {quickImportError && <Alert type="error" message={quickImportError} onClose={() => setQuickImportError('')} />}
@@ -1639,18 +1786,18 @@ export function StockPage() {
                 placeholder="Ví dụ: Nhập gấp phục vụ ca chiều..."
                 disabled={isSubmittingImport}
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <Button
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                <button
                   type="button"
-                  variant="secondary"
+                  className="stitch-btn-secondary"
                   onClick={() => setQuickImportData({ isOpen: false, ingredientId: '', ingredientName: '', unit: '' })}
                   disabled={isSubmittingImport}
                 >
                   Hủy
-                </Button>
-                <Button type="submit" variant="primary" loading={isSubmittingImport}>
+                </button>
+                <button type="submit" className="stitch-btn-primary" disabled={isSubmittingImport}>
                   Xác nhận nhập
-                </Button>
+                </button>
               </div>
             </form>
           </div>
@@ -1661,3 +1808,4 @@ export function StockPage() {
 }
 
 export default StockPage;
+

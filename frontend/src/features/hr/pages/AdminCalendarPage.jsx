@@ -105,18 +105,31 @@ export function AdminCalendarPage() {
     return days;
   };
 
-  const handleCellClick = (staff, day) => {
+  const handleCellClick = async (staff, day) => {
+    let currentShifts = masterShifts;
+    if (currentShifts.length === 0) {
+      try {
+        const shiftsRes = await hrApi.getShifts();
+        currentShifts = shiftsRes.data?.shifts || [];
+        setMasterShifts(currentShifts);
+      } catch (e) {
+        console.error('Error fetching shifts in modal', e);
+      }
+    }
+
     const dayStr = toLocalDateString(day);
     const dayShifts = assignedShifts.filter(s => s.staff_id === staff.id && toLocalDateString(s.shift_date) === dayStr);
+    const defaultShift = currentShifts[0];
+
     setCellModal({
       show: true,
       staff,
       date: day,
       existingShifts: dayShifts,
-      selectedShiftId: masterShifts[0]?.id || '',
+      selectedShiftId: defaultShift?.id || '',
       isFlexible: false,
-      customStart: '08:00',
-      customEnd: '12:00',
+      customStart: defaultShift ? formatTime(defaultShift.start_time) : '08:00',
+      customEnd: defaultShift ? formatTime(defaultShift.end_time) : '12:00',
     });
   };
 
@@ -134,10 +147,7 @@ export function AdminCalendarPage() {
   const handleAssignShift = async () => {
     const { staff, date, selectedShiftId, isFlexible, customStart, customEnd } = cellModal;
     
-    let finalShiftId = selectedShiftId;
-    if (isFlexible && !finalShiftId) {
-      finalShiftId = masterShifts[0]?.id || '';
-    }
+    let finalShiftId = selectedShiftId || masterShifts[0]?.id || '';
 
     if (!finalShiftId) {
       showToast('Vui lòng chọn một ca làm việc.', 'error');
@@ -150,20 +160,24 @@ export function AdminCalendarPage() {
         return;
       }
 
+      if (customStart === customEnd) {
+        showToast('Thời gian bắt đầu và kết thúc không được trùng nhau.', 'error');
+        return;
+      }
+
       const startParts = customStart.split(':');
       const startMin = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
       const endParts = customEnd.split(':');
       const endMin = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1], 10);
 
-      // 6 AM is 360 minutes, 11 PM is 1380 minutes
-      if (startMin < 360 || endMin > 1380 || startMin >= endMin) {
-        showToast('Chọn giờ tùy chọn trong khoảng 6h sáng (06:00) tới 11h tối (23:00) và không qua đêm.', 'error');
-        return;
+      let diffMinutes = endMin - startMin;
+      if (diffMinutes <= 0) {
+        diffMinutes += 24 * 60; // Hỗ trợ ca làm đêm qua ngày
       }
 
-      const diffHours = (endMin - startMin) / 60;
-      if (diffHours < 3 || diffHours > 16) {
-        showToast('Thời gian ca làm việc linh động phải từ 3 đến 16 tiếng.', 'error');
+      const diffHours = diffMinutes / 60;
+      if (diffHours < 0.5 || diffHours > 24) {
+        showToast('Thời gian ca làm việc linh động phải từ 30 phút đến 24 tiếng.', 'error');
         return;
       }
     }
@@ -442,19 +456,25 @@ export function AdminCalendarPage() {
               {/* Fixed shift option */}
               {!cellModal.isFlexible && (
                 <div className="form-group" style={{ marginBottom: '16px' }}>
-                  <label className="form-label">Chọn ca làm việc mẫu</label>
-                  <select
-                    className="form-control"
-                    value={cellModal.selectedShiftId}
-                    onChange={(e) => handleShiftSelectChange(e.target.value)}
-                  >
-                    <option value="">-- Chọn ca làm việc mẫu --</option>
-                    {masterShifts.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({formatTime(s.start_time)} - {formatTime(s.end_time)}) - {formatVND(Number(s.hourly_rate))}/h
-                      </option>
-                    ))}
-                  </select>
+                  <label className="form-label" style={{ fontWeight: '600' }}>Chọn ca làm việc mẫu</label>
+                  {masterShifts.length === 0 ? (
+                    <div style={{ padding: '10px 12px', background: 'var(--color-surface-container)', borderRadius: '8px', fontSize: '13px', color: 'var(--color-secondary)' }}>
+                      Đang tải hoặc tự động tạo các ca làm việc mẫu (Ca Sáng, Ca Chiều, Ca Tối)...
+                    </div>
+                  ) : (
+                    <select
+                      className="form-control"
+                      value={cellModal.selectedShiftId}
+                      onChange={(e) => handleShiftSelectChange(e.target.value)}
+                    >
+                      <option value="">-- Chọn ca làm việc mẫu --</option>
+                      {masterShifts.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({formatTime(s.start_time)} - {formatTime(s.end_time)}) - {formatVND(Number(s.hourly_rate))}/h
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
 
@@ -464,7 +484,7 @@ export function AdminCalendarPage() {
                   <div style={{ fontSize: '11px', color: 'var(--color-secondary)', marginBottom: '8px' }}>
                     * Ca làm việc linh động được tính đơn giá cố định <strong>25.000đ/giờ</strong>.
                     <br />
-                    * Thời gian làm việc phải từ 3 đến 16 tiếng, trong khoảng 6:00 sáng đến 11:00 tối.
+                    * Hỗ trợ chọn giờ <strong>24/7</strong> linh hoạt (bao gồm ca đêm qua ngày). Thời gian làm việc từ 30 phút đến 24 tiếng.
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                     <div className="form-group">

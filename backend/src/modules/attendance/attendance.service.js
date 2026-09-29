@@ -3,11 +3,19 @@ import crypto from 'crypto';
 
 const ATTENDANCE_SALT = 'mini-coffee-pos-salt-2026';
 
+export function getLocalDateStr(d = new Date()) {
+  const dateObj = new Date(d);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function generateTodayToken(storeId) {
   if (!storeId) {
     throw new Error('Store context is required to generate an attendance token.');
   }
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getLocalDateStr();
   return crypto
     .createHash('sha256')
     .update(ATTENDANCE_SALT + storeId + todayStr)
@@ -16,19 +24,33 @@ export function generateTodayToken(storeId) {
 
 export async function checkIn(staffId, token, storeId) {
   // 1. Verify token
-  const expectedToken = generateTodayToken(storeId);
-  if (token !== expectedToken) {
+  const expectedTodayToken = generateTodayToken(storeId);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const expectedYesterdayToken = crypto
+    .createHash('sha256')
+    .update(ATTENDANCE_SALT + storeId + getLocalDateStr(yesterday))
+    .digest('hex');
+
+  if (token !== expectedTodayToken && token !== expectedYesterdayToken) {
     throw new Error('Mã QR chấm công không hợp lệ hoặc đã hết hạn.');
   }
 
   // 2. Find active shift assigned for today that hasn't been checked in
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateStr();
+  const yesterdayStr = getLocalDateStr(yesterday);
+
   const activeShiftResult = await query(
-    `SELECT ss.id, ss.custom_start_time, s.start_time, s.name as shift_name
+    `SELECT ss.id, ss.custom_start_time, s.start_time, s.name as shift_name, ss.shift_date::text as shift_date
      FROM staff_shifts ss
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.store_id = $3 AND ss.check_in_at IS NULL`,
-    [staffId, today, storeId]
+     WHERE ss.staff_id = $1 
+       AND (ss.shift_date = $2 OR (ss.shift_date = $4 AND COALESCE(ss.custom_start_time, s.start_time) >= '18:00'))
+       AND ss.store_id = $3 
+       AND ss.check_in_at IS NULL
+       AND (ss.status IS NULL OR ss.status != 'CANCELLED')
+     ORDER BY ss.shift_date DESC, COALESCE(ss.custom_start_time, s.start_time) ASC`,
+    [staffId, today, storeId, yesterdayStr]
   );
 
   if (activeShiftResult.rows.length === 0) {
@@ -41,13 +63,16 @@ export async function checkIn(staffId, token, storeId) {
 
   // 3. Calculate lateness
   const now = new Date();
-  const currentHourMin = now.toTimeString().slice(0, 5); // "HH:MM"
+  const currentHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   
   const [currH, currM] = currentHourMin.split(':').map(Number);
   const [schedH, schedM] = scheduledStart.split(':').map(Number);
   
-  const currMinutes = currH * 60 + currM;
-  const schedMinutes = schedH * 60 + schedM;
+  let currMinutes = currH * 60 + currM;
+  let schedMinutes = schedH * 60 + schedM;
+  if (shiftRow.shift_date === yesterdayStr && schedMinutes > currMinutes) {
+    currMinutes += 24 * 60;
+  }
   let lateness = currMinutes - schedMinutes;
   if (lateness < 0) lateness = 0; // early or on time
 
@@ -64,8 +89,6 @@ export async function checkIn(staffId, token, storeId) {
 }
 
 export async function checkOut(staffId, storeId) {
-  const today = new Date().toISOString().slice(0, 10);
-
   // 1. Find active shift that is checked in but not checked out
   const checkedInResult = await query(
     `SELECT ss.id, ss.check_in_at, ss.hourly_rate_snapshot, ss.lateness_minutes,
@@ -73,8 +96,9 @@ export async function checkOut(staffId, storeId) {
             COALESCE(ss.custom_end_time, s.end_time) as end_time
      FROM staff_shifts ss
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.store_id = $3 AND ss.check_in_at IS NOT NULL AND ss.check_out_at IS NULL`,
-    [staffId, today, storeId]
+     WHERE ss.staff_id = $1 AND ss.store_id = $2 AND ss.check_in_at IS NOT NULL AND ss.check_out_at IS NULL
+     ORDER BY ss.check_in_at DESC`,
+    [staffId, storeId]
   );
 
   if (checkedInResult.rows.length === 0) {
@@ -94,9 +118,9 @@ export async function checkOut(staffId, storeId) {
   const [startH, startM] = shiftRow.start_time.split(':').map(Number);
   const [endH, endM] = shiftRow.end_time.split(':').map(Number);
   let plannedHours = (endH * 60 + endM - (startH * 60 + startM)) / 60;
-  if (plannedHours < 0) plannedHours += 24;
+  if (plannedHours <= 0) plannedHours += 24;
 
-  const latenessHours = shiftRow.lateness_minutes / 60;
+  const latenessHours = (shiftRow.lateness_minutes || 0) / 60;
   const payableHours = Math.max(0, plannedHours - latenessHours);
   const rate = Number(shiftRow.hourly_rate_snapshot);
   const totalSalary = Math.round(payableHours * rate);
@@ -123,7 +147,7 @@ export async function getAttendanceLogs(startDate, endDate, storeId) {
      FROM staff_shifts ss
      JOIN app_users u ON u.id = ss.staff_id
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.shift_date BETWEEN $1 AND $2 AND ss.store_id = $3
+     WHERE ss.shift_date >= $1 AND ss.shift_date <= $2 AND ss.store_id = $3
      ORDER BY ss.shift_date DESC, ss.check_in_at DESC`,
     [startDate, endDate, storeId]
   );
@@ -131,16 +155,32 @@ export async function getAttendanceLogs(startDate, endDate, storeId) {
 }
 
 export async function getTodayStaffStatus(staffId, storeId) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateStr();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = getLocalDateStr(yesterday);
+
   const result = await query(
     `SELECT ss.id, ss.check_in_at, ss.check_out_at, ss.lateness_minutes, ss.actual_hours, ss.status,
             s.name as shift_name,
+            ss.shift_date::text as shift_date,
             COALESCE(ss.custom_start_time, s.start_time) as planned_start,
             COALESCE(ss.custom_end_time, s.end_time) as planned_end
      FROM staff_shifts ss
      JOIN shifts s ON s.id = ss.shift_id
-     WHERE ss.staff_id = $1 AND ss.shift_date = $2 AND ss.store_id = $3`,
-    [staffId, today, storeId]
+     WHERE ss.staff_id = $1 
+       AND (
+         ss.shift_date = $2 
+         OR (ss.shift_date = $4 AND ss.check_in_at IS NOT NULL AND ss.check_out_at IS NULL)
+       ) 
+       AND ss.store_id = $3
+       AND (ss.status IS NULL OR ss.status != 'CANCELLED')
+     ORDER BY 
+       (ss.check_in_at IS NOT NULL AND ss.check_out_at IS NULL) DESC,
+       (ss.check_in_at IS NULL) DESC,
+       COALESCE(ss.custom_start_time, s.start_time) ASC`,
+    [staffId, today, storeId, yesterdayStr]
   );
   return result.rows[0] || null;
 }
+
